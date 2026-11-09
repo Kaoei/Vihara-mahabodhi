@@ -49,10 +49,12 @@
     </script>
 
     <style>
-        body {
+        html, body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: #f8fafc;
             color: #0f172a;
+            width: 100%;
+            max-width: 100%;
             overflow-x: hidden;
         }
 
@@ -63,8 +65,8 @@
         /* Hero background showing both the Buddha statues at top and the Bhikkhus & congregation below */
         .hero-banner {
             background-image:
-                linear-gradient(to bottom, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.52) 50%, rgba(15, 23, 42, 0.68) 100%),
-                url('{{ asset('Assets/Img/hero.png') }}');
+                linear-gradient(to bottom, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.55) 50%, rgba(15, 23, 42, 0.72) 100%),
+                url('/Assets/Img/hero.png');
             background-size: 100% 112%;
             background-position: center 48%;
             background-repeat: no-repeat;
@@ -95,19 +97,20 @@
         .reveal-delay-300 { transition-delay: 300ms; }
     </style>
 </head>
-<body class="antialiased selection:bg-gold-500 selection:text-white">
+<body class="antialiased selection:bg-gold-500 selection:text-white w-full max-w-full overflow-x-hidden">
+<div class="w-full max-w-full overflow-x-hidden relative">
 
     @if (empty($isArticleDetail))
     <!-- 3-Second Initial Buddhist Dhamma Loading Screen (White Mode) -->
-    <div id="dhammaLoadingScreen" class="fixed inset-0 z-[100] bg-white text-slate-900 flex flex-col items-center justify-center px-6 text-center transition-opacity duration-700">
-        <div class="max-w-xl mx-auto space-y-6 flex flex-col items-center">
+    <div id="dhammaLoadingScreen" class="fixed inset-0 z-[100] bg-white text-slate-900 flex flex-col items-center justify-center px-5 text-center transition-opacity duration-700 overflow-hidden">
+        <div class="w-full max-w-xl mx-auto space-y-5 sm:space-y-6 flex flex-col items-center">
             <!-- Buddha / Dharma Icon (No Background Box) -->
-            <div class="text-gold-500 text-5xl sm:text-6xl">
+            <div class="text-gold-500 text-4xl sm:text-6xl">
                 <i class="fa-solid fa-dharmachakra fa-spin" style="animation-duration: 10s;"></i>
             </div>
 
-            <div class="space-y-1.5">
-                <span class="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-gold-600 block">
+            <div class="space-y-1.5 px-2">
+                <span class="text-[10px] sm:text-xs font-bold uppercase tracking-widest sm:tracking-[0.2em] text-gold-600 block leading-relaxed">
                     Namo Tassa Bhagavato Arahato Sammāsambuddhassa
                 </span>
                 <div class="text-xs text-slate-500 font-medium">
@@ -116,11 +119,11 @@
             </div>
 
             <!-- Buddhist Dhamma Message -->
-            <div class="p-6 rounded-2xl bg-gold-50/70 border border-gold-200/80 shadow-xs space-y-3 max-w-lg">
-                <p id="loadingDhammaPali" class="font-display italic text-base sm:text-lg text-slate-900 leading-relaxed">
+            <div class="p-5 sm:p-6 rounded-2xl bg-gold-50/70 border border-gold-200/80 shadow-xs space-y-3 w-full max-w-lg">
+                <p id="loadingDhammaPali" class="font-display italic text-sm sm:text-lg text-slate-900 leading-relaxed break-words">
                     "Sabbapāpassa akaraṇaṃ, kusalassa upasampadā, sacittapariyodapanaṃ, etaṃ buddhāna sāsanaṃ."
                 </p>
-                <p id="loadingDhammaTranslation" class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p id="loadingDhammaTranslation" class="text-xs sm:text-sm text-slate-600 leading-relaxed break-words">
                     Tidak melakukan segala bentuk kejahatan, senantiasa mengembangkan kebajikan, dan memurnikan pikiran sendiri; inilah ajaran para Buddha.
                 </p>
                 <span id="loadingDhammaSource" class="inline-block text-[11px] font-bold uppercase tracking-wider text-gold-600 pt-1">
@@ -129,11 +132,11 @@
             </div>
 
             <!-- 3-Second Progress Bar -->
-            <div class="w-48 sm:w-64 space-y-2 pt-2">
+            <div class="w-48 sm:w-64 space-y-2 pt-1">
                 <div class="h-1.5 w-full rounded-full bg-slate-100 border border-slate-200/60 overflow-hidden">
                     <div id="dhammaLoadingBar" class="h-full w-0 bg-gold-500 rounded-full transition-all ease-linear" style="transition-duration: 3000ms;"></div>
                 </div>
-                <div class="text-[11px] text-slate-500 tracking-wide">
+                <div class="text-[10px] sm:text-[11px] text-slate-500 tracking-wide leading-relaxed">
                     Sabbe Sattā Bhavantu Sukhitattā &bull; Semoga Semua Makhluk Berbahagia
                 </div>
             </div>
@@ -142,14 +145,14 @@
     @endif
 
     <!-- Sticky Navigation Header with Spacious Y-Padding & Margin (No Icons in Menu Items, No Background on Buddha Icon) -->
-    <header id="mainNavbar" class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 py-4 sm:py-5 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-0.5 flex items-center justify-between gap-4">
+    <header id="mainNavbar" class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 py-3.5 sm:py-5 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-0.5 flex items-center justify-between gap-2 sm:gap-4">
             <!-- Brand (Buddha Icon Only — No Background Box) -->
-            <a href="{{ route('landing') }}" class="flex items-center gap-3 shrink-0 group">
-                <i class="fa-solid fa-dharmachakra text-gold-500 text-2xl sm:text-3xl transition-transform duration-500 group-hover:rotate-45"></i>
-                <div class="whitespace-nowrap">
-                    <span class="block text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none">Vihara Mahabodhi</span>
-                    <span class="block text-xs text-slate-500 mt-1">Buddhist Centre &bull; Semarang</span>
+            <a href="{{ route('landing') }}" class="flex items-center gap-2.5 sm:gap-3 min-w-0 group">
+                <i class="fa-solid fa-dharmachakra text-gold-500 text-2xl sm:text-3xl shrink-0 transition-transform duration-500 group-hover:rotate-45"></i>
+                <div class="min-w-0">
+                    <span class="block text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none truncate">Vihara Mahabodhi</span>
+                    <span class="block text-[11px] sm:text-xs text-slate-500 mt-1 truncate">Buddhist Centre &bull; Semarang</span>
                 </div>
             </a>
 
@@ -269,45 +272,45 @@
     <!-- ========================================================= -->
 
     <!-- Hero Section with Full Device Height (min-h-screen), Centered Content & Public Hero Image -->
-    <section id="beranda" class="relative hero-banner text-white py-24 lg:py-32 min-h-screen flex items-center justify-center">
+    <section id="beranda" class="relative hero-banner text-white py-20 sm:py-24 lg:py-32 min-h-screen flex items-center justify-center w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-            <div class="max-w-3xl mx-auto text-center flex flex-col items-center space-y-6 reveal-on-scroll is-visible">
-                <div class="inline-flex items-center justify-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-medium whitespace-nowrap">
-                    <i class="fa-solid fa-dharmachakra text-gold-400"></i>
-                    <span>{{ $vihara['name'] }} &bull; {{ $vihara['address_short'] }}</span>
+            <div class="max-w-3xl mx-auto text-center flex flex-col items-center space-y-5 sm:space-y-6 reveal-on-scroll is-visible">
+                <div class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-2xl sm:rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-medium max-w-full leading-snug">
+                    <i class="fa-solid fa-dharmachakra text-gold-400 shrink-0"></i>
+                    <span class="break-words">{{ $vihara['name'] }} &bull; {{ $vihara['address_short'] }}</span>
                 </div>
 
-                <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white drop-shadow-sm">
+                <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white drop-shadow-sm px-1">
                     Harmoni Kesadaran &amp; Kebajikan Dhamma
                 </h1>
 
-                <p class="text-sm sm:text-lg text-slate-100/95 leading-relaxed max-w-2xl mx-auto drop-shadow-xs">
+                <p class="text-sm sm:text-lg text-slate-100/95 leading-relaxed max-w-2xl mx-auto drop-shadow-xs px-1">
                     Pusat pembinaan spiritual, Puja Bakti, latihan meditasi, dan pelayanan sosial kemasyarakatan di <strong>{{ $vihara['address_short'] }}</strong>.
                 </p>
 
-                <div class="flex flex-wrap items-center justify-center gap-3.5 pt-2">
-                    <a href="#jadwal" class="px-6 py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-xs sm:text-sm shadow-md transition inline-flex items-center gap-2 whitespace-nowrap">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-3.5 pt-2 w-full sm:w-auto px-2 sm:px-0">
+                    <a href="#jadwal" class="px-6 py-3.5 rounded-xl bg-gold-500 hover:bg-gold-600 text-white font-semibold text-xs sm:text-sm shadow-md transition inline-flex items-center justify-center gap-2">
                         <span>Lihat Jadwal Ibadah</span>
                         <i class="fa-solid fa-arrow-right text-xs"></i>
                     </a>
-                    <a href="#berita" class="px-6 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 font-semibold text-xs sm:text-sm transition inline-flex items-center gap-2 whitespace-nowrap">
+                    <a href="#berita" class="px-6 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/25 font-semibold text-xs sm:text-sm transition inline-flex items-center justify-center gap-2">
                         <i class="fa-solid fa-book-open text-xs"></i>
                         <span>Baca Renungan Dharma</span>
                     </a>
                 </div>
 
-                <div class="grid grid-cols-3 gap-6 sm:gap-10 pt-8 border-t border-white/20 w-full max-w-xl mx-auto text-center whitespace-nowrap">
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-gold-400">{{ $schedules->count() }} Agenda</div>
-                        <div class="text-xs text-slate-200 mt-0.5">Jadwal Aktif</div>
+                <div class="grid grid-cols-3 gap-2 sm:gap-10 pt-6 sm:pt-8 border-t border-white/20 w-full max-w-xl mx-auto text-center">
+                    <div class="min-w-0">
+                        <div class="text-base sm:text-2xl font-bold text-gold-400">{{ $schedules->count() }} Agenda</div>
+                        <div class="text-[11px] sm:text-xs text-slate-200 mt-0.5">Jadwal Aktif</div>
                     </div>
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-gold-400">{{ $galleries->count() }} Media</div>
-                        <div class="text-xs text-slate-200 mt-0.5">Galeri Vihara</div>
+                    <div class="min-w-0">
+                        <div class="text-base sm:text-2xl font-bold text-gold-400">{{ $galleries->count() }} Media</div>
+                        <div class="text-[11px] sm:text-xs text-slate-200 mt-0.5">Galeri Vihara</div>
                     </div>
-                    <div>
-                        <div class="text-xl sm:text-2xl font-bold text-gold-400">07.00–21.00</div>
-                        <div class="text-xs text-slate-200 mt-0.5">Buka Setiap Hari</div>
+                    <div class="min-w-0">
+                        <div class="text-base sm:text-2xl font-bold text-gold-400">07.00–21.00</div>
+                        <div class="text-[11px] sm:text-xs text-slate-200 mt-0.5">Buka Setiap Hari</div>
                     </div>
                 </div>
             </div>
@@ -315,53 +318,53 @@
     </section>
 
     <!-- Section 1: Profil & Fasilitas Vihara -->
-    <section id="profil" class="py-16 sm:py-20 bg-white border-b border-slate-200/80">
+    <section id="profil" class="py-14 sm:py-20 bg-white border-b border-slate-200/80 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                <div class="lg:col-span-5 space-y-4 reveal-on-scroll">
-                    <span class="inline-block text-xs font-bold uppercase tracking-wider text-gold-600 whitespace-nowrap">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                <div class="lg:col-span-5 space-y-4 reveal-on-scroll min-w-0">
+                    <span class="inline-block text-xs font-bold uppercase tracking-wider text-gold-600">
                         Profil &amp; Informasi Vihara
                     </span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Vihara Mahabodhi Semarang
                     </h2>
                     <p class="text-sm text-slate-600 leading-relaxed">
                         {{ $vihara['about'] }}
                     </p>
 
-                    <div class="rounded-2xl bg-gold-50/50 border border-gold-200/70 p-5 space-y-2.5 text-xs">
-                        <div class="flex justify-between gap-4 py-1 border-b border-gold-200/50">
-                            <span class="text-slate-500 whitespace-nowrap inline-flex items-center gap-1.5">
+                    <div class="rounded-2xl bg-gold-50/50 border border-gold-200/70 p-4 sm:p-5 space-y-2.5 text-xs">
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 py-1.5 border-b border-gold-200/50">
+                            <span class="text-slate-500 inline-flex items-center gap-1.5 shrink-0">
                                 <i class="fa-solid fa-location-dot text-gold-600 w-3.5 text-center"></i>
                                 <span>Lokasi Vihara</span>
                             </span>
-                            <span class="font-semibold text-slate-900 text-right truncate">{{ $vihara['address_short'] }}</span>
+                            <span class="font-semibold text-slate-900 sm:text-right break-words">{{ $vihara['address_short'] }}</span>
                         </div>
-                        <div class="flex justify-between gap-4 py-1 border-b border-gold-200/50">
-                            <span class="text-slate-500 whitespace-nowrap inline-flex items-center gap-1.5">
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 py-1.5 border-b border-gold-200/50">
+                            <span class="text-slate-500 inline-flex items-center gap-1.5 shrink-0">
                                 <i class="fa-regular fa-clock text-gold-600 w-3.5 text-center"></i>
                                 <span>Jam Operasional</span>
                             </span>
-                            <span class="font-semibold text-slate-900 text-right whitespace-nowrap">07.00 – 21.00 WIB</span>
+                            <span class="font-semibold text-slate-900 sm:text-right">07.00 – 21.00 WIB</span>
                         </div>
-                        <div class="flex justify-between gap-4 py-1">
-                            <span class="text-slate-500 whitespace-nowrap inline-flex items-center gap-1.5">
+                        <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 py-1.5">
+                            <span class="text-slate-500 inline-flex items-center gap-1.5 shrink-0">
                                 <i class="fa-solid fa-phone text-gold-600 w-3.5 text-center"></i>
                                 <span>Kontak Sekretariat</span>
                             </span>
-                            <span class="font-semibold text-slate-900 text-right whitespace-nowrap">{{ $vihara['phone'] }}</span>
+                            <span class="font-semibold text-slate-900 sm:text-right break-words">{{ $vihara['phone'] }}</span>
                         </div>
                     </div>
                 </div>
 
                 @php($facilityIcons = ['fa-hands-praying', 'fa-spa', 'fa-book-open-reader', 'fa-hand-holding-heart'])
-                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0">
                     @foreach ($vihara['facilities'] as $index => $facility)
-                        <div class="reveal-on-scroll p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-gold-300 hover:shadow-md transition duration-300 space-y-2.5">
-                            <div class="w-10 h-10 rounded-xl bg-gold-500 text-white flex items-center justify-center text-sm shadow-2xs">
+                        <div class="reveal-on-scroll p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-gold-300 hover:shadow-md transition duration-300 space-y-2.5 min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-gold-500 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
                                 <i class="fa-solid {{ $facilityIcons[$index % count($facilityIcons)] }}"></i>
                             </div>
-                            <h3 class="text-base font-bold text-slate-900 whitespace-nowrap truncate">{{ $facility['title'] }}</h3>
+                            <h3 class="text-base font-bold text-slate-900 leading-snug break-words">{{ $facility['title'] }}</h3>
                             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{{ $facility['description'] }}</p>
                         </div>
                     @endforeach
@@ -371,12 +374,12 @@
     </section>
 
     <!-- Section 2: Jadwal Ibadah, Puja Bakti & Meditasi -->
-    <section id="jadwal" class="py-16 sm:py-20 bg-slate-50 border-b border-slate-200/80">
+    <section id="jadwal" class="py-14 sm:py-20 bg-slate-50 border-b border-slate-200/80 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 reveal-on-scroll">
-                <div class="space-y-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600 whitespace-nowrap">Agenda Kegiatan Vihara</span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                <div class="space-y-1.5 min-w-0">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Agenda Kegiatan Vihara</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Jadwal Ibadah &amp; Meditasi
                     </h2>
                 </div>
@@ -446,12 +449,12 @@
     </section>
 
     <!-- Section 3: Galeri Foto & Video Kegiatan -->
-    <section id="galeri" class="py-16 sm:py-20 bg-white border-b border-slate-200/80">
+    <section id="galeri" class="py-14 sm:py-20 bg-white border-b border-slate-200/80 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 reveal-on-scroll">
-                <div class="space-y-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600 whitespace-nowrap">Dokumentasi Visual</span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                <div class="space-y-1.5 min-w-0">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Dokumentasi Visual</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Galeri Kegiatan Vihara
                     </h2>
                 </div>
@@ -539,12 +542,12 @@
     </section>
 
     <!-- Section 4: Berita Kegiatan & Renungan Dharma (Navigates to Separate Page!) -->
-    <section id="berita" class="py-16 sm:py-20 bg-slate-50 border-b border-slate-200/80">
+    <section id="berita" class="py-14 sm:py-20 bg-slate-50 border-b border-slate-200/80 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 reveal-on-scroll">
-                <div class="space-y-1.5">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600 whitespace-nowrap">Publikasi &amp; Warta Vihara</span>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight whitespace-nowrap">
+                <div class="space-y-1.5 min-w-0">
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Publikasi &amp; Warta Vihara</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Berita &amp; Renungan Dharma
                     </h2>
                 </div>
@@ -654,9 +657,9 @@
 @endif
 
     <!-- Floating Circular Contact Button & Popover (Always follows scroll at bottom-right) -->
-    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3 max-w-[calc(100vw-2rem)]">
         <!-- Popover Contact Card -->
-        <div id="floatingContactCard" class="hidden w-80 sm:w-88 bg-white rounded-2xl border border-gold-200 shadow-2xl p-5 space-y-3.5 text-xs">
+        <div id="floatingContactCard" class="hidden w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-white rounded-2xl border border-gold-200 shadow-2xl p-5 space-y-3.5 text-xs">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2.5">
                     <div class="w-8 h-8 rounded-lg bg-gold-500 text-white flex items-center justify-center">
@@ -715,7 +718,7 @@
     </div>
 
     <!-- Footer (Contains Sekretariat & Pelayanan Umat Information) -->
-    <footer id="kontak" class="bg-slate-950 text-slate-300 pt-14 pb-10 border-t border-slate-800">
+    <footer id="kontak" class="bg-slate-950 text-slate-300 pt-14 pb-10 border-t border-slate-800 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-8 pb-10 border-b border-slate-800/80">
                 <!-- Col 1: Vihara Brand & About -->
@@ -785,12 +788,12 @@
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-dharmachakra text-gold-400"></i>
-                    <span>&copy; {{ date('Y') }} {{ $vihara['name'] }}. Sabbe Satta Bhavantu Sukhitatta.</span>
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 text-center sm:text-left">
+                <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <i class="fa-solid fa-dharmachakra text-gold-400 shrink-0"></i>
+                    <span class="break-words">&copy; {{ date('Y') }} {{ $vihara['name'] }}. Sabbe Satta Bhavantu Sukhitatta.</span>
                 </div>
-                <div class="flex items-center gap-5">
+                <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
                     <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="hover:text-white transition">Profil</a>
                     <a href="{{ !empty($isArticleDetail) ? route('landing').'#jadwal' : '#jadwal' }}" class="hover:text-white transition">Jadwal</a>
                     <a href="{{ !empty($isArticleDetail) ? route('landing').'#galeri' : '#galeri' }}" class="hover:text-white transition">Galeri</a>
@@ -1102,5 +1105,6 @@
             }
         });
     </script>
+</div>
 </body>
 </html>

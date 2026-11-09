@@ -38,8 +38,11 @@
     </script>
 
     <style>
-        body {
+        html, body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
         /* Clean custom scrollbar */
@@ -53,6 +56,54 @@
         ::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 9999px;
+        }
+
+        /* Responsive Mobile Stacked Table Cards on Android & iPhone (< 768px) */
+        @media screen and (max-width: 767px) {
+            .mgmt-responsive-table thead {
+                display: none;
+            }
+            .mgmt-responsive-table,
+            .mgmt-responsive-table tbody {
+                display: block;
+                width: 100%;
+            }
+            .mgmt-responsive-table tbody tr {
+                display: block;
+                width: 100%;
+                padding: 0.875rem 1rem;
+                box-sizing: border-box;
+            }
+            .mgmt-responsive-table tbody tr.hidden {
+                display: none !important;
+            }
+            .mgmt-responsive-table tbody td {
+                display: block;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0.375rem 0 !important;
+                text-align: left !important;
+                box-sizing: border-box;
+                overflow-wrap: anywhere;
+            }
+            .mgmt-responsive-table tbody td[data-label]::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 0.6875rem;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.04em;
+                color: #64748b;
+                margin-bottom: 0.2rem;
+            }
+            .mgmt-responsive-table tbody td.mgmt-actions-cell {
+                padding-top: 0.65rem !important;
+                margin-top: 0.35rem;
+                border-top: 1px dashed #e2e8f0;
+            }
+            .mgmt-responsive-table tbody td.mgmt-actions-cell > div {
+                justify-content: flex-start !important;
+            }
         }
 
         /* Dedicated Single-Page A4 Print Styling (Strictly 1 Sheet) */
@@ -206,7 +257,7 @@
         $currentTab = $activeTab ?? 'overview';
     @endphp
 
-    <div class="no-print min-h-screen bg-slate-50">
+    <div class="no-print min-h-screen bg-slate-50 w-full max-w-full overflow-x-hidden">
         <!-- Mobile Sidebar Backdrop -->
         <div id="sidebarBackdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs hidden lg:hidden"></div>
 
@@ -382,15 +433,15 @@
         <!-- ===================================================== -->
         <!-- MAIN WORKSPACE AREA (OFFSET BY lg:pl-72)              -->
         <!-- ===================================================== -->
-        <div class="lg:pl-72 min-h-screen flex flex-col min-w-0">
+        <div class="lg:pl-72 min-h-screen flex flex-col min-w-0 max-w-full overflow-x-hidden">
             <!-- Sticky Top Bar with Spacious Y-Padding & Margin -->
-            <header class="py-4 sm:py-5 mb-2 bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-2xs">
-                <div class="flex items-center gap-3.5 min-w-0 my-0.5">
+            <header class="py-3.5 sm:py-5 mb-2 bg-white border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-2.5 sm:gap-4 sticky top-0 z-20 shadow-2xs">
+                <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0 my-0.5">
                     <button type="button" onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 shrink-0" aria-label="Buka Menu">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
                     <div class="min-w-0 space-y-1">
-                        <h1 id="topbarTitle" class="text-base sm:text-xl font-bold text-slate-900 leading-snug">Ringkasan Operasional Sekretariat</h1>
+                        <h1 id="topbarTitle" class="text-sm sm:text-xl font-bold text-slate-900 leading-snug line-clamp-1 sm:line-clamp-none break-words">Ringkasan Operasional Sekretariat</h1>
                         <p class="text-xs text-slate-500 hidden sm:block leading-snug">Wihara Mahabodhi Buddhist Centre &bull; Jl. Seroja Timur No. 9-11 Semarang</p>
                     </div>
                 </div>
@@ -401,7 +452,7 @@
                         type="button"
                         id="profileDropdownBtn"
                         onclick="toggleProfileDropdown()"
-                        class="flex items-center gap-3 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition border border-transparent hover:border-slate-200"
+                        class="flex items-center gap-2 sm:gap-3 p-1.5 sm:px-3 sm:py-2 rounded-xl hover:bg-slate-100 transition border border-transparent hover:border-slate-200"
                     >
                         <div class="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ring-2 ring-slate-100">
                             {{ substr($currentUser->name ?? 'U', 0, 1) }}
@@ -414,7 +465,7 @@
                     </button>
 
                     <!-- Dropdown Menu -->
-                    <div id="profileDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-72 rounded-2xl bg-white shadow-xl border border-slate-200 py-2 z-50 text-xs">
+                    <div id="profileDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-xl border border-slate-200 py-2 z-50 text-xs">
                         <div class="px-4 py-3.5 border-b border-slate-100 bg-slate-50/70 rounded-t-xl">
                             <div class="font-bold text-slate-900 text-sm truncate">{{ $currentUser->name ?? 'Pengurus Vihara' }}</div>
                             <div class="text-slate-500 text-xs truncate mt-0.5">{{ $currentUser->email ?? '' }}</div>
@@ -461,7 +512,7 @@
             </header>
 
             <!-- Page Body (Full Width, No Horizontal Scroll Needed) -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 w-full space-y-6">
+            <main class="flex-1 p-3.5 sm:p-6 lg:p-8 w-full min-w-0 max-w-full overflow-x-hidden space-y-6">
 
                 <!-- Alerts -->
                 @if (session('success'))
@@ -496,15 +547,15 @@
                     @if (in_array($currentMode, ['create_receipt', 'edit_receipt'], true))
                         @php($isEdit = $currentMode === 'edit_receipt')
                         <div class="max-w-4xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 whitespace-nowrap">{{ $isEdit ? 'Mode Edit Data' : 'Input Baru' }}</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 inline-block">{{ $isEdit ? 'Mode Edit Data' : 'Input Baru' }}</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2">
-                                        <i class="fa-solid fa-receipt text-amber-600"></i>
-                                        <span>{{ $isEdit ? 'Edit Tanda Terima '.$editingRecord->receipt_number : 'Buat Tanda Terima & Ucapan Terima Kasih' }}</span>
+                                        <i class="fa-solid fa-receipt text-amber-600 shrink-0"></i>
+                                        <span class="break-words">{{ $isEdit ? 'Edit Tanda Terima '.$editingRecord->receipt_number : 'Buat Tanda Terima & Ucapan Terima Kasih' }}</span>
                                     </h2>
                                 </div>
-                                <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -513,18 +564,18 @@
                             <form
                                 method="POST"
                                 action="{{ $isEdit ? route('management.receipts.update', $editingRecord) : route('management.receipts.store') }}"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nomor Tanda Terima *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nomor Tanda Terima *</label>
                                         <input type="text" name="receipt_number" value="{{ old('receipt_number', $isEdit ? $editingRecord->receipt_number : $nextReceiptNumber) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jenis Penerimaan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis Penerimaan *</label>
                                         <select name="receipt_type" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
                                             @foreach (['Bantuan Dana', 'Barang', 'Surat / Dokumen'] as $opt)
                                                 <option value="{{ $opt }}" @selected(old('receipt_type', $isEdit ? $editingRecord->receipt_type : 'Bantuan Dana') === $opt)>{{ $opt }}</option>
@@ -532,50 +583,50 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Tanggal Penerimaan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Penerimaan *</label>
                                         <input type="date" name="receipt_date" value="{{ old('receipt_date', $isEdit ? $editingRecord->receipt_date->format('Y-m-d') : now()->toDateString()) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Petugas Penerima *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Petugas Penerima *</label>
                                         <input type="text" name="receiver_name" value="{{ old('receiver_name', $isEdit ? $editingRecord->receiver_name : ($currentUser?->name ?? 'Sekretariat Wihara Mahabodhi')) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nama Penyerah / Donatur *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Penyerah / Donatur *</label>
                                         <input type="text" name="donor_name" value="{{ old('donor_name', $isEdit ? $editingRecord->donor_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Instansi / Alamat</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Instansi / Alamat</label>
                                         <input type="text" name="donor_institution" value="{{ old('donor_institution', $isEdit ? $editingRecord->donor_institution : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kontak / No. Telepon</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kontak / No. Telepon</label>
                                         <input type="text" name="donor_contact" value="{{ old('donor_contact', $isEdit ? $editingRecord->donor_contact : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jumlah / Kuantitas *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jumlah / Kuantitas *</label>
                                         <input type="text" name="quantity" value="{{ old('quantity', $isEdit ? $editingRecord->quantity : '1 Paket') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Uraian Bantuan / Barang / Perihal Surat *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Uraian Bantuan / Barang / Perihal Surat *</label>
                                         <input type="text" name="item_name" value="{{ old('item_name', $isEdit ? $editingRecord->item_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nominal Rp (Opsional)</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nominal Rp (Opsional)</label>
                                         <input type="number" step="0.01" min="0" name="nominal" value="{{ old('nominal', $isEdit ? $editingRecord->nominal : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Catatan</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Catatan</label>
                                         <input type="text" name="notes" value="{{ old('notes', $isEdit ? $editingRecord->notes : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Pesan Ucapan Terima Kasih / Anumodana</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Pesan Ucapan Terima Kasih / Anumodana</label>
                                         <textarea name="thank_you_message" rows="3" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('thank_you_message', $isEdit ? $editingRecord->thank_you_message : '') }}</textarea>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>{{ $isEdit ? 'Simpan Perubahan' : 'Simpan & Terbitkan Tanda Terima' }}</span>
                                     </button>
@@ -586,15 +637,15 @@
                     @elseif (in_array($currentMode, ['create_document', 'edit_document'], true))
                         @php($isEdit = $currentMode === 'edit_document')
                         <div class="max-w-4xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 whitespace-nowrap">{{ $isEdit ? 'Pembaruan Arsip Dokumen' : 'Registrasi Arsip Persuratan' }}</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-block">{{ $isEdit ? 'Pembaruan Arsip Dokumen' : 'Registrasi Arsip Persuratan' }}</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2">
-                                        <i class="fa-solid fa-folder-open text-blue-600"></i>
-                                        <span>{{ $isEdit ? 'Edit Arsip Dokumen '.$editingRecord->document_number : 'Registrasi Arsip Surat & Dokumen Resmi' }}</span>
+                                        <i class="fa-solid fa-folder-open text-blue-600 shrink-0"></i>
+                                        <span class="break-words">{{ $isEdit ? 'Edit Arsip Dokumen '.$editingRecord->document_number : 'Registrasi Arsip Surat & Dokumen Resmi' }}</span>
                                     </h2>
                                 </div>
-                                <a href="{{ route('management.dashboard', ['tab' => 'documents']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'documents']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -604,18 +655,18 @@
                                 method="POST"
                                 action="{{ $isEdit ? route('management.documents.update', $editingRecord) : route('management.documents.store') }}"
                                 enctype="multipart/form-data"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nomor Surat / Dokumen *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nomor Surat / Dokumen *</label>
                                         <input type="text" name="document_number" value="{{ old('document_number', $isEdit ? $editingRecord->document_number : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kategori Dokumen *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori Dokumen *</label>
                                         <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
                                             @foreach (['Surat Masuk', 'Surat Keluar', 'Dokumen Umum A4', 'SK / Piagam'] as $opt)
                                                 <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Surat Masuk') === $opt)>{{ $opt }}</option>
@@ -623,46 +674,46 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Tanggal Surat *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Surat *</label>
                                         <input type="date" name="document_date" value="{{ old('document_date', $isEdit ? $editingRecord->document_date->format('Y-m-d') : now()->toDateString()) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Tanggal Diterima</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Diterima</label>
                                         <input type="date" name="received_date" value="{{ old('received_date', $isEdit ? $editingRecord->received_date?->format('Y-m-d') : now()->toDateString()) }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Judul / Perihal Dokumen *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Judul / Perihal Dokumen *</label>
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Pengirim *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Pengirim *</label>
                                         <input type="text" name="sender" value="{{ old('sender', $isEdit ? $editingRecord->sender : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Penerima / Tujuan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Penerima / Tujuan *</label>
                                         <input type="text" name="recipient" value="{{ old('recipient', $isEdit ? $editingRecord->recipient : 'Pengurus Wihara Mahabodhi Buddhist Centre') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Ukuran Kertas</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ukuran Kertas</label>
                                         <input type="text" name="paper_size" value="{{ old('paper_size', $isEdit ? $editingRecord->paper_size : 'A4') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kode Map Arsip A4</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kode Map Arsip A4</label>
                                         <input type="text" name="archive_code" value="{{ old('archive_code', $isEdit ? $editingRecord->archive_code : 'ARS-A4-01') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Lampiran Berkas Digital (PDF/DOCX/JPG)</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Lampiran Berkas Digital (PDF/DOCX/JPG)</label>
                                         <input type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border file:border-slate-300 file:bg-slate-50 file:text-slate-700">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Ringkasan Isi Surat / Dokumen A4 *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ringkasan Isi Surat / Dokumen A4 *</label>
                                         <textarea name="summary" rows="3" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('summary', $isEdit ? $editingRecord->summary : '') }}</textarea>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'documents']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'documents']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Dokumen A4' }}</span>
                                     </button>
@@ -673,15 +724,15 @@
                     @elseif (in_array($currentMode, ['create_marriage', 'edit_marriage'], true))
                         @php($isEdit = $currentMode === 'edit_marriage')
                         <div class="max-w-5xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">{{ $isEdit ? 'Mode Edit Surat Nikah' : 'Registrasi Pemberkatan Perkawinan' }}</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 inline-block">{{ $isEdit ? 'Mode Edit Surat Nikah' : 'Registrasi Pemberkatan Perkawinan' }}</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2.5">
-                                        <i class="fa-solid fa-ring text-rose-600"></i>
-                                        <span>{{ $isEdit ? 'Edit Surat Nikah '.$editingRecord->certificate_number : 'Buat Administrasi Surat Nikah & Pemberkatan Perkawinan Buddhis' }}</span>
+                                        <i class="fa-solid fa-ring text-rose-600 shrink-0"></i>
+                                        <span class="break-words">{{ $isEdit ? 'Edit Surat Nikah '.$editingRecord->certificate_number : 'Buat Administrasi Surat Nikah & Pemberkatan Perkawinan Buddhis' }}</span>
                                     </h2>
                                 </div>
-                                <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -691,7 +742,7 @@
                                 method="POST"
                                 action="{{ $isEdit ? route('management.marriages.update', $editingRecord) : route('management.marriages.store') }}"
                                 enctype="multipart/form-data"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-8"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-8"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
@@ -857,9 +908,9 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>{{ $isEdit ? 'Simpan Perubahan Data Nikah' : 'Simpan & Terbitkan Surat Nikah Buddhis' }}</span>
                                     </button>
@@ -870,12 +921,12 @@
                     @elseif (in_array($currentMode, ['create_schedule', 'edit_schedule'], true))
                         @php($isEdit = $currentMode === 'edit_schedule')
                         <div class="max-w-3xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
-                                    <i class="fa-solid fa-calendar-days text-emerald-600"></i>
-                                    <span>{{ $isEdit ? 'Edit Jadwal Kegiatan' : 'Tambah Jadwal Ibadah & Kegiatan' }}</span>
+                                    <i class="fa-solid fa-calendar-days text-emerald-600 shrink-0"></i>
+                                    <span class="break-words">{{ $isEdit ? 'Edit Jadwal Kegiatan' : 'Tambah Jadwal Ibadah & Kegiatan' }}</span>
                                 </h2>
-                                <a href="{{ route('management.dashboard', ['tab' => 'schedules']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'schedules']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -884,18 +935,18 @@
                             <form
                                 method="POST"
                                 action="{{ $isEdit ? route('management.schedules.update', $editingRecord) : route('management.schedules.store') }}"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nama Kegiatan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Kegiatan *</label>
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kategori *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori *</label>
                                         <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
                                             @foreach (['Puja Bakti', 'Meditasi', 'Kelas Dharma', 'Perayaan Hari Besar', 'Kegiatan Sosial'] as $opt)
                                                 <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Puja Bakti') === $opt)>{{ $opt }}</option>
@@ -903,36 +954,36 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Hari Pelaksanaan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Hari Pelaksanaan *</label>
                                         <input type="text" name="day_of_week" value="{{ old('day_of_week', $isEdit ? $editingRecord->day_of_week : 'Minggu') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jam Mulai *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jam Mulai *</label>
                                         <input type="text" name="start_time" value="{{ old('start_time', $isEdit ? $editingRecord->start_time : '09:00') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jam Selesai *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jam Selesai *</label>
                                         <input type="text" name="end_time" value="{{ old('end_time', $isEdit ? $editingRecord->end_time : '11:00') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Ruangan / Lokasi *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ruangan / Lokasi *</label>
                                         <input type="text" name="location" value="{{ old('location', $isEdit ? $editingRecord->location : 'Dharmasala Utama') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Pembimbing / Penceramah</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Pembimbing / Penceramah</label>
                                         <input type="text" name="speaker" value="{{ old('speaker', $isEdit ? $editingRecord->speaker : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Deskripsi Kegiatan *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Deskripsi Kegiatan *</label>
                                         <textarea name="description" rows="3" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('description', $isEdit ? $editingRecord->description : '') }}</textarea>
                                     </div>
                                 </div>
                                 <input type="hidden" name="is_recurring" value="1">
                                 <input type="hidden" name="is_active" value="1">
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'schedules']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'schedules']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Jadwal</span>
                                     </button>
@@ -944,15 +995,15 @@
                         @php($isEdit = $currentMode === 'edit_gallery')
                         @php($currentMediaType = old('media_type', $isEdit ? $editingRecord->media_type : 'photo'))
                         <div class="max-w-3xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
-                                <div>
-                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200">{{ $isEdit ? 'Mode Edit Galeri' : 'Input Dokumentasi Baru' }}</span>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                                <div class="min-w-0">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-block">{{ $isEdit ? 'Mode Edit Galeri' : 'Input Dokumentasi Baru' }}</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2">
-                                        <i class="fa-solid fa-images text-blue-600"></i>
-                                        <span>{{ $isEdit ? 'Edit Dokumentasi Galeri' : 'Tambah Dokumentasi Galeri Foto & Video' }}</span>
+                                        <i class="fa-solid fa-images text-blue-600 shrink-0"></i>
+                                        <span class="break-words">{{ $isEdit ? 'Edit Dokumentasi Galeri' : 'Tambah Dokumentasi Galeri Foto & Video' }}</span>
                                     </h2>
                                 </div>
-                                <a href="{{ route('management.dashboard', ['tab' => 'galleries']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'galleries']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -962,7 +1013,7 @@
                                 method="POST"
                                 action="{{ $isEdit ? route('management.galleries.update', $editingRecord) : route('management.galleries.store') }}"
                                 enctype="multipart/form-data"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
@@ -988,7 +1039,7 @@
                                     <div id="galleryPhotoUploadBox" class="sm:col-span-2 {{ $currentMediaType === 'video' ? 'hidden' : '' }}">
                                         <div class="p-4 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-3">
                                             <div class="flex items-center gap-2 text-blue-900 font-bold text-xs sm:text-sm">
-                                                <i class="fa-solid fa-camera text-blue-600"></i>
+                                                <i class="fa-solid fa-camera text-blue-600 shrink-0"></i>
                                                 <span>Upload File Foto Kegiatan (.JPG, .PNG, .WEBP — Maks. 5 MB) {{ $isEdit ? '' : '*' }}</span>
                                             </div>
                                             <input
@@ -1000,7 +1051,7 @@
                                             >
                                             @if ($isEdit && $editingRecord->media_type === 'photo' && $editingRecord->media_url)
                                                 <div class="flex items-center gap-3 pt-1">
-                                                    <img src="{{ $editingRecord->thumbnail_url ?: $editingRecord->media_url }}" alt="Preview" class="w-16 h-12 rounded-lg object-cover border border-slate-300">
+                                                    <img src="{{ $editingRecord->thumbnail_url ?: $editingRecord->media_url }}" alt="Preview" class="w-16 h-12 rounded-lg object-cover border border-slate-300 shrink-0">
                                                     <div class="text-xs text-slate-600">
                                                         <div class="font-semibold text-slate-800">Foto saat ini sudah tersimpan</div>
                                                         <div>Biarkan kosong jika tidak ingin mengganti file foto.</div>
@@ -1015,7 +1066,7 @@
                                     <div id="galleryYoutubeInputBox" class="sm:col-span-2 {{ $currentMediaType === 'video' ? '' : 'hidden' }}">
                                         <div class="p-4 rounded-2xl bg-rose-50/50 border border-rose-200/80 space-y-2.5">
                                             <label class="block font-bold text-rose-950 text-xs sm:text-sm flex items-center gap-2">
-                                                <i class="fa-brands fa-youtube text-rose-600 text-lg"></i>
+                                                <i class="fa-brands fa-youtube text-rose-600 text-lg shrink-0"></i>
                                                 <span>Tautan / URL Video YouTube *</span>
                                             </label>
                                             <input
@@ -1044,9 +1095,9 @@
                                 </div>
                                 <input type="hidden" name="is_featured" value="1">
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'galleries']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'galleries']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Dokumentasi</span>
                                     </button>
@@ -1072,12 +1123,12 @@
                     @elseif (in_array($currentMode, ['create_article', 'edit_article'], true))
                         @php($isEdit = $currentMode === 'edit_article')
                         <div class="max-w-4xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
-                                    <i class="fa-solid fa-newspaper text-rose-600"></i>
-                                    <span>{{ $isEdit ? 'Edit Artikel Dharma' : 'Terbitkan Artikel & Berita Baru' }}</span>
+                                    <i class="fa-solid fa-newspaper text-rose-600 shrink-0"></i>
+                                    <span class="break-words">{{ $isEdit ? 'Edit Artikel Dharma' : 'Terbitkan Artikel & Berita Baru' }}</span>
                                 </h2>
-                                <a href="{{ route('management.dashboard', ['tab' => 'articles']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'articles']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -1086,18 +1137,18 @@
                             <form
                                 method="POST"
                                 action="{{ $isEdit ? route('management.articles.update', $editingRecord) : route('management.articles.store') }}"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Judul Publikasi *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Judul Publikasi *</label>
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kategori *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori *</label>
                                         <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
                                             @foreach (['Berita Kegiatan', 'Renungan Dharma', 'Pengumuman', 'Artikel Buddhis'] as $opt)
                                                 <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Berita Kegiatan') === $opt)>{{ $opt }}</option>
@@ -1105,27 +1156,27 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Penulis *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Penulis *</label>
                                         <input type="text" name="author" value="{{ old('author', $isEdit ? $editingRecord->author : ($currentUser?->name ?? 'Sekretariat Wihara Mahabodhi')) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">URL Gambar Sampul (Opsional)</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">URL Gambar Sampul (Opsional)</label>
                                         <input type="text" name="cover_image" value="{{ old('cover_image', $isEdit ? $editingRecord->cover_image : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-3">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Ringkasan Singkat *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ringkasan Singkat *</label>
                                         <input type="text" name="excerpt" value="{{ old('excerpt', $isEdit ? $editingRecord->excerpt : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-3">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Isi Artikel Lengkap *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Isi Artikel Lengkap *</label>
                                         <textarea name="content" rows="6" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('content', $isEdit ? $editingRecord->content : '') }}</textarea>
                                     </div>
                                 </div>
                                 <input type="hidden" name="is_published" value="1">
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'articles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'articles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Publikasi</span>
                                     </button>
@@ -1136,12 +1187,12 @@
                     @elseif (in_array($currentMode, ['create_role', 'edit_role'], true))
                         @php($isEdit = $currentMode === 'edit_role')
                         <div class="max-w-3xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
-                                    <i class="fa-solid fa-user-shield text-purple-600"></i>
-                                    <span>{{ $isEdit ? 'Edit Role '.$editingRecord->name : 'Buat Role Pengurus Baru' }}</span>
+                                    <i class="fa-solid fa-user-shield text-purple-600 shrink-0"></i>
+                                    <span class="break-words">{{ $isEdit ? 'Edit Role '.$editingRecord->name : 'Buat Role Pengurus Baru' }}</span>
                                 </h2>
-                                <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -1150,24 +1201,24 @@
                             <form
                                 method="POST"
                                 action="{{ $isEdit ? route('management.roles.update', $editingRecord) : route('management.roles.store') }}"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nama Role *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Role *</label>
                                         <input type="text" name="name" value="{{ old('name', $isEdit ? $editingRecord->name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Deskripsi Tugas</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Deskripsi Tugas</label>
                                         <input type="text" name="description" value="{{ old('description', $isEdit ? $editingRecord->description : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                 </div>
 
                                 <div class="space-y-3">
-                                    <label class="block font-bold text-slate-800 text-xs sm:text-sm whitespace-nowrap">Hak Akses Modul *</label>
+                                    <label class="block font-bold text-slate-800 text-xs sm:text-sm">Hak Akses Modul *</label>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         @foreach ($availablePermissions as $permKey => $permLabel)
                                             <label class="flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/80 transition">
@@ -1176,17 +1227,17 @@
                                                     name="permissions[]"
                                                     value="{{ $permKey }}"
                                                     @checked(in_array($permKey, old('permissions', $isEdit ? ($editingRecord->permissions ?? []) : []), true))
-                                                    class="w-4 h-4 rounded text-slate-900"
+                                                    class="w-4 h-4 rounded text-slate-900 shrink-0"
                                                 >
-                                                <span class="text-xs sm:text-sm font-semibold text-slate-800">{{ $permLabel }}</span>
+                                                <span class="text-xs sm:text-sm font-semibold text-slate-800 break-words">{{ $permLabel }}</span>
                                             </label>
                                         @endforeach
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Role</span>
                                     </button>
@@ -1197,12 +1248,12 @@
                     @elseif (in_array($currentMode, ['create_user', 'edit_user'], true))
                         @php($isEdit = $currentMode === 'edit_user')
                         <div class="max-w-3xl mx-auto space-y-6">
-                            <div class="flex items-center justify-between gap-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
-                                    <i class="fa-solid fa-user text-indigo-600"></i>
-                                    <span>{{ $isEdit ? 'Edit Akun Pengurus '.$editingRecord->name : 'Tambah Akun Pengurus Baru' }}</span>
+                                    <i class="fa-solid fa-user text-indigo-600 shrink-0"></i>
+                                    <span class="break-words">{{ $isEdit ? 'Edit Akun Pengurus '.$editingRecord->name : 'Tambah Akun Pengurus Baru' }}</span>
                                 </h2>
-                                <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-2xs">
+                                <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
                                     <span>Kembali</span>
                                 </a>
@@ -1211,26 +1262,26 @@
                             <form
                                 method="POST"
                                 action="{{ $isEdit ? route('management.users.update', $editingRecord) : route('management.users.store') }}"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-5"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nama Lengkap *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Lengkap *</label>
                                         <input type="text" name="name" value="{{ old('name', $isEdit ? $editingRecord->name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Email *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Email *</label>
                                         <input type="email" name="email" value="{{ old('email', $isEdit ? $editingRecord->email : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kata Sandi {{ $isEdit ? '(Opsional)' : '*' }}</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kata Sandi {{ $isEdit ? '(Opsional)' : '*' }}</label>
                                         <input type="password" name="password" {{ $isEdit ? '' : 'required' }} class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Role Pengurus *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Role Pengurus *</label>
                                         <select name="role_id" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
                                             @foreach ($roles as $rOpt)
                                                 <option value="{{ $rOpt->id }}" @selected((int) old('role_id', $isEdit ? $editingRecord->role_id : 0) === $rOpt->id)>{{ $rOpt->name }}</option>
@@ -1238,19 +1289,19 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jabatan</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan</label>
                                         <input type="text" name="position" value="{{ old('position', $isEdit ? $editingRecord->position : 'Pengurus Vihara') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">No. Telepon</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">No. Telepon</label>
                                         <input type="text" name="phone" value="{{ old('phone', $isEdit ? $editingRecord->phone : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                 </div>
                                 <input type="hidden" name="is_active" value="1">
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
-                                    <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm whitespace-nowrap">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'roles']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Akun Pengurus</span>
                                     </button>
@@ -1357,12 +1408,12 @@
                         <!-- ========================================================= -->
                         <!-- KALENDER JADWAL IBADAH, PUJA BAKTI & KEGIATAN VIHARA      -->
                         <!-- ========================================================= -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-5">
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-5 overflow-hidden">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                                 <div>
                                     <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2.5">
-                                        <i class="fa-solid fa-calendar-days text-emerald-600 text-lg"></i>
-                                        <span>Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Vihara</span>
+                                        <i class="fa-solid fa-calendar-days text-emerald-600 text-lg shrink-0"></i>
+                                        <span class="break-words">Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Vihara</span>
                                     </h2>
                                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
                                         Klik tanggal pada kalender untuk melihat rincian jadwal Puja Bakti, Meditasi, Kelas Dharma, dan Kegiatan Vihara.
@@ -1391,10 +1442,10 @@
 
                             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                                 <!-- Left 8 Cols: Interactive Monthly Calendar Grid -->
-                                <div class="lg:col-span-8 space-y-3">
-                                    <div class="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200/80">
+                                <div class="lg:col-span-8 space-y-3 min-w-0">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200/80">
                                         <div id="dashboardCalendarMonthTitle" class="text-sm sm:text-base font-extrabold text-slate-900"></div>
-                                        <div class="flex items-center gap-3 text-xs text-slate-600 font-semibold">
+                                        <div class="flex flex-wrap items-center gap-3 text-xs text-slate-600 font-semibold">
                                             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Ada Kegiatan</span>
                                             <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Hari Ini</span>
                                         </div>
@@ -1402,14 +1453,14 @@
 
                                     <div class="rounded-xl border border-slate-200 overflow-hidden">
                                         <!-- Day of week headers -->
-                                        <div class="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center text-xs font-bold text-slate-700 uppercase tracking-wider">
-                                            <div class="py-2.5 text-rose-600">Min</div>
-                                            <div class="py-2.5">Sen</div>
-                                            <div class="py-2.5">Sel</div>
-                                            <div class="py-2.5">Rab</div>
-                                            <div class="py-2.5">Kam</div>
-                                            <div class="py-2.5">Jum</div>
-                                            <div class="py-2.5 text-blue-600">Sab</div>
+                                        <div class="grid grid-cols-7 bg-slate-100 border-b border-slate-200 text-center text-[11px] sm:text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                            <div class="py-2 sm:py-2.5 text-rose-600">Min</div>
+                                            <div class="py-2 sm:py-2.5">Sen</div>
+                                            <div class="py-2 sm:py-2.5">Sel</div>
+                                            <div class="py-2 sm:py-2.5">Rab</div>
+                                            <div class="py-2 sm:py-2.5">Kam</div>
+                                            <div class="py-2 sm:py-2.5">Jum</div>
+                                            <div class="py-2 sm:py-2.5 text-blue-600">Sab</div>
                                         </div>
                                         <!-- Calendar Days Grid -->
                                         <div id="dashboardCalendarGrid" class="grid grid-cols-7 divide-x divide-y divide-slate-200 bg-white"></div>
@@ -1417,15 +1468,15 @@
                                 </div>
 
                                 <!-- Right 4 Cols: Selected Day Schedule Details & Weekly List -->
-                                <div class="lg:col-span-4 bg-slate-50 rounded-2xl border border-slate-200/90 p-4 sm:p-5 space-y-4">
+                                <div class="lg:col-span-4 bg-slate-50 rounded-2xl border border-slate-200/90 p-4 sm:p-5 space-y-4 min-w-0">
                                     <div class="border-b border-slate-200 pb-3">
                                         <div class="text-xs font-bold uppercase tracking-wider text-emerald-700">Agenda Tanggal Terpilih</div>
-                                        <h3 id="dashboardSelectedDateLabel" class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5">Hari Ini</h3>
+                                        <h3 id="dashboardSelectedDateLabel" class="text-base sm:text-lg font-extrabold text-slate-900 mt-0.5 break-words">Hari Ini</h3>
                                     </div>
 
                                     <div id="dashboardSelectedDayEvents" class="space-y-2.5"></div>
 
-                                    <div class="pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
+                                    <div class="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
                                         <span class="text-slate-500 font-medium">Total Jadwal Rutin: <strong>{{ $schedules->count() }} Kegiatan</strong></span>
                                         @if ($canSchedules)
                                             <button type="button" onclick="switchManagementTab('schedules')" class="font-bold text-slate-800 hover:underline flex items-center gap-1">
@@ -1441,17 +1492,17 @@
                         <!-- Recent Activity Tables (Direct View without sliding) -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Recent Receipts -->
-                            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
-                                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6 space-y-4 overflow-hidden min-w-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 border-b border-slate-100 pb-3">
                                     <div class="min-w-0">
                                         <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                                            <i class="fa-solid fa-receipt text-amber-600"></i>
-                                            <span>Tanda Terima Bantuan / Barang / Surat</span>
+                                            <i class="fa-solid fa-receipt text-amber-600 shrink-0"></i>
+                                            <span class="break-words">Tanda Terima Bantuan / Barang / Surat</span>
                                         </h2>
                                         <p class="text-xs sm:text-sm text-slate-500">Penerimaan terbaru di sekretariat vihara</p>
                                     </div>
                                     @if ($canReceipts)
-                                        <button type="button" onclick="switchManagementTab('receipts')" class="text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 whitespace-nowrap shrink-0 flex items-center gap-1.5">
+                                        <button type="button" onclick="switchManagementTab('receipts')" class="self-start sm:self-auto text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 shrink-0 flex items-center gap-1.5">
                                             <span>Kelola Semua</span>
                                             <i class="fa-solid fa-arrow-right text-xs"></i>
                                         </button>
@@ -1459,7 +1510,7 @@
                                 </div>
 
                                 <!-- Search & Info Bar -->
-                                <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div class="relative w-full sm:w-64">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
@@ -1469,26 +1520,26 @@
                                             class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
-                                    <div id="overviewReceiptsInfo" class="text-xs text-slate-500 whitespace-nowrap font-medium"></div>
+                                    <div id="overviewReceiptsInfo" class="text-xs text-slate-500 font-medium"></div>
                                 </div>
 
                                 <div id="overviewReceiptsContainer" class="divide-y divide-slate-100">
                                     @forelse ($receipts as $r)
-                                        <div class="overview-receipt-row py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition">
+                                        <div class="overview-receipt-row py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center flex-wrap gap-2">
-                                                    <span class="font-bold text-slate-900 text-sm sm:text-base leading-snug">{{ $r->donor_name }}</span>
+                                                    <span class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $r->donor_name }}</span>
                                                     <span class="px-2 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700 shrink-0">{{ $r->receipt_type }}</span>
                                                 </div>
-                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug">{{ $r->item_name }} &bull; {{ $r->quantity }}</div>
-                                                <div class="text-xs text-slate-400 mt-0.5">{{ $r->receipt_number }} &bull; {{ $r->receipt_date->format('d M Y') }}</div>
+                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug break-words">{{ $r->item_name }} &bull; {{ $r->quantity }}</div>
+                                                <div class="text-xs text-slate-400 mt-0.5 break-words">{{ $r->receipt_number }} &bull; {{ $r->receipt_date->format('d M Y') }}</div>
                                             </div>
-                                            <div class="flex items-center gap-2 shrink-0">
-                                                <button type="button" onclick="openReceiptPrintModal(@js($r), 'receipt')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition whitespace-nowrap shadow-xs flex items-center gap-1.5">
+                                            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                                <button type="button" onclick="openReceiptPrintModal(@js($r), 'receipt')" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition shadow-xs flex items-center gap-1.5">
                                                     <i class="fa-solid fa-print"></i>
                                                     <span>Print A4</span>
                                                 </button>
-                                                <button type="button" onclick="openReceiptPrintModal(@js($r), 'thank_you')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5">
+                                                <button type="button" onclick="openReceiptPrintModal(@js($r), 'thank_you')" class="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
                                                     <i class="fa-solid fa-envelope-open-text"></i>
                                                     <span>Ucapan</span>
                                                 </button>
@@ -1499,21 +1550,21 @@
                                     @endforelse
                                 </div>
 
-                                <div id="overviewReceiptsPagination" class="flex justify-end pt-3 border-t border-slate-100"></div>
+                                <div id="overviewReceiptsPagination" class="flex justify-center sm:justify-end pt-3 border-t border-slate-100"></div>
                             </div>
 
                             <!-- Recent Documents -->
-                            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
-                                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-6 space-y-4 overflow-hidden min-w-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 border-b border-slate-100 pb-3">
                                     <div class="min-w-0">
                                         <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                                            <i class="fa-solid fa-folder-open text-blue-600"></i>
-                                            <span>Arsip Persuratan &amp; Dokumen Terbaru</span>
+                                            <i class="fa-solid fa-folder-open text-blue-600 shrink-0"></i>
+                                            <span class="break-words">Arsip Persuratan &amp; Dokumen Terbaru</span>
                                         </h2>
                                         <p class="text-xs sm:text-sm text-slate-500">Registrasi surat masuk, surat keluar &amp; naskah dinas sekretariat</p>
                                     </div>
                                     @if ($canDocuments)
-                                        <button type="button" onclick="switchManagementTab('documents')" class="text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 whitespace-nowrap shrink-0 flex items-center gap-1.5">
+                                        <button type="button" onclick="switchManagementTab('documents')" class="self-start sm:self-auto text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 shrink-0 flex items-center gap-1.5">
                                             <span>Buka Arsip</span>
                                             <i class="fa-solid fa-arrow-right text-xs"></i>
                                         </button>
@@ -1521,7 +1572,7 @@
                                 </div>
 
                                 <!-- Search & Info Bar -->
-                                <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div class="relative w-full sm:w-64">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
@@ -1531,21 +1582,21 @@
                                             class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
-                                    <div id="overviewDocsInfo" class="text-xs text-slate-500 whitespace-nowrap font-medium"></div>
+                                    <div id="overviewDocsInfo" class="text-xs text-slate-500 font-medium"></div>
                                 </div>
 
                                 <div id="overviewDocsContainer" class="divide-y divide-slate-100">
                                     @forelse ($documents as $d)
-                                        <div class="overview-doc-row py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition">
+                                        <div class="overview-doc-row py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition">
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center flex-wrap gap-2">
                                                     <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-xs shrink-0">{{ $d->category }}</span>
-                                                    <span class="font-bold text-slate-900 text-sm sm:text-base leading-snug">{{ $d->title }}</span>
+                                                    <span class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $d->title }}</span>
                                                 </div>
-                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug">{{ $d->document_number }} &bull; Dari: {{ $d->sender }}</div>
-                                                <div class="text-xs text-slate-400 mt-0.5">{{ $d->document_date->format('d M Y') }} &bull; {{ $d->archive_code }}</div>
+                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug break-words">{{ $d->document_number }} &bull; Dari: {{ $d->sender }}</div>
+                                                <div class="text-xs text-slate-400 mt-0.5 break-words">{{ $d->document_date->format('d M Y') }} &bull; {{ $d->archive_code }}</div>
                                             </div>
-                                            <button type="button" onclick="openDocumentPrintModal(@js($d))" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shrink-0 transition whitespace-nowrap shadow-xs flex items-center gap-1.5">
+                                            <button type="button" onclick="openDocumentPrintModal(@js($d))" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shrink-0 transition shadow-xs flex items-center gap-1.5">
                                                 <i class="fa-solid fa-print"></i>
                                                 <span>Cetak A4</span>
                                             </button>
@@ -1555,7 +1606,7 @@
                                     @endforelse
                                 </div>
 
-                                <div id="overviewDocsPagination" class="flex justify-end pt-3 border-t border-slate-100"></div>
+                                <div id="overviewDocsPagination" class="flex justify-center sm:justify-end pt-3 border-t border-slate-100"></div>
                             </div>
                         </div>
                     </section>
@@ -1566,25 +1617,25 @@
                     @if ($canReceipts)
                     <section id="tab-receipts" class="mgmt-tab-panel hidden space-y-6">
                         <!-- Top Header Banner with Separated Primary Create Button -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="min-w-0">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
-                                    <i class="fa-solid fa-receipt text-amber-600 text-xl"></i>
-                                    <span>Tanda Terima Bantuan / Barang / Surat &amp; Ucapan Terima Kasih</span>
+                                    <i class="fa-solid fa-receipt text-amber-600 text-xl shrink-0"></i>
+                                    <span class="break-words">Tanda Terima Bantuan / Barang / Surat &amp; Ucapan Terima Kasih</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
                                     Kelola penerimaan vihara, cetak A4 berlogo <code>[logo]</code>, serta ekspor &amp; impor data Excel (<code>.xlsx</code>).
                                 </p>
                             </div>
                             <div class="shrink-0">
-                                <a href="{{ route('management.receipts.create') }}" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-2 shadow-xs">
+                                <a href="{{ route('management.receipts.create') }}" class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
                                     <i class="fa-solid fa-circle-plus text-base"></i>
                                     <span>Buat Tanda Terima Baru</span>
                                 </a>
                             </div>
                         </div>
 
-                        <!-- Receipts Table Card (Direct View with overflow-x-auto, NEVER cut off) -->
+                        <!-- Receipts Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                             <!-- Search, Filter & Excel Actions Toolbar -->
                             <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -1598,7 +1649,7 @@
                                             class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
-                                    <select id="receiptFilterType" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
+                                    <select id="receiptFilterType" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
                                         <option value="all">Semua Jenis</option>
                                         <option value="Bantuan Dana">Bantuan Dana</option>
                                         <option value="Barang">Barang</option>
@@ -1606,22 +1657,24 @@
                                     </select>
                                 </div>
 
-                                <div class="flex items-center flex-wrap gap-2.5 justify-between lg:justify-end">
-                                    <a href="{{ route('management.receipts.export') }}" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs">
-                                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                                        <span>Export (.xlsx)</span>
-                                    </a>
-                                    <button type="button" onclick="openImportExcelModal()" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition whitespace-nowrap flex items-center gap-1.5 shadow-2xs">
-                                        <i class="fa-solid fa-file-import text-blue-600"></i>
-                                        <span>Import Excel</span>
-                                    </button>
-                                    <div id="receiptsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap pl-2 border-l border-slate-200"></div>
+                                <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <a href="{{ route('management.receipts.export') }}" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                                            <span>Export (.xlsx)</span>
+                                        </a>
+                                        <button type="button" onclick="openImportExcelModal()" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-file-import text-blue-600"></i>
+                                            <span>Import Excel</span>
+                                        </button>
+                                    </div>
+                                    <div id="receiptsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
                                 </div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table Wrapper -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[18%]">No. &amp; Tanggal</th>
@@ -1634,11 +1687,11 @@
                                     <tbody id="receiptsTableBody" class="divide-y divide-slate-100">
                                         @forelse ($receipts as $receipt)
                                             <tr data-category="{{ $receipt->receipt_type }}" class="receipt-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="No. &amp; Tanggal" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base break-words">{{ $receipt->receipt_number }}</div>
                                                     <div class="text-xs sm:text-sm text-slate-500 mt-0.5">{{ $receipt->receipt_date->format('d M Y') }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Jenis &amp; Nominal" class="py-3.5 px-3 align-top">
                                                     <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         {{ $receipt->receipt_type }}
                                                     </span>
@@ -1646,20 +1699,20 @@
                                                         {{ $receipt->nominal !== null ? 'Rp '.number_format((float) $receipt->nominal, 0, ',', '.') : '—' }}
                                                     </div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="Donatur / Instansi" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $receipt->donor_name }}</div>
                                                     @if ($receipt->donor_institution)
                                                         <div class="text-xs sm:text-sm text-slate-600 leading-snug mt-0.5 break-words">{{ $receipt->donor_institution }}</div>
                                                     @endif
                                                     @if ($receipt->donor_contact)
-                                                        <div class="text-xs text-slate-400 mt-0.5">{{ $receipt->donor_contact }}</div>
+                                                        <div class="text-xs text-slate-400 mt-0.5 break-words">{{ $receipt->donor_contact }}</div>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="Uraian &amp; Penerima" class="py-3.5 px-4 align-top">
                                                     <div class="text-slate-900 font-semibold text-sm sm:text-base leading-snug break-words">{{ $receipt->item_name }}</div>
-                                                    <div class="text-xs sm:text-sm text-slate-500 mt-1 leading-snug">{{ $receipt->quantity }} &bull; Penerima: {{ $receipt->receiver_name }}</div>
+                                                    <div class="text-xs sm:text-sm text-slate-500 mt-1 leading-snug break-words">{{ $receipt->quantity }} &bull; Penerima: {{ $receipt->receiver_name }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <button type="button" onclick="openReceiptPrintModal(@js($receipt), 'receipt')" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5">
                                                             <i class="fa-solid fa-print"></i>
@@ -1692,7 +1745,7 @@
                             </div>
 
                             <!-- Pagination Footer -->
-                            <div class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/50" id="receiptsPaginationContainer"></div>
+                            <div class="p-4 border-t border-slate-100 flex items-center justify-center sm:justify-end bg-slate-50/50" id="receiptsPaginationContainer"></div>
                         </div>
                     </section>
                     @endif
@@ -1703,23 +1756,23 @@
                     @if ($canDocuments)
                     <section id="tab-documents" class="mgmt-tab-panel hidden space-y-6">
                         <!-- Top Header & Action Bar -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="min-w-0">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
-                                    <i class="fa-solid fa-folder-open text-blue-600 text-xl"></i>
-                                    <span>Arsip Persuratan &amp; Dokumen Resmi Sekretariat</span>
+                                    <i class="fa-solid fa-folder-open text-blue-600 text-xl shrink-0"></i>
+                                    <span class="break-words">Arsip Persuratan &amp; Dokumen Resmi Sekretariat</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
                                     Pengelolaan naskah dinas surat masuk, surat keluar, surat keputusan, dan arsip digital resmi Wihara Mahabodhi.
                                 </p>
                             </div>
-                            <a href="{{ route('management.documents.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-2 shadow-xs">
+                            <a href="{{ route('management.documents.create') }}" class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-xs">
                                 <i class="fa-solid fa-circle-plus text-base"></i>
                                 <span>Registrasi Dokumen Baru</span>
                             </a>
                         </div>
 
-                        <!-- Documents Table Card (Direct View with overflow-x-auto, NEVER cut off) -->
+                        <!-- Documents Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                             <!-- Search & Filter Category Pills -->
                             <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -1734,19 +1787,19 @@
                                         >
                                     </div>
                                     <div class="flex flex-wrap gap-1.5">
-                                        <button type="button" data-filter="all" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 text-white whitespace-nowrap">Semua</button>
-                                        <button type="button" data-filter="Surat Masuk" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap flex items-center gap-1.5"><i class="fa-solid fa-inbox text-blue-600"></i> Surat Masuk</button>
-                                        <button type="button" data-filter="Surat Keluar" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap flex items-center gap-1.5"><i class="fa-solid fa-paper-plane text-emerald-600"></i> Surat Keluar</button>
-                                        <button type="button" data-filter="Dokumen Umum A4" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-amber-600"></i> Dokumen Umum A4</button>
-                                        <button type="button" data-filter="SK / Piagam" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 whitespace-nowrap flex items-center gap-1.5"><i class="fa-solid fa-award text-purple-600"></i> SK / Piagam</button>
+                                        <button type="button" data-filter="all" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 text-white">Semua</button>
+                                        <button type="button" data-filter="Surat Masuk" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-inbox text-blue-600"></i> Surat Masuk</button>
+                                        <button type="button" data-filter="Surat Keluar" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-paper-plane text-emerald-600"></i> Surat Keluar</button>
+                                        <button type="button" data-filter="Dokumen Umum A4" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-amber-600"></i> Dokumen Umum A4</button>
+                                        <button type="button" data-filter="SK / Piagam" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-award text-purple-600"></i> SK / Piagam</button>
                                     </div>
                                 </div>
-                                <div id="docsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap"></div>
+                                <div id="docsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table Wrapper -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[20%]">No. &amp; Tanggal Dokumen</th>
@@ -1759,11 +1812,11 @@
                                     <tbody id="documentsTableBody" class="divide-y divide-slate-100">
                                         @forelse ($documents as $doc)
                                             <tr data-category="{{ $doc->category }}" class="doc-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="No. &amp; Tanggal Dokumen" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base break-words">{{ $doc->document_number }}</div>
                                                     <div class="text-xs sm:text-sm text-slate-500 mt-0.5">{{ $doc->document_date->format('d M Y') }} &bull; {{ $doc->archive_code }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Kategori" class="py-3.5 px-3 align-top">
                                                     <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         {{ $doc->category }}
                                                     </span>
@@ -1771,21 +1824,21 @@
                                                         {{ $doc->paper_size }}
                                                     </span>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="Perihal &amp; Ringkasan" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $doc->title }}</div>
                                                     <div class="text-xs sm:text-sm text-slate-600 leading-snug mt-1 break-words">{{ $doc->summary }}</div>
                                                     @if ($doc->attachment_path)
-                                                        <a href="{{ asset('storage/'.$doc->attachment_path) }}" target="_blank" class="inline-flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline">
-                                                            <i class="fa-solid fa-paperclip"></i>
+                                                        <a href="{{ asset('storage/'.$doc->attachment_path) }}" target="_blank" class="inline-flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline break-all">
+                                                            <i class="fa-solid fa-paperclip shrink-0"></i>
                                                             <span>Lampiran: {{ $doc->attachment_name ?? 'Berkas' }}</span>
                                                         </a>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-xs sm:text-sm text-slate-700 leading-snug break-words">
+                                                <td data-label="Pengirim &rarr; Penerima" class="py-3.5 px-4 align-top text-xs sm:text-sm text-slate-700 leading-snug break-words">
                                                     <div>Dari: <strong class="text-slate-900 font-bold">{{ $doc->sender }}</strong></div>
                                                     <div class="text-slate-500 mt-0.5">Ke: {{ $doc->recipient }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <button type="button" onclick="openDocumentPrintModal(@js($doc))" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5">
                                                             <i class="fa-solid fa-print"></i>
@@ -1814,7 +1867,7 @@
                             </div>
 
                             <!-- Pagination Footer -->
-                            <div class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/50" id="documentsPaginationContainer"></div>
+                            <div class="p-4 border-t border-slate-100 flex items-center justify-center sm:justify-end bg-slate-50/50" id="documentsPaginationContainer"></div>
                         </div>
                     </section>
                     @endif
@@ -1825,25 +1878,25 @@
                     @if ($canMarriages)
                     <section id="tab-marriages" class="mgmt-tab-panel hidden space-y-6">
                         <!-- Top Header Banner with Separated Primary Create Button -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="min-w-0">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
-                                    <i class="fa-solid fa-ring text-rose-600 text-xl"></i>
-                                    <span>Administrasi Surat Nikah &amp; Pemberkatan Perkawinan Buddhis</span>
+                                    <i class="fa-solid fa-ring text-rose-600 text-xl shrink-0"></i>
+                                    <span class="break-words">Administrasi Surat Nikah &amp; Pemberkatan Perkawinan Buddhis</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
                                     Arsip resmi Akta / Surat Keterangan Pemberkatan Perkawinan Buddhis, Bimbingan Pra-Nikah, berita acara saksi, dan cetak piagam A4 berlogo <code>[logo]</code>.
                                 </p>
                             </div>
                             <div class="shrink-0">
-                                <a href="{{ route('management.marriages.create') }}" class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
+                                <a href="{{ route('management.marriages.create') }}" class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
                                     <i class="fa-solid fa-circle-plus text-base"></i>
                                     <span>Buat Surat Nikah Baru</span>
                                 </a>
                             </div>
                         </div>
 
-                        <!-- Marriages Table Card (Direct View with overflow-x-auto, NEVER cut off) -->
+                        <!-- Marriages Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
                             <!-- Search & Filter Toolbar -->
                             <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -1857,7 +1910,7 @@
                                             class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
-                                    <select id="marriageFilterStatus" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
+                                    <select id="marriageFilterStatus" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
                                         <option value="all">Semua Status Administrasi</option>
                                         <option value="Terdaftar & Verifikasi Berkas">Terdaftar &amp; Verifikasi Berkas</option>
                                         <option value="Selesai Pemberkatan">Selesai Pemberkatan</option>
@@ -1867,9 +1920,9 @@
                                 <div id="marriagesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table Wrapper -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[21%]">No. Surat &amp; Status</th>
@@ -1882,7 +1935,7 @@
                                     <tbody id="marriagesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($marriages ?? [] as $marriage)
                                             <tr data-category="{{ $marriage->status }}" class="marriage-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="No. Surat &amp; Status" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base break-words">{{ $marriage->certificate_number }}</div>
                                                     <div class="flex flex-wrap items-center gap-1 mt-1">
                                                         <span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
@@ -1904,7 +1957,7 @@
                                                         </a>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="Mempelai Pria &amp; Wanita" class="py-3.5 px-4 align-top">
                                                     <div class="space-y-1.5">
                                                         <div>
                                                             <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
@@ -1924,17 +1977,17 @@
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-xs sm:text-sm">
+                                                <td data-label="Jadwal &amp; Lokasi" class="py-3.5 px-4 align-top text-xs sm:text-sm">
                                                     <div class="font-bold text-slate-900">{{ $marriage->wedding_date->format('d M Y') }}</div>
                                                     <div class="text-slate-600 mt-0.5">{{ $marriage->wedding_time }}</div>
                                                     <div class="text-xs text-slate-500 mt-1 leading-snug break-words">{{ $marriage->wedding_location }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-xs sm:text-sm">
+                                                <td data-label="Pandita &amp; Saksi" class="py-3.5 px-4 align-top text-xs sm:text-sm">
                                                     <div class="font-bold text-slate-900 leading-snug break-words">{{ $marriage->officiant_name }}</div>
                                                     <div class="text-xs text-slate-600 mt-1 break-words">Saksi I: {{ $marriage->witness_one }}</div>
                                                     <div class="text-xs text-slate-600 break-words">Saksi II: {{ $marriage->witness_two }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <button type="button" onclick="openMarriagePrintModal(@js($marriage), 'certificate')" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5" title="Cetak Surat Pemberkatan Perkawinan A4">
                                                             <i class="fa-solid fa-print"></i>
@@ -1967,7 +2020,7 @@
                             </div>
 
                             <!-- Pagination Footer -->
-                            <div class="p-4 border-t border-slate-100 flex items-center justify-end bg-slate-50/50" id="marriagesPaginationContainer"></div>
+                            <div class="p-4 border-t border-slate-100 flex items-center justify-center sm:justify-end bg-slate-50/50" id="marriagesPaginationContainer"></div>
                         </div>
                     </section>
                     @endif
@@ -1979,22 +2032,22 @@
                     <section id="tab-roles" class="mgmt-tab-panel hidden space-y-6">
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                             <!-- Roles List Card -->
-                            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
-                                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 overflow-hidden min-w-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                     <div class="min-w-0">
                                         <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-                                            <i class="fa-solid fa-user-shield text-purple-600"></i>
-                                            <span>Manajemen Role Pengurus</span>
+                                            <i class="fa-solid fa-user-shield text-purple-600 shrink-0"></i>
+                                            <span class="break-words">Manajemen Role Pengurus</span>
                                         </h2>
                                         <p class="text-xs sm:text-sm text-slate-500 mt-1">Pengaturan hak akses modular untuk Admin dan pengurus internal.</p>
                                     </div>
-                                    <a href="{{ route('management.roles.create') }}" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-xs">
+                                    <a href="{{ route('management.roles.create') }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs">
                                         <i class="fa-solid fa-circle-plus"></i>
                                         <span>Buat Role</span>
                                     </a>
                                 </div>
 
-                                <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div class="relative w-full sm:w-64">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
@@ -2004,24 +2057,24 @@
                                             class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
                                         >
                                     </div>
-                                    <div id="rolesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap"></div>
+                                    <div id="rolesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                                 </div>
 
                                 <div id="rolesListContainer" class="space-y-3">
                                     @foreach ($roles as $role)
                                         <div class="role-item-row p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                                            <div class="flex items-start justify-between gap-3">
+                                            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                                 <div class="min-w-0">
                                                     <div class="flex items-center flex-wrap gap-2">
-                                                        <h3 class="text-base font-bold text-slate-900 leading-snug">{{ $role->name }}</h3>
-                                                        <span class="px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-bold whitespace-nowrap shrink-0">{{ $role->users_count }} User</span>
+                                                        <h3 class="text-base font-bold text-slate-900 leading-snug break-words">{{ $role->name }}</h3>
+                                                        <span class="px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-bold shrink-0">{{ $role->users_count }} User</span>
                                                         @if ($role->is_system)
-                                                            <span class="px-2.5 py-0.5 rounded-md bg-slate-900 text-white text-xs font-bold whitespace-nowrap shrink-0">Sistem</span>
+                                                            <span class="px-2.5 py-0.5 rounded-md bg-slate-900 text-white text-xs font-bold shrink-0">Sistem</span>
                                                         @endif
                                                     </div>
-                                                    <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{{ $role->description }}</p>
+                                                    <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed break-words">{{ $role->description }}</p>
                                                 </div>
-                                                <div class="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                                                <div class="flex items-center gap-1.5 shrink-0">
                                                     <a href="{{ route('management.roles.edit', $role) }}" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 shadow-2xs">
                                                         <i class="fa-solid fa-pen-to-square"></i>
                                                         <span>Edit Izin</span>
@@ -2040,8 +2093,8 @@
 
                                             <div class="flex flex-wrap gap-1.5">
                                                 @foreach ($role->permissions ?? [] as $permKey)
-                                                    <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-700 whitespace-nowrap flex items-center gap-1">
-                                                        <i class="fa-solid fa-check text-emerald-600 text-[10px]"></i>
+                                                    <span class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-xs font-medium text-slate-700 flex items-center gap-1.5 break-words">
+                                                        <i class="fa-solid fa-check text-emerald-600 text-[10px] shrink-0"></i>
                                                         <span>{{ $availablePermissions[$permKey] ?? $permKey }}</span>
                                                     </span>
                                                 @endforeach
@@ -2050,26 +2103,26 @@
                                     @endforeach
                                 </div>
 
-                                <div id="rolesPaginationContainer" class="flex justify-end pt-3 border-t border-slate-100"></div>
+                                <div id="rolesPaginationContainer" class="flex justify-center sm:justify-end pt-3 border-t border-slate-100"></div>
                             </div>
 
                             <!-- Users List Card -->
-                            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
-                                <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 overflow-hidden min-w-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                     <div class="min-w-0">
                                         <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-                                            <i class="fa-solid fa-users text-indigo-600"></i>
-                                            <span>Akun Pengurus Internal</span>
+                                            <i class="fa-solid fa-users text-indigo-600 shrink-0"></i>
+                                            <span class="break-words">Akun Pengurus Internal</span>
                                         </h2>
                                         <p class="text-xs sm:text-sm text-slate-500 mt-1">Daftar pengguna sistem manajemen.</p>
                                     </div>
-                                    <a href="{{ route('management.users.create') }}" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-xs">
+                                    <a href="{{ route('management.users.create') }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs">
                                         <i class="fa-solid fa-user-plus"></i>
                                         <span>Tambah</span>
                                     </a>
                                 </div>
 
-                                <div class="flex items-center justify-between gap-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                     <div class="relative w-full sm:w-64">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
@@ -2079,21 +2132,21 @@
                                             class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
                                         >
                                     </div>
-                                    <div id="usersCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap"></div>
+                                    <div id="usersCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                                 </div>
 
                                 <div id="usersListContainer" class="space-y-3">
                                     @foreach ($users as $u)
-                                        <div class="user-item-row p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3">
+                                        <div class="user-item-row p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                             <div class="min-w-0">
-                                                <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug">{{ $u->name }}</div>
-                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug">{{ $u->email }} &bull; {{ $u->position }}</div>
-                                                <span class="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 font-bold text-xs whitespace-nowrap">
-                                                    <i class="fa-solid fa-id-badge text-[10px] text-slate-400"></i>
-                                                    {{ $u->role?->name ?? 'Tanpa Role' }}
+                                                <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $u->name }}</div>
+                                                <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug break-all sm:break-words">{{ $u->email }} &bull; {{ $u->position }}</div>
+                                                <span class="inline-flex items-center gap-1 mt-1.5 px-2.5 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 font-bold text-xs">
+                                                    <i class="fa-solid fa-id-badge text-[10px] text-slate-400 shrink-0"></i>
+                                                    <span>{{ $u->role?->name ?? 'Tanpa Role' }}</span>
                                                 </span>
                                             </div>
-                                            <div class="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
+                                            <div class="flex items-center gap-1.5 shrink-0">
                                                 <a href="{{ route('management.users.edit', $u) }}" class="p-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
@@ -2111,7 +2164,7 @@
                                     @endforeach
                                 </div>
 
-                                <div id="usersPaginationContainer" class="flex justify-end pt-3 border-t border-slate-100"></div>
+                                <div id="usersPaginationContainer" class="flex justify-center sm:justify-end pt-3 border-t border-slate-100"></div>
                             </div>
                         </div>
                     </section>
@@ -2122,7 +2175,7 @@
                     <!-- ================================================= -->
                     @if ($canSchedules)
                     <section id="tab-schedules" class="mgmt-tab-panel hidden space-y-6">
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4 overflow-hidden">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                                 <div>
                                     <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -2131,14 +2184,14 @@
                                     </h2>
                                     <p class="text-xs sm:text-sm text-slate-500 mt-1">Data jadwal ini tampil secara dinamis di halaman publik vihara.</p>
                                 </div>
-                                <a href="{{ route('management.schedules.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-xs">
+                                <a href="{{ route('management.schedules.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 shadow-xs">
                                     <i class="fa-solid fa-circle-plus"></i>
                                     <span>Tambah Jadwal</span>
                                 </a>
                             </div>
 
                             <!-- Search & Filter Controls -->
-                            <div class="flex items-center justify-between gap-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div class="relative w-full sm:w-72">
                                     <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                     <input
@@ -2148,12 +2201,12 @@
                                         class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
                                     >
                                 </div>
-                                <div id="schedulesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap"></div>
+                                <div id="schedulesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table / Mobile Card View -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[28%]">Kegiatan</th>
@@ -2166,25 +2219,25 @@
                                     <tbody id="schedulesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($schedules as $sch)
                                             <tr class="schedule-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
+                                                <td data-label="Kegiatan" class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
                                                     {{ $sch->title }}
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Kategori" class="py-3.5 px-3 align-top">
                                                     <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         {{ $sch->category }}
                                                     </span>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-slate-700 font-semibold text-xs sm:text-sm leading-snug">
+                                                <td data-label="Waktu & Hari" class="py-3.5 px-4 align-top text-slate-700 font-semibold text-xs sm:text-sm leading-snug">
                                                     <i class="fa-regular fa-clock text-slate-400 mr-1"></i>
                                                     {{ $sch->day_of_week }}, {{ $sch->start_time }} – {{ $sch->end_time }} WIB
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-slate-700 text-xs sm:text-sm leading-snug break-words">
+                                                <td data-label="Lokasi & Pembimbing" class="py-3.5 px-4 align-top text-slate-700 text-xs sm:text-sm leading-snug break-words">
                                                     <div class="font-medium"><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i> {{ $sch->location }}</div>
                                                     @if ($sch->speaker)
                                                         <div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-chalkboard-user text-slate-400 mr-1"></i> {{ $sch->speaker }}</div>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <a href="{{ route('management.schedules.edit', $sch) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -2229,7 +2282,7 @@
                                     Kelola dokumentasi foto (upload file gambar) dan video dokumentasi kegiatan (tautan YouTube) yang tampil di halaman utama.
                                 </p>
                             </div>
-                            <a href="{{ route('management.galleries.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center gap-2 shadow-xs">
+                            <a href="{{ route('management.galleries.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-2 shadow-xs">
                                 <i class="fa-solid fa-circle-plus text-base"></i>
                                 <span>Tambah Dokumentasi</span>
                             </a>
@@ -2248,7 +2301,7 @@
                                             class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
                                         >
                                     </div>
-                                    <select id="galleryFilterType" class="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
+                                    <select id="galleryFilterType" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
                                         <option value="all">Semua Tipe Media</option>
                                         <option value="photo">Foto Kegiatan (File Upload)</option>
                                         <option value="video">Video Kegiatan (YouTube)</option>
@@ -2257,9 +2310,9 @@
                                 <div id="galleriesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table / Mobile Card View -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[14%]">Pratinjau</th>
@@ -2272,8 +2325,8 @@
                                     <tbody id="galleriesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($galleries as $gal)
                                             <tr data-category="{{ $gal->media_type }}" class="gallery-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top">
-                                                    <a href="{{ $gal->media_url }}" target="_blank" class="relative block w-24 h-16 rounded-xl bg-slate-200 overflow-hidden border border-slate-200 shadow-2xs group">
+                                                <td data-label="Pratinjau" class="py-3.5 px-4 align-top">
+                                                    <a href="{{ $gal->media_url }}" target="_blank" class="relative block w-28 sm:w-24 h-18 sm:h-16 rounded-xl bg-slate-200 overflow-hidden border border-slate-200 shadow-2xs group">
                                                         <img src="{{ $gal->thumbnail_url ?: $gal->media_url }}" alt="{{ $gal->title }}" class="w-full h-full object-cover group-hover:scale-105 transition">
                                                         @if ($gal->media_type === 'video')
                                                             <span class="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
@@ -2282,13 +2335,13 @@
                                                         @endif
                                                     </a>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top">
+                                                <td data-label="Judul & Keterangan Kegiatan" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $gal->title }}</div>
                                                     @if ($gal->description)
                                                         <p class="text-xs sm:text-sm text-slate-600 mt-1 leading-snug break-words">{{ $gal->description }}</p>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Tipe & Sumber Media" class="py-3.5 px-3 align-top">
                                                     @if ($gal->media_type === 'video')
                                                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                                             <i class="fa-brands fa-youtube text-rose-600"></i>
@@ -2313,7 +2366,7 @@
                                                         </div>
                                                     @endif
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Kategori & Tanggal" class="py-3.5 px-3 align-top">
                                                     <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         {{ $gal->category }}
                                                     </span>
@@ -2321,7 +2374,7 @@
                                                         {{ $gal->event_date ? $gal->event_date->format('d M Y') : 'Dokumentasi Vihara' }}
                                                     </div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <a href="{{ route('management.galleries.edit', $gal) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -2355,7 +2408,7 @@
                     <!-- ================================================= -->
                     @if ($canArticles)
                     <section id="tab-articles" class="mgmt-tab-panel hidden space-y-6">
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4">
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4 overflow-hidden">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                                 <div>
                                     <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -2364,14 +2417,14 @@
                                     </h2>
                                     <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola artikel dan warta vihara pada halaman utama.</p>
                                 </div>
-                                <a href="{{ route('management.articles.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 flex items-center gap-1.5 shadow-xs">
+                                <a href="{{ route('management.articles.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 shadow-xs">
                                     <i class="fa-solid fa-circle-plus"></i>
                                     <span>Terbitkan Artikel Baru</span>
                                 </a>
                             </div>
 
                             <!-- Search & Filter Controls -->
-                            <div class="flex items-center justify-between gap-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div class="relative w-full sm:w-72">
                                     <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                     <input
@@ -2381,12 +2434,12 @@
                                         class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
                                     >
                                 </div>
-                                <div id="articlesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap"></div>
+                                <div id="articlesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
                             </div>
 
-                            <!-- Full-Width Direct View Table (Zero Horizontal Scroll, No Cut-Offs) -->
-                            <div class="w-full">
-                                <table class="w-full table-auto text-left border-collapse">
+                            <!-- Responsive Table / Mobile Card View -->
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
                                             <th class="py-3.5 px-4 w-[26%]">Judul Artikel</th>
@@ -2399,25 +2452,25 @@
                                     <tbody id="articlesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($articles as $art)
                                             <tr class="article-row hover:bg-slate-50/80 transition">
-                                                <td class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
+                                                <td data-label="Judul Artikel" class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
                                                     <a href="{{ route('landing.article', $art->slug) }}" target="_blank" class="hover:underline inline-flex items-center gap-1.5">
                                                         <span>{{ $art->title }}</span>
                                                         <i class="fa-solid fa-arrow-up-right-from-square text-xs text-slate-400"></i>
                                                     </a>
                                                 </td>
-                                                <td class="py-3.5 px-3 align-top">
+                                                <td data-label="Kategori" class="py-3.5 px-3 align-top">
                                                     <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                                         {{ $art->category }}
                                                     </span>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-slate-700 text-xs sm:text-sm leading-snug break-words">
+                                                <td data-label="Penulis & Tanggal" class="py-3.5 px-4 align-top text-slate-700 text-xs sm:text-sm leading-snug break-words">
                                                     <div class="font-semibold">{{ $art->author }}</div>
                                                     <div class="text-xs text-slate-500 mt-0.5">{{ $art->published_at ? $art->published_at->format('d M Y') : 'Draft' }}</div>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-slate-600 text-xs sm:text-sm leading-relaxed break-words">
+                                                <td data-label="Ringkasan" class="py-3.5 px-4 align-top text-slate-600 text-xs sm:text-sm leading-relaxed break-words">
                                                     <p>{{ $art->excerpt }}</p>
                                                 </td>
-                                                <td class="py-3.5 px-4 align-top text-right">
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
                                                         <a href="{{ route('management.articles.edit', $art) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
@@ -2450,7 +2503,7 @@
                     <!-- TAB 7: PROFILE / ACCOUNT CONFIGURATION            -->
                     <!-- ================================================= -->
                     <section id="tab-profile" class="mgmt-tab-panel hidden space-y-6">
-                        <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-2xs space-y-6">
+                        <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-6">
                             <div class="border-b border-slate-100 pb-4">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
                                     <i class="fa-solid fa-user-gear text-slate-700"></i>
@@ -2465,7 +2518,7 @@
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Nama Lengkap *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Lengkap *</label>
                                         <input
                                             type="text"
                                             name="name"
@@ -2475,7 +2528,7 @@
                                         >
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Alamat Email *</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Alamat Email *</label>
                                         <input
                                             type="email"
                                             name="email"
@@ -2485,7 +2538,7 @@
                                         >
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Role Akses (Sistem)</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Role Akses (Sistem)</label>
                                         <input
                                             type="text"
                                             value="{{ $currentUser?->role?->name ?? 'Pengurus' }}"
@@ -2494,7 +2547,7 @@
                                         >
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Jabatan di Vihara</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan di Vihara</label>
                                         <input
                                             type="text"
                                             name="position"
@@ -2504,7 +2557,7 @@
                                         >
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5 whitespace-nowrap">No. Telepon / WhatsApp</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">No. Telepon / WhatsApp</label>
                                         <input
                                             type="text"
                                             name="phone"
@@ -2519,7 +2572,7 @@
                                     <div class="font-bold text-slate-900 text-sm sm:text-base">Ganti Kata Sandi (Kosongkan bila tidak ingin mengubah)</div>
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block font-semibold text-slate-700 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Kata Sandi Baru</label>
+                                            <label class="block font-semibold text-slate-700 text-xs sm:text-sm mb-1.5">Kata Sandi Baru</label>
                                             <input
                                                 type="password"
                                                 name="password"
@@ -2528,7 +2581,7 @@
                                             >
                                         </div>
                                         <div>
-                                            <label class="block font-semibold text-slate-700 text-xs sm:text-sm mb-1.5 whitespace-nowrap">Konfirmasi Kata Sandi Baru</label>
+                                            <label class="block font-semibold text-slate-700 text-xs sm:text-sm mb-1.5">Konfirmasi Kata Sandi Baru</label>
                                             <input
                                                 type="password"
                                                 name="password_confirmation"
@@ -2539,10 +2592,10 @@
                                     </div>
                                 </div>
 
-                                <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-5 border-t border-slate-100">
                                     <button
                                         type="submit"
-                                        class="px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center gap-2 shadow-xs"
+                                        class="w-full sm:w-auto justify-center px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center gap-2 shadow-xs"
                                     >
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Perubahan Akun</span>
@@ -2553,7 +2606,7 @@
                     </section>
                 @endif
 
-            </main>
+            </main> 
         </div>
     </div>
 
@@ -2563,25 +2616,25 @@
     <div id="importExcelModal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-6 flex flex-col items-center justify-center">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
             <!-- Modal Header -->
-            <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/80 shrink-0">
-                <div class="flex items-center gap-3">
+            <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/80 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
                     <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-lg shrink-0 shadow-2xs">
                         <i class="fa-solid fa-file-excel"></i>
                     </div>
-                    <div>
-                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Import Data Tanda Terima via Excel (.xlsx / .csv)</h3>
+                    <div class="min-w-0">
+                        <h3 class="text-sm sm:text-lg font-bold text-slate-900 leading-snug">Import Data Tanda Terima via Excel (.xlsx / .csv)</h3>
                         <p class="text-xs text-slate-500">Unggah berkas spreadsheet untuk memasukkan data penerimaan donasi dan bantuan secara massal.</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeImportExcelModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 flex items-center justify-center transition" title="Tutup Modal">
+                <button type="button" onclick="closeImportExcelModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 flex items-center justify-center shrink-0 transition" title="Tutup Modal">
                     <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
 
             <!-- Modal Body (Scrollable) -->
-            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-slate-700">
+            <div class="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-700">
                 <!-- Step 1: Download Template Callout -->
-                <div class="p-4.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5">
                             <i class="fa-solid fa-file-arrow-down text-sm"></i>
@@ -2591,7 +2644,7 @@
                             <p class="text-xs text-emerald-800/90 mt-0.5">Pastikan susunan kolom pada berkas Excel Anda persis mengikuti template resmi agar seluruh baris data dapat diproses otomatis.</p>
                         </div>
                     </div>
-                    <a href="{{ route('management.receipts.template') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm whitespace-nowrap shrink-0 flex items-center gap-2 shadow-xs transition">
+                    <a href="{{ route('management.receipts.template') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shrink-0 flex items-center justify-center gap-2 shadow-xs transition">
                         <i class="fa-solid fa-download"></i>
                         <span>Unduh Template (.xlsx)</span>
                     </a>
@@ -2602,9 +2655,9 @@
                     @csrf
                     <div>
                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-2">Pilih Berkas Excel / CSV *</label>
-                        <div class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-6 text-center bg-slate-50/60 hover:bg-emerald-50/30 transition cursor-pointer" onclick="document.getElementById('modalExcelInput').click()">
+                        <div class="border-2 border-dashed border-slate-300 hover:border-emerald-500 rounded-2xl p-5 sm:p-6 text-center bg-slate-50/60 hover:bg-emerald-50/30 transition cursor-pointer" onclick="document.getElementById('modalExcelInput').click()">
                             <i class="fa-solid fa-cloud-arrow-up text-3xl text-emerald-600/70 mb-2"></i>
-                            <div class="text-xs sm:text-sm font-bold text-slate-800" id="modalFileName">Klik di sini untuk memilih berkas spreadsheet (.xlsx, .xls, .csv)</div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-800 break-words" id="modalFileName">Klik di sini untuk memilih berkas spreadsheet (.xlsx, .xls, .csv)</div>
                             <p class="text-xs text-slate-400 mt-1">Maksimal ukuran berkas 5 MB &bull; Disarankan format OpenXML .xlsx</p>
                             <input
                                 type="file"
@@ -2618,11 +2671,11 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end gap-3 pt-2">
-                        <button type="button" onclick="closeImportExcelModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-2">
+                        <button type="button" onclick="closeImportExcelModal()" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs sm:text-sm transition">
                             Batal
                         </button>
-                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-xs">
+                        <button type="submit" class="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition flex items-center gap-2 shadow-xs">
                             <i class="fa-solid fa-upload"></i>
                             <span>Mulai Proses Import Data</span>
                         </button>
@@ -2631,7 +2684,7 @@
 
                 <!-- Step 3: Complete Field Documentation Table -->
                 <div class="space-y-3 pt-4 border-t border-slate-200">
-                    <div class="flex items-center justify-between">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                             <h4 class="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                                 <i class="fa-solid fa-book-open text-blue-600"></i>
@@ -2639,11 +2692,11 @@
                             </h4>
                             <p class="text-xs text-slate-500 mt-0.5">Panduan aturan pengisian untuk setiap kolom pada baris data Excel.</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">Total: 12 Kolom</span>
+                        <span class="self-start sm:self-auto px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs shrink-0">Total: 12 Kolom</span>
                     </div>
 
-                    <div class="w-full rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-                        <table class="w-full table-auto text-left text-xs border-collapse">
+                    <div class="w-full rounded-xl border border-slate-200 shadow-2xs overflow-x-auto">
+                        <table class="w-full min-w-[640px] table-auto text-left text-xs border-collapse">
                             <thead class="bg-slate-100/90 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
                                 <tr>
                                     <th class="p-3 w-[6%] text-center">No</th>
@@ -2758,12 +2811,12 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 shrink-0">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-lightbulb text-amber-500"></i>
+            <div class="px-4 sm:px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 shrink-0">
+                <div class="flex items-start sm:items-center gap-2">
+                    <i class="fa-solid fa-lightbulb text-amber-500 mt-0.5 sm:mt-0"></i>
                     <span>Baris pertama file Excel harus berupa judul kolom (header). Baris kosong akan dilewati otomatis.</span>
                 </div>
-                <button type="button" onclick="closeImportExcelModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition">Tutup</button>
+                <button type="button" onclick="closeImportExcelModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition">Tutup</button>
             </div>
         </div>
     </div>
@@ -2771,16 +2824,16 @@
     <!-- ========================================================= -->
     <!-- MODAL & LEMBAR CETAK STANDAR KERTAS A4 DENGAN KOP [logo]  -->
     <!-- ========================================================= -->
-    <div id="a4PrintWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-4 sm:p-8 flex flex-col items-center">
+    <div id="a4PrintWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-8 flex flex-col items-center">
         <!-- Control Bar -->
-        <div class="no-print max-w-[210mm] w-full mb-4 bg-slate-900 text-white px-5 py-3 rounded-xl flex items-center justify-between gap-3 shadow-lg">
+        <div class="no-print max-w-[210mm] w-full mb-4 bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
             <div class="text-xs sm:text-sm flex items-center gap-2">
                 <i class="fa-solid fa-file-lines text-amber-400"></i>
                 <span class="font-bold">Pratinjau Cetak Kertas A4</span>
                 <span class="text-slate-400 ml-2 hidden sm:inline">Template surat resmi dengan placeholder [logo]</span>
             </div>
-            <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                <button type="button" onclick="window.print()" class="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
+            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button type="button" onclick="window.print()" class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
                     <i class="fa-solid fa-print"></i>
                     <span>Cetak / Simpan PDF (A4)</span>
                 </button>
@@ -2792,7 +2845,7 @@
         </div>
 
         <!-- Actual A4 Sheet (Strictly 1-Page A4 Official Letter Standard) -->
-        <div class="a4-sheet bg-white text-slate-900 w-full max-w-[210mm] p-6 sm:p-9 print:p-0 rounded-xl shadow-2xl border border-slate-300 space-y-4 print:space-y-3">
+        <div class="a4-sheet bg-white text-slate-900 w-full max-w-[210mm] p-4 sm:p-9 print:p-0 rounded-xl shadow-2xl border border-slate-300 space-y-4 print:space-y-3 overflow-x-auto">
             <div class="space-y-4 print:space-y-3">
                 <!-- KOP SURAT RESMI STANDAR TATA NASKAH DINAS DENGAN PLACEHOLDER [logo] -->
                 <div class="border-b-4 border-double border-slate-900 pb-3 flex items-center gap-4">
@@ -3030,7 +3083,7 @@
                         return;
                     }
 
-                    let html = '<div class="flex items-center gap-1.5">';
+                    let html = '<div class="flex flex-wrap items-center justify-center sm:justify-end gap-1.5">';
                     
                     const prevDisabled = this.currentPage === 1;
                     html += `<button type="button" class="px-3.5 py-1.5 text-xs sm:text-sm rounded-xl border border-slate-200 transition flex items-center gap-1 ${prevDisabled ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400' : 'bg-white hover:bg-slate-100 text-slate-700 font-bold shadow-2xs'}" ${prevDisabled ? 'disabled' : ''} data-page="${this.currentPage - 1}"><i class="fa-solid fa-chevron-left text-[10px]"></i> Prev</button>`;
@@ -3577,7 +3630,7 @@
             let html = '';
 
             for (let emptyIdx = 0; emptyIdx < firstDay; emptyIdx++) {
-                html += `<div class="min-h-[82px] p-1.5 bg-slate-50/60"></div>`;
+                html += `<div class="min-h-[60px] sm:min-h-[82px] p-1 sm:p-1.5 bg-slate-50/60"></div>`;
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
@@ -3609,26 +3662,26 @@
                 let eventsHtml = '';
                 dayEvents.slice(0, 2).forEach(function (ev) {
                     eventsHtml += `
-                        <div class="px-1.5 py-0.5 rounded bg-emerald-100/90 text-emerald-900 font-semibold text-[10px] leading-tight break-words border border-emerald-200/80">
+                        <div class="px-1 sm:px-1.5 py-0.5 rounded bg-emerald-100/90 text-emerald-900 font-semibold text-[9px] sm:text-[10px] leading-tight truncate sm:whitespace-normal sm:break-words border border-emerald-200/80">
                             ${escapeHtml(ev.start_time)} ${escapeHtml(ev.title)}
                         </div>
                     `;
                 });
                 if (dayEvents.length > 2) {
-                    eventsHtml += `<div class="text-[10px] font-bold text-emerald-700 pl-1">+${dayEvents.length - 2} kegiatan lain</div>`;
+                    eventsHtml += `<div class="text-[9px] sm:text-[10px] font-bold text-emerald-700 pl-0.5 sm:pl-1 truncate">+${dayEvents.length - 2} kegiatan</div>`;
                 }
 
                 html += `
                     <button
                         type="button"
                         onclick="selectDashboardCalendarDate('${isoStr}')"
-                        class="min-h-[82px] p-1.5 text-left flex flex-col justify-between transition cursor-pointer ${cellBg}"
+                        class="min-h-[60px] sm:min-h-[82px] p-1 sm:p-1.5 text-left flex flex-col justify-between transition cursor-pointer overflow-hidden min-w-0 ${cellBg}"
                     >
                         <div class="flex items-center justify-between w-full">
                             <span class="text-xs font-bold ${badgeNumberClass}">${day}</span>
-                            ${dayEvents.length > 0 ? `<span class="w-2 h-2 rounded-full bg-emerald-500"></span>` : ''}
+                            ${dayEvents.length > 0 ? `<span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-500 shrink-0"></span>` : ''}
                         </div>
-                        <div class="space-y-1 mt-1 w-full">
+                        <div class="space-y-1 mt-1 w-full min-w-0">
                             ${eventsHtml}
                         </div>
                     </button>
