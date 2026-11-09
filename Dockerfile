@@ -46,9 +46,5 @@ RUN sed -i 's/\r$//' /var/www/html/docker-entrypoint.sh && chmod +x /var/www/htm
 # Expose port 80 untuk Apache
 EXPOSE 80
 
-# Healthcheck bawaan container
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost/up || exit 1
-
 # Jalankan entrypoint script saat container start
 ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
