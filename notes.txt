@@ -1,0 +1,54 @@
+aku ingin kamu jadi jadi senior fullstack web developer yang bisa design dan mengerti method design yang baik. 
+pastikan semua flow dan security app ini berjalan dengan baik.
+
+jadi di resource kamu buat 2 file dimana ada web landing page dan web management. 
+
+jadi web yang ingin kubuat adalah web keagamaan Buddha. 
+jadi warna utama untuk web ini harus merah maroon dan ada kuning emas. jangan pilih warna yang terlalu contrast. 
+
+buat webnya responsive. 
+
+baca dulu pertanyaan di bawah ini dan jawabannya
+Public Landing page
+1. Untuk kebutuh informsi bolehkan kami tau informasi umum vihara dengan lengkap ? 
+2. Apakah perlu menampilkan jadwal ibadah, puja bakti, meditasi, dan kegiatan keagamaan lainnya?
+3. Apakah perlu galeri foto dan video kegiatan vihara?
+4. Apakah perlu halaman artikel, berita, pengumuman, atau renungan Dharma?
+Management System (Internal) 
+1. Apa saja proses administrasi yang saat ini dilakukan secara manual?
+2. Dokumen apa saja yang perlu dikelola dan disimpan secara digital?
+3. Apakah ada contoh dokumen yang dapat kami gunakan untuk refrensi pembuatan sistem? 
+4. Apakah perlu alur persetujuan bertingkat untuk transaksi, dokumen, atau kegiatan?
+5. Siapa saja yang nantinya akan menggunakan sistem internal?
+
+jawabannya :
+
+Public Landing Page
+1. Wihara Mahabodhi Buddhist Centre. Jl. Seroja Timur No. 9-11 Semarang
+2. Perlu
+3. Perlu
+4. Perlu
+Managomont System (internal)
+1. Tanda Terima bantuan/barang/Surat. Ucapan terima kasih 
+2. Surat Masuk dan surat keluar serta dokumen2 rata2 format A4
+3. Dokumen umumnya seperti surat masuk. untul tanda terima juga yg umum.
+4. tidak
+5. admin dan 2 atau 3
+
+jadi ini adalah fitur yang wajib ada :
+FITUR WAJIB management web:
+1. buat tanda Terima bantuan/barang/Surat ( bisa di print & input excel) 
+2. Master Dokumen 
+3. Role management
+
+
+FITUR WAJIB PUBLIC LANDING PAGE:
+1. tampilan untuk jadwal ibadah, puja bakti, meditasi, dan kegiatan keagamaan (ini jangan static dari frontend tapi nanti bisa ditambahin dari backend)
+2. Tampilan galeri kegiatan 
+3. Berita kegiatan
+4. Fitur khusus (belom ada) 
+
+tolong buatkan web flow nya yang baik dan bagus. code nya juga rapih dan manageable. 
+
+untuk design landing page webnya minimalis tapi bagus dan elegan. tambahkan animasi agar tidak monton. untuk asset perlogoan pake dummy dulu aja.
+tapi untuk perlogoan di template surat gitu pake [logo] dulu gitu. 
