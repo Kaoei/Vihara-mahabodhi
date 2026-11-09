@@ -1,8 +1,11 @@
-# Gunakan PHP 8.4 Apache karena dependensi proyek (symfony/http-foundation v8.1.9) memerlukan PHP >= 8.4
+# Gunakan PHP 8.4 Apache
 FROM php:8.4-apache
 
 # Set working directory
 WORKDIR /var/www/html
+
+# Set ServerName globally untuk menghilangkan warning Apache AH00558
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 # Install dependencies sistem yang dibutuhkan untuk Laravel, SQLite, dan modul gambar/file
 RUN apt-get update && apt-get install -y \
@@ -20,10 +23,13 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Konfigurasi Apache DocumentRoot ke folder public Laravel menggunakan format ENV key=value
+# Konfigurasi Apache DocumentRoot ke folder public Laravel
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Izinkan .htaccess Override di direktori /var/www/html/public
+RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -31,7 +37,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Salin file proyek ke dalam container
 COPY . /var/www/html
 
-# Install dependensi PHP via Composer untuk production (abaikan batasan platform untuk keamanan environment docker)
+# Install dependensi PHP via Composer untuk production
 RUN composer install --no-dev --optimize-autoloader --no-interaction --ignore-platform-reqs
 
 # Pastikan entrypoint script memiliki line-ending UNIX dan executable
@@ -39,6 +45,10 @@ RUN sed -i 's/\r$//' /var/www/html/docker-entrypoint.sh && chmod +x /var/www/htm
 
 # Expose port 80 untuk Apache
 EXPOSE 80
+
+# Healthcheck bawaan container
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost/up || exit 1
 
 # Jalankan entrypoint script saat container start
 ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]

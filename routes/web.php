@@ -4,6 +4,10 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\ManagementController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/up', function () {
+    return response('OK', 200);
+});
+
 Route::get('/', [LandingController::class, 'index'])->name('landing');
 Route::get('/berita/{article:slug}', [LandingController::class, 'showArticle'])->name('landing.article');
 
