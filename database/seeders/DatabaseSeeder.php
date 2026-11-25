@@ -10,6 +10,7 @@ use App\Models\Receipt;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\ViharaProfile;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -47,11 +48,13 @@ class DatabaseSeeder extends Seeder
             ['slug' => 'pengurus'],
             [
                 'name' => 'Pengurus Kegiatan & Publikasi',
-                'description' => 'Mengelola pembaruan Jadwal Ibadah/Puja Bakti/Meditasi, Galeri Foto & Video, serta Artikel, Berita & Renungan Dharma pada halaman publik.',
-                'permissions' => ['manage_schedules', 'manage_galleries', 'manage_articles'],
+                'description' => 'Mengelola pembaruan Profil & Informasi Wihara, Jadwal Ibadah/Puja Bakti/Meditasi, Galeri Foto & Video, serta Artikel, Berita & Renungan Dharma pada halaman publik.',
+                'permissions' => ['manage_profile', 'manage_schedules', 'manage_galleries', 'manage_articles'],
                 'is_system' => false,
             ]
         );
+
+        ViharaProfile::current();
 
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@mahabodhi.or.id'],
@@ -119,7 +122,7 @@ class DatabaseSeeder extends Seeder
                 'quantity' => '25 Karung & 50 Buku',
                 'nominal' => 4750000,
                 'receiver_name' => 'Upasaka Dharmadi Wijaya',
-                'thank_you_message' => 'Anumodana atas penyerahan bantuan sembako beras dan buku Paritta Suci dari Ibu Ratna Dewi Halim. Bantuan ini sangat bermanfaat bagi kegiatan bakti sosial vihara serta menunjang kelancaran Puja Bakti umat di Dharmasala.',
+                'thank_you_message' => 'Anumodana atas penyerahan bantuan sembako beras dan buku Paritta Suci dari Ibu Ratna Dewi Halim. Bantuan ini sangat bermanfaat bagi kegiatan bakti sosial wihara serta menunjang kelancaran Puja Bakti umat di Dharmasala.',
                 'notes' => 'Barang telah disimpan di ruang logistik lantai 1 dan perpustakaan Dharma.',
                 'created_by' => $sekretarisUser->id,
             ],
@@ -158,7 +161,7 @@ class DatabaseSeeder extends Seeder
                 'recipient' => 'Ketua Pengurus Wihara Mahabodhi Buddhist Centre',
                 'paper_size' => 'A4',
                 'archive_code' => 'ARS-A4-SM-01',
-                'summary' => 'Surat undangan rapat koordinasi pembinaan umat Buddha dan penyelarasan jadwal kegiatan keagamaan lintas vihara di wilayah Kota Semarang. Berkas asli disimpan dalam map arsip A4 Sekretariat.',
+                'summary' => 'Surat undangan rapat koordinasi pembinaan umat Buddha dan penyelarasan jadwal kegiatan keagamaan lintas wihara di wilayah Kota Semarang. Berkas asli disimpan dalam map arsip A4 Sekretariat.',
                 'created_by' => $sekretarisUser->id,
             ],
             [
@@ -189,15 +192,15 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'document_number' => '005/DOK-A4/WMBC/X/2026',
-                'category' => 'Dokumen Umum A4',
+                'category' => 'SK / Piagam',
                 'title' => 'Pedoman Tata Tertib Dharmasala, Ruang Meditasi & Standar Administrasi Surat A4',
                 'document_date' => '2026-10-01',
                 'received_date' => '2026-10-01',
                 'sender' => 'Dewan Pengurus Wihara Mahabodhi Buddhist Centre',
-                'recipient' => 'Seluruh Pengurus, Petugas Sekretariat, dan Umat Vihara',
+                'recipient' => 'Seluruh Pengurus, Petugas Sekretariat, dan Umat Wihara',
                 'paper_size' => 'A4',
                 'archive_code' => 'ARS-A4-UM-01',
-                'summary' => 'Dokumen standar operasional vihara ukuran A4 yang memuat etika memasuki Dharmasala, ketenangan ruang meditasi, serta format baku penomoran surat masuk, surat keluar, dan tanda terima bantuan.',
+                'summary' => 'Dokumen standar operasional wihara ukuran A4 yang memuat etika memasuki Dharmasala, ketenangan ruang meditasi, serta format baku penomoran surat masuk, surat keluar, dan tanda terima bantuan.',
                 'created_by' => $adminUser->id,
             ],
         ];
@@ -455,7 +458,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Berita Kegiatan',
                 'author' => 'Sekretariat Wihara Mahabodhi',
                 'excerpt' => 'Wihara Mahabodhi Buddhist Centre Semarang mengundang seluruh umat untuk hadir dalam rangkaian Puja Bakti Kathina dan persembahan dana empat kebutuhan pokok Sangha.',
-                'content' => "Namo Buddhaya,\n\nBerakhirnya masa Vassa selama tiga bulan merupakan momen suci bagi umat Buddha untuk mempraktikkan Sanghadana pada perayaan Kathina Puja. Wihara Mahabodhi Buddhist Centre (Jl. Seroja Timur No. 9-11 Semarang) akan menyelenggarakan Puja Bakti Kathina yang dihadiri oleh anggota Bhikkhu Sangha.\n\nRangkaian acara meliputi Pindapatta pagi di halaman vihara, prosesi persembahan jubah dan kebutuhan pokok (Cattari Paccaya), Dhammadesana, serta pelimpahan jasa bagi para leluhur. Umat yang ingin berpartisipasi dalam dana barang maupun dana operasional dapat menghubungi Sekretariat Vihara.",
+                'content' => "Namo Buddhaya,\n\nBerakhirnya masa Vassa selama tiga bulan merupakan momen suci bagi umat Buddha untuk mempraktikkan Sanghadana pada perayaan Kathina Puja. Wihara Mahabodhi Buddhist Centre (Jl. Seroja Timur No. 9-11 Semarang) akan menyelenggarakan Puja Bakti Kathina yang dihadiri oleh anggota Bhikkhu Sangha.\n\nRangkaian acara meliputi Pindapatta pagi di halaman wihara, prosesi persembahan jubah dan kebutuhan pokok (Cattari Paccaya), Dhammadesana, serta pelimpahan jasa bagi para leluhur. Umat yang ingin berpartisipasi dalam dana barang maupun dana operasional dapat menghubungi Sekretariat Wihara.",
                 'cover_image' => 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?auto=format&fit=crop&w=1000&q=80',
                 'published_at' => now()->subDays(2),
                 'is_published' => true,
@@ -467,7 +470,7 @@ class DatabaseSeeder extends Seeder
                 'category' => 'Pengumuman',
                 'author' => 'Upasika Metta Kusuma',
                 'excerpt' => 'Untuk meningkatkan transparansi dan kerapian arsip, setiap penerimaan bantuan dana, barang, maupun surat kini dilengkapi Tanda Terima dan Surat Ucapan Terima Kasih resmi.',
-                'content' => "Dalam rangka menata administrasi Wihara Mahabodhi Buddhist Centre secara tertib, akuntabel, dan modern, Sekretariat Vihara kini menerapkan sistem pencatatan digital terpadu.\n\nSetiap penyerahan bantuan dana, barang bakti sosial, perlengkapan altar, maupun surat menyurat (format A4) akan langsung dicatat dan diterbitkan Tanda Terima resmi beserta Surat Ucapan Terima Kasih (Anumodana). Para donatur juga dapat meminta salinan cetak A4 langsung melalui petugas sekretariat yang bertugas.",
+                'content' => "Dalam rangka menata administrasi Wihara Mahabodhi Buddhist Centre secara tertib, akuntabel, dan modern, Sekretariat Wihara kini menerapkan sistem pencatatan digital terpadu.\n\nSetiap penyerahan bantuan dana, barang bakti sosial, perlengkapan altar, maupun surat menyurat (format A4) akan langsung dicatat dan diterbitkan Tanda Terima resmi beserta Surat Ucapan Terima Kasih (Anumodana). Para donatur juga dapat meminta salinan cetak A4 langsung melalui petugas sekretariat yang bertugas.",
                 'cover_image' => 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=80',
                 'published_at' => now()->subDay(),
                 'is_published' => true,

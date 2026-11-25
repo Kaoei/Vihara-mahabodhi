@@ -10,6 +10,7 @@ use App\Models\Receipt;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\ViharaProfile;
 use App\Services\ReceiptExcelService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -47,7 +48,7 @@ class ViharaSystemTest extends TestCase
         $response = $this->get(route('landing'));
 
         $response->assertStatus(200);
-        $response->assertSee('Vihara Mahabodhi Buddhist Centre');
+        $response->assertSee('Wihara Mahabodhi Buddhist Centre');
         $response->assertSee('Jl. Seroja Timur No. 9-11 Semarang');
         $response->assertSee('Puja Bakti Minggu Pagi Mahabodhi');
         $response->assertSee('Dokumentasi Penyalaan Pelita Dharma');
@@ -125,7 +126,7 @@ class ViharaSystemTest extends TestCase
             'receipt_type' => 'Bantuan Dana',
             'receipt_date' => '2026-10-27',
             'donor_name' => 'Bpk. Dharmaputra Wijaya',
-            'donor_institution' => 'Simpatisan Vihara Semarang',
+            'donor_institution' => 'Simpatisan Wihara Semarang',
             'donor_contact' => '08123456789',
             'item_name' => 'Dana Operasional Puja Bakti & Altar',
             'quantity' => '1 Paket Dana',
@@ -304,7 +305,7 @@ class ViharaSystemTest extends TestCase
         $user = User::factory()->create([
             'name' => 'Bhiksu Dharmavira',
             'email' => 'dharmavira@mahabodhi.or.id',
-            'position' => 'Kepala Vihara',
+            'position' => 'Kepala Wihara',
         ]);
 
         $response = $this->actingAs($user)->get(route('management.profile.edit'));
@@ -315,7 +316,7 @@ class ViharaSystemTest extends TestCase
         $updateResponse = $this->actingAs($user)->put(route('management.profile.update'), [
             'name' => 'Bhiksu Dharmavira Mahathera',
             'email' => 'dharmavira.new@mahabodhi.or.id',
-            'position' => 'Pimpinan Spiritual Vihara',
+            'position' => 'Pimpinan Spiritual Wihara',
             'phone' => '081299887766',
         ]);
 
@@ -324,7 +325,7 @@ class ViharaSystemTest extends TestCase
             'id' => $user->id,
             'name' => 'Bhiksu Dharmavira Mahathera',
             'email' => 'dharmavira.new@mahabodhi.or.id',
-            'position' => 'Pimpinan Spiritual Vihara',
+            'position' => 'Pimpinan Spiritual Wihara',
             'phone' => '081299887766',
         ]);
     }
@@ -340,8 +341,8 @@ class ViharaSystemTest extends TestCase
         // 1. Overview dashboard shows Calendar and does not show Total Nominal or Akses Cepat
         $dashboardResponse = $this->actingAs($admin)->get(route('management.dashboard'));
         $dashboardResponse->assertStatus(200);
-        $dashboardResponse->assertSee('Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Vihara', false);
-        $dashboardResponse->assertDontSee('Akses Cepat Pengurus Vihara');
+        $dashboardResponse->assertSee('Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Wihara', false);
+        $dashboardResponse->assertDontSee('Akses Cepat Pengurus Wihara');
         $dashboardResponse->assertDontSee('Total Nominal:');
 
         // 2. Photo Upload via file
@@ -376,5 +377,81 @@ class ViharaSystemTest extends TestCase
             'media_url' => 'https://www.youtube.com/embed/dQw4w9WgXcQ',
             'thumbnail_url' => 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
         ]);
+    }
+
+    public function test_admin_can_edit_wihara_profile_and_manage_landing_info_cards(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        // 1. Update main Wihara profile
+        $updateResp = $this->actingAs($admin)->put(route('management.vihara-profile.update'), [
+            'name' => 'Wihara Mahabodhi Buddhist Centre Semarang Baru',
+            'short_name' => 'Wihara Mahabodhi Baru',
+            'tagline' => 'Cahaya Dhamma & Cinta Kasih Universal',
+            'about' => 'Deskripsi terbaru profil Wihara Mahabodhi yang diperbarui dari dashboard.',
+            'address_short' => 'Jl. Seroja Timur No. 9-11 Semarang Tengah',
+            'address' => 'Jl. Seroja Timur No. 9-11, Karangkidul, Semarang Tengah 50136',
+            'phone' => '(024) 841-5509',
+            'email' => 'info@mahabodhi.or.id',
+            'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
+            'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
+            'default_signer_name' => 'Upasaka Dharmadi Wijaya',
+        ]);
+
+        $updateResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
+        $this->assertDatabaseHas('vihara_profiles', [
+            'name' => 'Wihara Mahabodhi Buddhist Centre Semarang Baru',
+            'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
+            'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
+            'default_signer_name' => 'Upasaka Dharmadi Wijaya',
+        ]);
+
+        $mgmtDashboard = $this->actingAs($admin)->get(route('management.dashboard', ['tab' => 'vihara-profile']));
+        $mgmtDashboard->assertStatus(200);
+        $mgmtDashboard->assertSee('Edit Penandatangan');
+        $mgmtDashboard->assertSee('Upasaka Dharmadi Wijaya');
+
+        // 2. Add a new facility / information card
+        $createPage = $this->actingAs($admin)->get(route('management.vihara-profile.facilities.create'));
+        $createPage->assertStatus(200);
+
+        $storeResp = $this->actingAs($admin)->post(route('management.vihara-profile.facilities.store'), [
+            'title' => 'Sekolah Minggu Buddhis',
+            'description' => 'Pembinaan karakter dan ajaran Dhamma untuk anak-anak dan remaja setiap hari Minggu.',
+            'icon' => 'fa-graduation-cap',
+        ]);
+        $storeResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
+
+        $profile = ViharaProfile::current()->fresh();
+        $addedFacility = collect($profile->facilities)->firstWhere('title', 'Sekolah Minggu Buddhis');
+        $this->assertNotNull($addedFacility);
+        $facilityId = $addedFacility['id'];
+
+        // 3. Edit the newly added facility / information card
+        $editPage = $this->actingAs($admin)->get(route('management.vihara-profile.facilities.edit', $facilityId));
+        $editPage->assertStatus(200);
+
+        $editResp = $this->actingAs($admin)->put(route('management.vihara-profile.facilities.update', $facilityId), [
+            'title' => 'Sekolah Minggu Buddhis Mahabodhi',
+            'description' => 'Kelas Dhamma anak dan remaja setiap Minggu pagi pukul 09.00 WIB.',
+            'icon' => 'fa-users',
+        ]);
+        $editResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
+
+        // 4. Verify updated profile and new card appear on the public landing page
+        $landingResp = $this->get(route('landing'));
+        $landingResp->assertStatus(200);
+        $landingResp->assertSee('Wihara Mahabodhi Buddhist Centre Semarang Baru');
+        $landingResp->assertSee('Deskripsi terbaru profil Wihara Mahabodhi yang diperbarui dari dashboard.');
+        $landingResp->assertSee('Setiap Hari: 06.30 – 21.00 WIB');
+        $landingResp->assertSee('Sekolah Minggu Buddhis Mahabodhi');
+        $landingResp->assertSee('Kelas Dhamma anak dan remaja setiap Minggu pagi pukul 09.00 WIB.');
+
+        // 5. Delete the facility / information card
+        $deleteResp = $this->actingAs($admin)->delete(route('management.vihara-profile.facilities.destroy', $facilityId));
+        $deleteResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
+
+        $landingAfterDelete = $this->get(route('landing'));
+        $landingAfterDelete->assertDontSee('Sekolah Minggu Buddhis Mahabodhi');
     }
 }

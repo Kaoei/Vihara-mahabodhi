@@ -19,7 +19,7 @@ class DocumentFactory extends Factory
     {
         return [
             'document_number' => fake()->unique()->numerify('###').'/SM/WMBC/X/2026',
-            'category' => fake()->randomElement(['Surat Masuk', 'Surat Keluar', 'Dokumen Umum A4']),
+            'category' => fake()->randomElement(['Surat Masuk', 'Surat Keluar', 'SK / Piagam']),
             'title' => fake()->sentence(5),
             'document_date' => now()->toDateString(),
             'received_date' => now()->toDateString(),

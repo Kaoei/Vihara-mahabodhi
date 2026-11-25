@@ -31,7 +31,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'role_id' => null,
-            'position' => 'Pengurus Vihara',
+            'position' => 'Pengurus Wihara',
             'phone' => '0812'.fake()->numerify('########'),
             'is_active' => true,
             'remember_token' => Str::random(10),
@@ -58,7 +58,7 @@ class UserFactory extends Factory
                 ['slug' => 'admin'],
                 [
                     'name' => 'Administrator Utama',
-                    'description' => 'Akses penuh seluruh sistem manajemen dan landing page vihara.',
+                    'description' => 'Akses penuh seluruh sistem manajemen dan landing page wihara.',
                     'permissions' => array_keys(Role::availablePermissions()),
                     'is_system' => true,
                 ]
@@ -66,7 +66,7 @@ class UserFactory extends Factory
 
             return [
                 'role_id' => $role->id,
-                'position' => 'Ketua Sekretariat Vihara',
+                'position' => 'Ketua Sekretariat Wihara',
             ];
         });
     }

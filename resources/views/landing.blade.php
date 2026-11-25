@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>
         @if (!empty($isArticleDetail) && isset($article))
-            {{ $article->title }} — {{ $vihara['name'] ?? 'Vihara Mahabodhi Buddhist Centre' }}
+            {{ $article->title }} — {{ $vihara['name'] ?? 'Wihara Mahabodhi Buddhist Centre' }}
         @else
-            {{ $vihara['name'] ?? 'Vihara Mahabodhi Buddhist Centre' }} — Semarang
+            {{ $vihara['name'] ?? 'Wihara Mahabodhi Buddhist Centre' }} — Semarang
         @endif
     </title>
-    <meta name="description" content="{{ $vihara['about'] ?? 'Vihara Mahabodhi Buddhist Centre, Jl. Seroja Timur No. 9-11 Semarang.' }}">
+    <meta name="description" content="{{ $vihara['about'] ?? 'Wihara Mahabodhi Buddhist Centre, Jl. Seroja Timur No. 9-11 Semarang.' }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -114,7 +114,7 @@
                     Namo Tassa Bhagavato Arahato Sammāsambuddhassa
                 </span>
                 <div class="text-xs text-slate-500 font-medium">
-                    Vihara Mahabodhi Buddhist Centre &bull; Semarang
+                    Wihara Mahabodhi Buddhist Centre &bull; Semarang
                 </div>
             </div>
 
@@ -151,14 +151,14 @@
             <a href="{{ route('landing') }}" class="flex items-center gap-2.5 sm:gap-3 min-w-0 group">
                 <i class="fa-solid fa-dharmachakra text-gold-500 text-2xl sm:text-3xl shrink-0 transition-transform duration-500 group-hover:rotate-45"></i>
                 <div class="min-w-0">
-                    <span class="block text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none truncate">Vihara Mahabodhi</span>
+                    <span class="block text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none truncate">{{ $vihara['short_name'] ?? 'Wihara Mahabodhi' }}</span>
                     <span class="block text-[11px] sm:text-xs text-slate-500 mt-1 truncate">Buddhist Centre &bull; Semarang</span>
                 </div>
             </a>
 
             <!-- Desktop Navigation (Clean text links without icons, Kontak moved to Floating Button) -->
             <nav class="hidden lg:flex items-center gap-8 text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
-                <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="hover:text-gold-600 transition">Profil Vihara</a>
+                <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="hover:text-gold-600 transition">Profil Wihara</a>
                 <a href="{{ !empty($isArticleDetail) ? route('landing').'#jadwal' : '#jadwal' }}" class="hover:text-gold-600 transition">Jadwal Ibadah</a>
                 <a href="{{ !empty($isArticleDetail) ? route('landing').'#galeri' : '#galeri' }}" class="hover:text-gold-600 transition">Galeri Kegiatan</a>
                 <a href="{{ !empty($isArticleDetail) ? route('landing').'#berita' : '#berita' }}" class="hover:text-gold-600 transition">Berita &amp; Renungan</a>
@@ -178,7 +178,7 @@
 
         <!-- Mobile Menu (Clean text links without icons) -->
         <div id="mobileMenuPanel" class="hidden lg:hidden bg-white border-b border-slate-200 px-4 pt-3 pb-4 mt-3 space-y-1.5 text-xs sm:text-sm font-semibold">
-            <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="block px-3 py-2.5 rounded-lg text-slate-700 hover:bg-gold-50 hover:text-gold-700">Profil Vihara</a>
+            <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="block px-3 py-2.5 rounded-lg text-slate-700 hover:bg-gold-50 hover:text-gold-700">Profil Wihara</a>
             <a href="{{ !empty($isArticleDetail) ? route('landing').'#jadwal' : '#jadwal' }}" class="block px-3 py-2.5 rounded-lg text-slate-700 hover:bg-gold-50 hover:text-gold-700">Jadwal Ibadah &amp; Meditasi</a>
             <a href="{{ !empty($isArticleDetail) ? route('landing').'#galeri' : '#galeri' }}" class="block px-3 py-2.5 rounded-lg text-slate-700 hover:bg-gold-50 hover:text-gold-700">Galeri Kegiatan</a>
             <a href="{{ !empty($isArticleDetail) ? route('landing').'#berita' : '#berita' }}" class="block px-3 py-2.5 rounded-lg text-slate-700 hover:bg-gold-50 hover:text-gold-700">Berita &amp; Renungan Dharma</a>
@@ -306,7 +306,7 @@
                     </div>
                     <div class="min-w-0">
                         <div class="text-base sm:text-2xl font-bold text-gold-400">{{ $galleries->count() }} Media</div>
-                        <div class="text-[11px] sm:text-xs text-slate-200 mt-0.5">Galeri Vihara</div>
+                        <div class="text-[11px] sm:text-xs text-slate-200 mt-0.5">Galeri Wihara</div>
                     </div>
                     <div class="min-w-0">
                         <div class="text-base sm:text-2xl font-bold text-gold-400">07.00–21.00</div>
@@ -317,18 +317,18 @@
         </div>
     </section>
 
-    <!-- Section 1: Profil & Fasilitas Vihara -->
+    <!-- Section 1: Profil & Fasilitas Wihara -->
     <section id="profil" class="py-14 sm:py-20 bg-white border-b border-slate-200/80 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 <div class="lg:col-span-5 space-y-4 reveal-on-scroll min-w-0">
                     <span class="inline-block text-xs font-bold uppercase tracking-wider text-gold-600">
-                        Profil &amp; Informasi Vihara
+                        Profil &amp; Informasi Wihara
                     </span>
                     <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
-                        Vihara Mahabodhi Semarang
+                        {{ $vihara['name'] }}
                     </h2>
-                    <p class="text-sm text-slate-600 leading-relaxed">
+                    <p class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
                         {{ $vihara['about'] }}
                     </p>
 
@@ -336,7 +336,7 @@
                         <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 py-1.5 border-b border-gold-200/50">
                             <span class="text-slate-500 inline-flex items-center gap-1.5 shrink-0">
                                 <i class="fa-solid fa-location-dot text-gold-600 w-3.5 text-center"></i>
-                                <span>Lokasi Vihara</span>
+                                <span>Lokasi Wihara</span>
                             </span>
                             <span class="font-semibold text-slate-900 sm:text-right break-words">{{ $vihara['address_short'] }}</span>
                         </div>
@@ -345,7 +345,7 @@
                                 <i class="fa-regular fa-clock text-gold-600 w-3.5 text-center"></i>
                                 <span>Jam Operasional</span>
                             </span>
-                            <span class="font-semibold text-slate-900 sm:text-right">07.00 – 21.00 WIB</span>
+                            <span class="font-semibold text-slate-900 sm:text-right break-words">{{ $vihara['operational_hours'] }}</span>
                         </div>
                         <div class="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-4 py-1.5">
                             <span class="text-slate-500 inline-flex items-center gap-1.5 shrink-0">
@@ -362,7 +362,7 @@
                     @foreach ($vihara['facilities'] as $index => $facility)
                         <div class="reveal-on-scroll p-5 sm:p-6 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-gold-300 hover:shadow-md transition duration-300 space-y-2.5 min-w-0">
                             <div class="w-10 h-10 rounded-xl bg-gold-500 text-white flex items-center justify-center text-sm shadow-2xs shrink-0">
-                                <i class="fa-solid {{ $facilityIcons[$index % count($facilityIcons)] }}"></i>
+                                <i class="fa-solid {{ $facility['icon'] ?? $facilityIcons[$index % count($facilityIcons)] }}"></i>
                             </div>
                             <h3 class="text-base font-bold text-slate-900 leading-snug break-words">{{ $facility['title'] }}</h3>
                             <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">{{ $facility['description'] }}</p>
@@ -378,7 +378,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 reveal-on-scroll">
                 <div class="space-y-1.5 min-w-0">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Agenda Kegiatan Vihara</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Agenda Kegiatan Wihara</span>
                     <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Jadwal Ibadah &amp; Meditasi
                     </h2>
@@ -455,7 +455,7 @@
                 <div class="space-y-1.5 min-w-0">
                     <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Dokumentasi Visual</span>
                     <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
-                        Galeri Kegiatan Vihara
+                        Galeri Kegiatan Wihara
                     </h2>
                 </div>
 
@@ -494,7 +494,7 @@
                         data-category="{{ $item->category }}"
                         data-description="{{ $item->description }}"
                         data-url="{{ $item->media_url }}"
-                        data-date="{{ $item->event_date ? $item->event_date->format('d M Y') : 'Dokumentasi Vihara' }}"
+                        data-date="{{ $item->event_date ? $item->event_date->format('d M Y') : 'Dokumentasi Wihara' }}"
                         class="gallery-card reveal-on-scroll group cursor-pointer bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover:border-gold-300 hover:-translate-y-1 shadow-2xs hover:shadow-md transition duration-300 flex flex-col justify-between"
                     >
                         <div class="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -546,7 +546,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 reveal-on-scroll">
                 <div class="space-y-1.5 min-w-0">
-                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Publikasi &amp; Warta Vihara</span>
+                    <span class="text-xs font-bold uppercase tracking-wider text-gold-600">Publikasi &amp; Warta Wihara</span>
                     <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
                         Berita &amp; Renungan Dharma
                     </h2>
@@ -667,7 +667,7 @@
                     </div>
                     <div>
                         <div class="font-bold text-slate-900 text-sm">Kontak Sekretariat</div>
-                        <div class="text-[11px] text-gold-600 font-medium">Vihara Mahabodhi Semarang</div>
+                        <div class="text-[11px] text-gold-600 font-medium">Wihara Mahabodhi Semarang</div>
                     </div>
                 </div>
                 <button type="button" id="closeFloatingContactBtn" class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition">
@@ -709,8 +709,8 @@
         <button
             type="button"
             id="floatingContactBtn"
-            aria-label="Kontak Vihara"
-            title="Kontak Sekretariat Vihara"
+            aria-label="Kontak Wihara"
+            title="Kontak Sekretariat Wihara"
             class="w-14 h-14 rounded-full bg-gold-500 hover:bg-gold-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex items-center justify-center ring-4 ring-gold-400/30"
         >
             <i class="fa-solid fa-comments text-xl"></i>
@@ -721,7 +721,7 @@
     <footer id="kontak" class="bg-slate-950 text-slate-300 pt-14 pb-10 border-t border-slate-800 w-full overflow-hidden">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
             <div class="grid grid-cols-1 md:grid-cols-12 gap-8 pb-10 border-b border-slate-800/80">
-                <!-- Col 1: Vihara Brand & About -->
+                <!-- Col 1: Wihara Brand & About -->
                 <div class="md:col-span-5 space-y-4">
                     <div class="flex items-center gap-3">
                         <i class="fa-solid fa-dharmachakra text-gold-400 text-2xl shrink-0"></i>

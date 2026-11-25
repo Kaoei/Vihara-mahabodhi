@@ -47,6 +47,15 @@ Route::middleware('permission')->group(function (): void {
         Route::delete('/management/marriages/{marriage}', [ManagementController::class, 'destroyMarriage'])->name('management.marriages.destroy');
     });
 
+    Route::middleware('permission:manage_profile')->group(function (): void {
+        Route::put('/management/vihara-profile', [ManagementController::class, 'updateViharaProfile'])->name('management.vihara-profile.update');
+        Route::get('/management/vihara-profile/facilities/create', [ManagementController::class, 'createViharaFacility'])->name('management.vihara-profile.facilities.create');
+        Route::post('/management/vihara-profile/facilities', [ManagementController::class, 'storeViharaFacility'])->name('management.vihara-profile.facilities.store');
+        Route::get('/management/vihara-profile/facilities/{facilityId}/edit', [ManagementController::class, 'editViharaFacility'])->name('management.vihara-profile.facilities.edit');
+        Route::put('/management/vihara-profile/facilities/{facilityId}', [ManagementController::class, 'updateViharaFacility'])->name('management.vihara-profile.facilities.update');
+        Route::delete('/management/vihara-profile/facilities/{facilityId}', [ManagementController::class, 'destroyViharaFacility'])->name('management.vihara-profile.facilities.destroy');
+    });
+
     Route::middleware('permission:manage_schedules')->group(function (): void {
         Route::get('/management/schedules/create', [ManagementController::class, 'createSchedule'])->name('management.schedules.create');
         Route::post('/management/schedules', [ManagementController::class, 'storeSchedule'])->name('management.schedules.store');

@@ -29,7 +29,7 @@ class ReceiptFactory extends Factory
             'nominal' => 1500000,
             'receiver_name' => 'Sekretariat Wihara Mahabodhi',
             'thank_you_message' => 'Anumodana atas kebajikan dan kemurahan hati Bapak/Ibu. Semoga semua makhluk berbahagia.',
-            'notes' => 'Diterima dalam keadaan baik di Sekretariat Vihara.',
+            'notes' => 'Diterima dalam keadaan baik di Sekretariat Wihara.',
         ];
     }
 }

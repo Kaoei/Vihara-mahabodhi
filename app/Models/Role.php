@@ -28,6 +28,7 @@ class Role extends Model
             'manage_schedules' => 'Kelola Jadwal Ibadah, Puja Bakti & Meditasi',
             'manage_galleries' => 'Kelola Galeri Foto & Video Kegiatan',
             'manage_articles' => 'Kelola Berita, Pengumuman & Renungan Dharma',
+            'manage_profile' => 'Kelola Profil & Informasi Wihara (Landing Page)',
             'manage_roles' => 'Kelola Role & Hak Akses Pengguna',
         ];
     }

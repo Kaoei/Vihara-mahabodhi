@@ -10,6 +10,7 @@ use App\Models\Receipt;
 use App\Models\Role;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Models\ViharaProfile;
 use App\Services\ReceiptExcelService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -91,6 +92,8 @@ class ManagementController extends Controller
             'total_roles' => $roles->count(),
         ];
 
+        $viharaProfile = ViharaProfile::current();
+
         return view('management', array_merge([
             'isLoginPage' => false,
             'pageMode' => 'index',
@@ -109,6 +112,8 @@ class ManagementController extends Controller
             'articles' => $articles,
             'roles' => $roles,
             'users' => $users,
+            'viharaProfile' => $viharaProfile,
+            'availableFacilityIcons' => ViharaProfile::availableIcons(),
             'availablePermissions' => Role::availablePermissions(),
         ], $overrides));
     }
@@ -460,7 +465,7 @@ class ManagementController extends Controller
     {
         $validated = $request->validate([
             'document_number' => ['required', 'string', 'max:100', 'unique:documents,document_number'],
-            'category' => ['required', 'string', Rule::in(['Surat Masuk', 'Surat Keluar', 'Dokumen Umum A4', 'SK / Piagam'])],
+            'category' => ['required', 'string', Rule::in(['Surat Masuk', 'Surat Keluar', 'SK / Piagam'])],
             'title' => ['required', 'string', 'max:255'],
             'document_date' => ['required', 'date'],
             'received_date' => ['nullable', 'date'],
@@ -511,7 +516,7 @@ class ManagementController extends Controller
     {
         $validated = $request->validate([
             'document_number' => ['required', 'string', 'max:100', Rule::unique('documents', 'document_number')->ignore($document->id)],
-            'category' => ['required', 'string', Rule::in(['Surat Masuk', 'Surat Keluar', 'Dokumen Umum A4', 'SK / Piagam'])],
+            'category' => ['required', 'string', Rule::in(['Surat Masuk', 'Surat Keluar', 'SK / Piagam'])],
             'title' => ['required', 'string', 'max:255'],
             'document_date' => ['required', 'date'],
             'received_date' => ['nullable', 'date'],
@@ -1328,7 +1333,7 @@ class ManagementController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role_id' => (int) $validated['role_id'],
-            'position' => $validated['position'] ?? 'Pengurus Vihara',
+            'position' => $validated['position'] ?? 'Pengurus Wihara',
             'phone' => $validated['phone'] ?? null,
             'is_active' => $request->boolean('is_active', true),
             'email_verified_at' => now(),
@@ -1436,5 +1441,154 @@ class ManagementController extends Controller
         return redirect()
             ->route('management.dashboard', ['tab' => 'profile'])
             ->with('success', 'Konfigurasi akun dan profil Anda berhasil diperbarui.');
+    }
+
+    /**
+     * Update the public landing page Wihara profile and contact information.
+     */
+    public function updateViharaProfile(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'short_name' => ['required', 'string', 'max:120'],
+            'tagline' => ['required', 'string', 'max:255'],
+            'about' => ['required', 'string', 'max:3000'],
+            'address_short' => ['required', 'string', 'max:255'],
+            'address' => ['required', 'string', 'max:500'],
+            'phone' => ['required', 'string', 'max:120'],
+            'email' => ['required', 'email', 'max:150'],
+            'operational_hours' => ['required', 'string', 'max:255'],
+            'default_signer_title' => ['nullable', 'string', 'max:150'],
+            'default_signer_name' => ['nullable', 'string', 'max:150'],
+        ]);
+
+        $profile = ViharaProfile::current();
+        $profile->update($validated);
+
+        return redirect()
+            ->route('management.dashboard', ['tab' => 'vihara-profile'])
+            ->with('success', 'Profil dan informasi utama wihara pada halaman landing page berhasil diperbarui.');
+    }
+
+    /**
+     * Show the create form for a new Wihara facility / information card.
+     */
+    public function createViharaFacility(): View
+    {
+        return $this->renderManagementView([
+            'pageMode' => 'create_vihara_facility',
+            'activeTab' => 'vihara-profile',
+        ]);
+    }
+
+    /**
+     * Store a newly created Wihara facility / information card.
+     */
+    public function storeViharaFacility(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:150'],
+            'description' => ['required', 'string', 'max:1000'],
+            'icon' => ['required', 'string', Rule::in(array_keys(ViharaProfile::availableIcons()))],
+        ]);
+
+        $profile = ViharaProfile::current();
+        $facilities = is_array($profile->facilities) ? $profile->facilities : [];
+
+        $facilities[] = [
+            'id' => Str::slug($validated['title']).'-'.Str::lower(Str::random(4)),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'icon' => $validated['icon'],
+        ];
+
+        $profile->update(['facilities' => array_values($facilities)]);
+
+        return redirect()
+            ->route('management.dashboard', ['tab' => 'vihara-profile'])
+            ->with('success', "Informasi/fasilitas '{$validated['title']}' berhasil ditambahkan ke halaman landing page.");
+    }
+
+    /**
+     * Show the edit form for an existing Wihara facility / information card.
+     */
+    public function editViharaFacility(string $facilityId): View
+    {
+        $profile = ViharaProfile::current();
+        $facilities = is_array($profile->facilities) ? $profile->facilities : [];
+        $facility = collect($facilities)->firstWhere('id', $facilityId);
+
+        abort_if(! is_array($facility), 404);
+
+        return $this->renderManagementView([
+            'pageMode' => 'edit_vihara_facility',
+            'activeTab' => 'vihara-profile',
+            'editingRecord' => (object) $facility,
+        ]);
+    }
+
+    /**
+     * Update an existing Wihara facility / information card.
+     */
+    public function updateViharaFacility(Request $request, string $facilityId): RedirectResponse
+    {
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:150'],
+            'description' => ['required', 'string', 'max:1000'],
+            'icon' => ['required', 'string', Rule::in(array_keys(ViharaProfile::availableIcons()))],
+        ]);
+
+        $profile = ViharaProfile::current();
+        $facilities = is_array($profile->facilities) ? $profile->facilities : [];
+        $found = false;
+
+        foreach ($facilities as $index => $item) {
+            if (($item['id'] ?? null) === $facilityId) {
+                $facilities[$index] = [
+                    'id' => $facilityId,
+                    'title' => $validated['title'],
+                    'description' => $validated['description'],
+                    'icon' => $validated['icon'],
+                ];
+                $found = true;
+                break;
+            }
+        }
+
+        abort_if(! $found, 404);
+
+        $profile->update(['facilities' => array_values($facilities)]);
+
+        return redirect()
+            ->route('management.dashboard', ['tab' => 'vihara-profile'])
+            ->with('success', "Informasi/fasilitas '{$validated['title']}' berhasil diperbarui.");
+    }
+
+    /**
+     * Delete a Wihara facility / information card.
+     */
+    public function destroyViharaFacility(string $facilityId): RedirectResponse
+    {
+        $profile = ViharaProfile::current();
+        $facilities = is_array($profile->facilities) ? $profile->facilities : [];
+        $removedTitle = null;
+
+        $remaining = [];
+        foreach ($facilities as $item) {
+            if (($item['id'] ?? null) === $facilityId) {
+                $removedTitle = $item['title'] ?? 'Informasi';
+
+                continue;
+            }
+            $remaining[] = $item;
+        }
+
+        abort_if($removedTitle === null, 404);
+
+        $profile->update(['facilities' => array_values($remaining)]);
+
+        return redirect()
+            ->route('management.dashboard', ['tab' => 'vihara-profile'])
+            ->with('success', "Informasi/fasilitas '{$removedTitle}' berhasil dihapus dari landing page.");
     }
 }

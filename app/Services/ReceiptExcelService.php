@@ -150,7 +150,7 @@ class ReceiptExcelService
                 'Ibu Liana Wijaya',
                 'Donatur Bakti Sosial',
                 '081398765432',
-                'Beras 100 Kg & Minyak Goreng 20 Liter untuk Baksos Vihara',
+                'Beras 100 Kg & Minyak Goreng 20 Liter untuk Baksos Wihara',
                 '10 Karung & 2 Dus',
                 2200000,
                 'Upasaka Dharmadi Wijaya',
@@ -360,8 +360,8 @@ class ReceiptExcelService
                 ? (float) $rawNominal
                 : null;
 
-            $donorFinal = $donorName !== '' ? $donorName : 'Donatur / Simpatisan Vihara';
-            $itemFinal = $itemName !== '' ? $itemName : 'Bantuan Operasional Vihara';
+            $donorFinal = $donorName !== '' ? $donorName : 'Donatur / Simpatisan Wihara';
+            $itemFinal = $itemName !== '' ? $itemName : 'Bantuan Operasional Wihara';
 
             $thankYou = trim($row[10] ?? '');
             if ($thankYou === '') {

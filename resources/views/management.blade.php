@@ -252,6 +252,7 @@
         $canSchedules = $currentUser?->hasPermission('manage_schedules') ?? false;
         $canGalleries = $currentUser?->hasPermission('manage_galleries') ?? false;
         $canArticles = $currentUser?->hasPermission('manage_articles') ?? false;
+        $canViharaProfile = $currentUser?->hasPermission('manage_profile') ?? false;
         $canRoles = $currentUser?->hasPermission('manage_roles') ?? false;
         $currentMode = $pageMode ?? 'index';
         $currentTab = $activeTab ?? 'overview';
@@ -350,11 +351,24 @@
                 @endif
 
                 <!-- Group: Publikasi Landing Page -->
-                @if ($canSchedules || $canGalleries || $canArticles)
+                @if ($canViharaProfile || $canSchedules || $canGalleries || $canArticles)
                 <div class="space-y-1">
                     <div class="px-3 pb-1.5 text-xs font-bold uppercase tracking-wider text-slate-400">
                         Konten Landing Page
                     </div>
+                    @if ($canViharaProfile)
+                        @if ($currentMode === 'index')
+                            <button type="button" data-tab-target="vihara-profile" class="mgmt-tab-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition text-sm font-semibold">
+                                <i class="fa-solid fa-landmark w-5 text-center text-base shrink-0"></i>
+                                <span class="leading-snug">Profil &amp; Informasi Wihara</span>
+                            </button>
+                        @else
+                            <a href="{{ route('management.dashboard', ['tab' => 'vihara-profile']) }}" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition text-sm font-semibold {{ $currentTab === 'vihara-profile' ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-300 hover:bg-slate-800/80 hover:text-white' }}">
+                                <i class="fa-solid fa-landmark w-5 text-center text-base shrink-0"></i>
+                                <span class="leading-snug">Profil &amp; Informasi Wihara</span>
+                            </a>
+                        @endif
+                    @endif
                     @if ($canSchedules)
                         @if ($currentMode === 'index')
                             <button type="button" data-tab-target="schedules" class="mgmt-tab-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-left transition text-sm font-semibold">
@@ -467,7 +481,7 @@
                     <!-- Dropdown Menu -->
                     <div id="profileDropdownMenu" class="hidden absolute right-0 top-full mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] rounded-2xl bg-white shadow-xl border border-slate-200 py-2 z-50 text-xs">
                         <div class="px-4 py-3.5 border-b border-slate-100 bg-slate-50/70 rounded-t-xl">
-                            <div class="font-bold text-slate-900 text-sm truncate">{{ $currentUser->name ?? 'Pengurus Vihara' }}</div>
+                            <div class="font-bold text-slate-900 text-sm truncate">{{ $currentUser->name ?? 'Pengurus Wihara' }}</div>
                             <div class="text-slate-500 text-xs truncate mt-0.5">{{ $currentUser->email ?? '' }}</div>
                             <span class="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg bg-slate-200 text-slate-800 font-semibold text-xs">
                                 <i class="fa-solid fa-shield-halved text-[10px]"></i>
@@ -668,7 +682,7 @@
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori Dokumen *</label>
                                         <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                            @foreach (['Surat Masuk', 'Surat Keluar', 'Dokumen Umum A4', 'SK / Piagam'] as $opt)
+                                            @foreach (['Surat Masuk', 'Surat Keluar', 'SK / Piagam'] as $opt)
                                                 <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Surat Masuk') === $opt)>{{ $opt }}</option>
                                             @endforeach
                                         </select>
@@ -1290,7 +1304,7 @@
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan</label>
-                                        <input type="text" name="position" value="{{ old('position', $isEdit ? $editingRecord->position : 'Pengurus Vihara') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
+                                        <input type="text" name="position" value="{{ old('position', $isEdit ? $editingRecord->position : 'Pengurus Wihara') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">No. Telepon</label>
@@ -1304,6 +1318,80 @@
                                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
                                         <span>Simpan Akun Pengurus</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    @elseif ($currentMode === 'create_vihara_facility' || $currentMode === 'edit_vihara_facility')
+                        @php($isEdit = $currentMode === 'edit_vihara_facility' && $editingRecord)
+                        <div class="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-landmark text-amber-600"></i>
+                                        <span>{{ $isEdit ? 'Edit Informasi / Fasilitas Wihara' : 'Tambah Informasi / Fasilitas Wihara Baru' }}</span>
+                                    </h2>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Kartu informasi ini akan tampil langsung pada bagian Profil &amp; Informasi Wihara di halaman utama.</p>
+                                </div>
+                                <a href="{{ route('management.dashboard', ['tab' => 'vihara-profile']) }}" class="self-start sm:self-auto px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold shrink-0 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span>Kembali</span>
+                                </a>
+                            </div>
+
+                            <form
+                                method="POST"
+                                action="{{ $isEdit ? route('management.vihara-profile.facilities.update', $editingRecord->id) : route('management.vihara-profile.facilities.store') }}"
+                                class="space-y-4"
+                            >
+                                @csrf
+                                @if ($isEdit)
+                                    @method('PUT')
+                                @endif
+
+                                <div>
+                                    <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Judul Informasi / Fasilitas *</label>
+                                    <input
+                                        type="text"
+                                        name="title"
+                                        value="{{ old('title', $isEdit ? ($editingRecord->title ?? '') : '') }}"
+                                        required
+                                        placeholder="Contoh: Dharmasala Agung, Sekolah Minggu Buddhis, Klinik Sosial"
+                                        class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ikon Kartu *</label>
+                                    <select
+                                        name="icon"
+                                        required
+                                        class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                    >
+                                        @php($selectedIcon = old('icon', $isEdit ? ($editingRecord->icon ?? 'fa-hands-praying') : 'fa-hands-praying'))
+                                        @foreach ($availableFacilityIcons as $iconClass => $iconLabel)
+                                            <option value="{{ $iconClass }}" @selected($selectedIcon === $iconClass)>{{ $iconLabel }} ({{ $iconClass }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Deskripsi Lengkap *</label>
+                                    <textarea
+                                        name="description"
+                                        rows="4"
+                                        required
+                                        placeholder="Jelaskan fungsi, layanan, atau informasi penting dari fasilitas/bagian ini..."
+                                        class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                    >{{ old('description', $isEdit ? ($editingRecord->description ?? '') : '') }}</textarea>
+                                </div>
+
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
+                                    <a href="{{ route('management.dashboard', ['tab' => 'vihara-profile']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        <span>{{ $isEdit ? 'Simpan Perubahan' : 'Tambahkan ke Landing Page' }}</span>
                                     </button>
                                 </div>
                             </form>
@@ -1406,17 +1494,17 @@
                         </div>
 
                         <!-- ========================================================= -->
-                        <!-- KALENDER JADWAL IBADAH, PUJA BAKTI & KEGIATAN VIHARA      -->
+                        <!-- KALENDER JADWAL IBADAH, PUJA BAKTI & KEGIATAN WIHARA      -->
                         <!-- ========================================================= -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-5 overflow-hidden">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                                 <div>
                                     <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2.5">
                                         <i class="fa-solid fa-calendar-days text-emerald-600 text-lg shrink-0"></i>
-                                        <span class="break-words">Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Vihara</span>
+                                        <span class="break-words">Kalender Jadwal Ibadah, Puja Bakti &amp; Kegiatan Wihara</span>
                                     </h2>
                                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
-                                        Klik tanggal pada kalender untuk melihat rincian jadwal Puja Bakti, Meditasi, Kelas Dharma, dan Kegiatan Vihara.
+                                        Klik tanggal pada kalender untuk melihat rincian jadwal Puja Bakti, Meditasi, Kelas Dharma, dan Kegiatan Wihara.
                                     </p>
                                 </div>
                                 <div class="flex items-center flex-wrap gap-2">
@@ -1499,7 +1587,7 @@
                                             <i class="fa-solid fa-receipt text-amber-600 shrink-0"></i>
                                             <span class="break-words">Tanda Terima Bantuan / Barang / Surat</span>
                                         </h2>
-                                        <p class="text-xs sm:text-sm text-slate-500">Penerimaan terbaru di sekretariat vihara</p>
+                                        <p class="text-xs sm:text-sm text-slate-500">Penerimaan terbaru di sekretariat wihara</p>
                                     </div>
                                     @if ($canReceipts)
                                         <button type="button" onclick="switchManagementTab('receipts')" class="self-start sm:self-auto text-xs sm:text-sm font-bold text-slate-700 hover:text-slate-900 shrink-0 flex items-center gap-1.5">
@@ -1624,7 +1712,7 @@
                                     <span class="break-words">Tanda Terima Bantuan / Barang / Surat &amp; Ucapan Terima Kasih</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                    Kelola penerimaan vihara, cetak A4 berlogo <code>[logo]</code>, serta ekspor &amp; impor data Excel (<code>.xlsx</code>).
+                                    Kelola penerimaan wihara, cetak A4 berlogo <code>[logo]</code>, serta ekspor &amp; impor data Excel (<code>.xlsx</code>).
                                 </p>
                             </div>
                             <div class="shrink-0">
@@ -1790,7 +1878,6 @@
                                         <button type="button" data-filter="all" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 text-white">Semua</button>
                                         <button type="button" data-filter="Surat Masuk" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-inbox text-blue-600"></i> Surat Masuk</button>
                                         <button type="button" data-filter="Surat Keluar" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-paper-plane text-emerald-600"></i> Surat Keluar</button>
-                                        <button type="button" data-filter="Dokumen Umum A4" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-file-lines text-amber-600"></i> Dokumen Umum A4</button>
                                         <button type="button" data-filter="SK / Piagam" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-award text-purple-600"></i> SK / Piagam</button>
                                     </div>
                                 </div>
@@ -2171,6 +2258,233 @@
                     @endif
 
                     <!-- ================================================= -->
+                    <!-- TAB 3B: PROFIL & INFORMASI WIHARA (LANDING PAGE)  -->
+                    <!-- ================================================= -->
+                    @if ($canViharaProfile)
+                    <section id="tab-vihara-profile" class="mgmt-tab-panel hidden space-y-6">
+                        <!-- Card 1: Edit Profil Utama Wihara -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-5 overflow-hidden">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-landmark text-amber-600"></i>
+                                        <span>Edit Profil &amp; Informasi Utama Wihara</span>
+                                    </h2>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Perubahan di sini langsung memperbarui nama, deskripsi, alamat, jam operasional, dan kontak pada halaman publik (Landing Page).</p>
+                                </div>
+                                <a href="{{ route('landing') }}#profil" target="_blank" class="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 transition">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                    <span>Lihat di Landing Page</span>
+                                </a>
+                            </div>
+
+                            <form method="POST" action="{{ route('management.vihara-profile.update') }}" class="space-y-4">
+                                @csrf
+                                @method('PUT')
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Lengkap Wihara *</label>
+                                        <input
+                                            type="text"
+                                            name="name"
+                                            value="{{ old('name', $viharaProfile->name) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Singkat (Navbar &amp; Header) *</label>
+                                        <input
+                                            type="text"
+                                            name="short_name"
+                                            value="{{ old('short_name', $viharaProfile->short_name) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tagline / Semboyan Wihara *</label>
+                                        <input
+                                            type="text"
+                                            name="tagline"
+                                            value="{{ old('tagline', $viharaProfile->tagline) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tentang / Profil Wihara *</label>
+                                        <textarea
+                                            name="about"
+                                            rows="4"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >{{ old('about', $viharaProfile->about) }}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Lokasi Singkat *</label>
+                                        <input
+                                            type="text"
+                                            name="address_short"
+                                            value="{{ old('address_short', $viharaProfile->address_short) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jam Operasional *</label>
+                                        <input
+                                            type="text"
+                                            name="operational_hours"
+                                            value="{{ old('operational_hours', $viharaProfile->operational_hours) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Alamat Lengkap *</label>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value="{{ old('address', $viharaProfile->address) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kontak Telepon / WhatsApp *</label>
+                                        <input
+                                            type="text"
+                                            name="phone"
+                                            value="{{ old('phone', $viharaProfile->phone) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Email Sekretariat *</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value="{{ old('email', $viharaProfile->email) }}"
+                                            required
+                                            class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="pt-4 border-t border-slate-100 space-y-3">
+                                    <div>
+                                        <div class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                                            <i class="fa-solid fa-signature text-amber-600"></i>
+                                            <span>Default Penandatangan Semua Dokumen Cetak (A4)</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">Opsional. Jika diisi, jabatan &amp; nama ini otomatis menjadi penandatangan default (kolom kanan) di semua surat cetak A4. Anda juga tetap bisa mengubah penandatangan langsung di jendela pratinjau cetak.</p>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan Penandatangan Default</label>
+                                            <input
+                                                type="text"
+                                                name="default_signer_title"
+                                                value="{{ old('default_signer_title', $viharaProfile->default_signer_title) }}"
+                                                placeholder="Contoh: Ketua Pengurus Wihara Mahabodhi"
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Penandatangan Default</label>
+                                            <input
+                                                type="text"
+                                                name="default_signer_name"
+                                                value="{{ old('default_signer_name', $viharaProfile->default_signer_name) }}"
+                                                placeholder="Contoh: Upasaka Dharmadi Wijaya"
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                                    <button type="submit" class="w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center gap-2 shadow-xs">
+                                        <i class="fa-solid fa-floppy-disk"></i>
+                                        <span>Simpan Profil Wihara</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Card 2: Daftar Kartu Informasi & Fasilitas Wihara -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs space-y-4 overflow-hidden">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                                        <i class="fa-solid fa-layer-group text-amber-600"></i>
+                                        <span>Kartu Informasi &amp; Fasilitas Wihara</span>
+                                    </h3>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Tambah, edit, atau hapus kartu fasilitas dan informasi yang tampil di samping profil wihara pada Landing Page.</p>
+                                </div>
+                                <a href="{{ route('management.vihara-profile.facilities.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 shadow-xs">
+                                    <i class="fa-solid fa-circle-plus"></i>
+                                    <span>Tambah Informasi / Fasilitas</span>
+                                </a>
+                            </div>
+
+                            <div class="w-full overflow-x-auto">
+                                <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
+                                    <thead>
+                                        <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
+                                            <th class="py-3.5 px-4 w-[10%]">Ikon</th>
+                                            <th class="py-3.5 px-4 w-[26%]">Judul Informasi / Fasilitas</th>
+                                            <th class="py-3.5 px-4 w-[50%]">Deskripsi</th>
+                                            <th class="py-3.5 px-4 text-right w-[14%]">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        @forelse ($viharaProfile->facilities ?? [] as $facility)
+                                            <tr class="hover:bg-slate-50/80 transition">
+                                                <td data-label="Ikon" class="py-3.5 px-4 align-top">
+                                                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center text-sm shadow-2xs">
+                                                        <i class="fa-solid {{ $facility['icon'] ?? 'fa-hands-praying' }}"></i>
+                                                    </div>
+                                                </td>
+                                                <td data-label="Judul Informasi / Fasilitas" class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
+                                                    {{ $facility['title'] ?? '' }}
+                                                </td>
+                                                <td data-label="Deskripsi" class="py-3.5 px-4 align-top text-slate-600 text-xs sm:text-sm leading-relaxed break-words">
+                                                    {{ $facility['description'] ?? '' }}
+                                                </td>
+                                                <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
+                                                    @if (! empty($facility['id']))
+                                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                                        <a href="{{ route('management.vihara-profile.facilities.edit', $facility['id']) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Edit">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </a>
+                                                        <form method="POST" action="{{ route('management.vihara-profile.facilities.destroy', $facility['id']) }}" onsubmit="return confirm('Hapus kartu informasi/fasilitas ini dari Landing Page?')">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="p-1.5 rounded-xl text-rose-600 hover:bg-rose-50 font-semibold text-xs sm:text-sm inline-flex items-center justify-center w-8 h-8" title="Hapus">
+                                                                <i class="fa-solid fa-trash-can"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="py-10 text-center text-slate-400 text-sm sm:text-base">Belum ada kartu informasi atau fasilitas wihara. Klik "Tambah Informasi / Fasilitas" untuk menambahkan.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                    @endif
+
+                    <!-- ================================================= -->
                     <!-- TAB 4: SCHEDULES                                  -->
                     <!-- ================================================= -->
                     @if ($canSchedules)
@@ -2182,7 +2496,7 @@
                                         <i class="fa-solid fa-calendar-days text-emerald-600"></i>
                                         <span>Jadwal Ibadah, Puja Bakti, Meditasi &amp; Kegiatan</span>
                                     </h2>
-                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Data jadwal ini tampil secara dinamis di halaman publik vihara.</p>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Data jadwal ini tampil secara dinamis di halaman publik wihara.</p>
                                 </div>
                                 <a href="{{ route('management.schedules.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 shadow-xs">
                                     <i class="fa-solid fa-circle-plus"></i>
@@ -2371,7 +2685,7 @@
                                                         {{ $gal->category }}
                                                     </span>
                                                     <div class="text-xs text-slate-500 mt-1.5">
-                                                        {{ $gal->event_date ? $gal->event_date->format('d M Y') : 'Dokumentasi Vihara' }}
+                                                        {{ $gal->event_date ? $gal->event_date->format('d M Y') : 'Dokumentasi Wihara' }}
                                                     </div>
                                                 </td>
                                                 <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
@@ -2415,7 +2729,7 @@
                                         <i class="fa-solid fa-newspaper text-rose-600"></i>
                                         <span>Berita Kegiatan, Pengumuman &amp; Renungan Dharma</span>
                                     </h2>
-                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola artikel dan warta vihara pada halaman utama.</p>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola artikel dan warta wihara pada halaman utama.</p>
                                 </div>
                                 <a href="{{ route('management.articles.create') }}" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shrink-0 flex items-center justify-center gap-1.5 shadow-xs">
                                     <i class="fa-solid fa-circle-plus"></i>
@@ -2547,12 +2861,12 @@
                                         >
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan di Vihara</label>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan di Wihara</label>
                                         <input
                                             type="text"
                                             name="position"
                                             value="{{ old('position', $currentUser?->position) }}"
-                                            placeholder="Contoh: Sekretaris Vihara"
+                                            placeholder="Contoh: Sekretaris Wihara"
                                             class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
                                         >
                                     </div>
@@ -2713,7 +3027,7 @@
                                     <td class="p-3 font-bold text-slate-900">No Tanda Terima</td>
                                     <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
                                     <td class="p-3 text-slate-600 font-medium">Teks</td>
-                                    <td class="p-3 text-slate-600">Boleh dikosongkan. Jika kosong, sistem otomatis membuatkan nomor tanda terima resmi vihara (format: <code>001/TT-WMBC/XI/2026</code>).</td>
+                                    <td class="p-3 text-slate-600">Boleh dikosongkan. Jika kosong, sistem otomatis membuatkan nomor tanda terima resmi wihara (format: <code>001/TT-WMBC/XI/2026</code>).</td>
                                     <td class="p-3 text-slate-800 font-mono text-[11px]">001/TT-WMBC/XI/2026</td>
                                 </tr>
                                 <tr class="hover:bg-slate-50/80 transition">
@@ -2729,7 +3043,7 @@
                                     <td class="p-3 font-bold text-slate-900">Tanggal</td>
                                     <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
                                     <td class="p-3 text-slate-600 font-medium">Format Tanggal</td>
-                                    <td class="p-3 text-slate-600">Tanggal penyerahan donasi atau barang di sekretariat vihara. Format yang disarankan: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>.</td>
+                                    <td class="p-3 text-slate-600">Tanggal penyerahan donasi atau barang di sekretariat wihara. Format yang disarankan: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>.</td>
                                     <td class="p-3 text-slate-800 font-mono text-[11px]">2026-11-08</td>
                                 </tr>
                                 <tr class="hover:bg-slate-50/80 transition">
@@ -2785,7 +3099,7 @@
                                     <td class="p-3 font-bold text-slate-900">Petugas Penerima</td>
                                     <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
                                     <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Nama pengurus vihara yang bertugas menerima. Jika dikosongkan, sistem otomatis memakai nama pengurus yang sedang login saat import.</td>
+                                    <td class="p-3 text-slate-600">Nama pengurus wihara yang bertugas menerima. Jika dikosongkan, sistem otomatis memakai nama pengurus yang sedang login saat import.</td>
                                     <td class="p-3 text-slate-800">Upasika Metta Kusuma</td>
                                 </tr>
                                 <tr class="hover:bg-slate-50/80 transition">
@@ -2801,7 +3115,7 @@
                                     <td class="p-3 font-bold text-slate-900">Catatan</td>
                                     <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
                                     <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Catatan internal sekretariat vihara (misal: lokasi penyimpanan di gudang, transfer via rekening BCA, kondisi barang, dll).</td>
+                                    <td class="p-3 text-slate-600">Catatan internal sekretariat wihara (misal: lokasi penyimpanan di gudang, transfer via rekening BCA, kondisi barang, dll).</td>
                                     <td class="p-3 text-slate-800">Diterima via Sekretariat Wihara</td>
                                 </tr>
                             </tbody>
@@ -2826,13 +3140,17 @@
     <!-- ========================================================= -->
     <div id="a4PrintWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-8 flex flex-col items-center">
         <!-- Control Bar -->
-        <div class="no-print max-w-[210mm] w-full mb-4 bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+        <div class="no-print max-w-[210mm] w-full mb-3 bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
             <div class="text-xs sm:text-sm flex items-center gap-2">
                 <i class="fa-solid fa-file-lines text-amber-400"></i>
                 <span class="font-bold">Pratinjau Cetak Kertas A4</span>
                 <span class="text-slate-400 ml-2 hidden sm:inline">Template surat resmi dengan placeholder [logo]</span>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <button type="button" onclick="toggleA4SignerEditor()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
+                    <i class="fa-solid fa-signature"></i>
+                    <span>Edit Penandatangan</span>
+                </button>
                 <button type="button" onclick="window.print()" class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
                     <i class="fa-solid fa-print"></i>
                     <span>Cetak / Simpan PDF (A4)</span>
@@ -2841,6 +3159,39 @@
                     <i class="fa-solid fa-xmark"></i>
                     <span>Tutup</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- Live Signatory Editor Panel (Hidden When Printing) -->
+        <div id="a4SignerEditorPanel" class="no-print hidden max-w-[210mm] w-full mb-4 bg-white text-slate-900 px-4 sm:px-5 py-4 rounded-xl border border-amber-300 shadow-lg space-y-3">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-amber-600"></i>
+                    <span>Ubah Penandatangan Surat Ini (Langsung Terlihat di Pratinjau)</span>
+                </div>
+                <button type="button" onclick="toggleA4SignerEditor()" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Sembunyikan</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
+                <div>
+                    <label for="a4EditLeftTitle" class="block font-bold text-slate-700 mb-1">Jabatan Kiri</label>
+                    <input type="text" id="a4EditLeftTitle" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label for="a4EditLeftName" class="block font-bold text-slate-700 mb-1">Nama Kiri</label>
+                    <input type="text" id="a4EditLeftName" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label for="a4EditRightTitle" class="block font-bold text-slate-700 mb-1">Jabatan Kanan</label>
+                    <input type="text" id="a4EditRightTitle" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label for="a4EditRightName" class="block font-bold text-slate-700 mb-1">Nama Kanan</label>
+                    <input type="text" id="a4EditRightName" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div>
+                    <label for="a4EditSignDate" class="block font-bold text-slate-700 mb-1">Tanggal TTD</label>
+                    <input type="text" id="a4EditSignDate" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
             </div>
         </div>
 
@@ -2854,7 +3205,7 @@
                         <span class="font-bold text-[11px] tracking-wider">[logo]</span>
                     </div>
                     <div class="flex-1 min-w-0 text-center pr-2">
-                        <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">Majelis Agama Buddha &bull; Sekretariat Pengurus Vihara</div>
+                        <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">Majelis Agama Buddha &bull; Sekretariat Pengurus Wihara</div>
                         <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 uppercase tracking-wide mt-0.5">
                             Wihara Mahabodhi Buddhist Centre
                         </h2>
@@ -2871,27 +3222,27 @@
                 <div id="a4DocumentContent" class="space-y-3 print:space-y-2.5 text-xs leading-snug text-slate-900"></div>
             </div>
 
-            <!-- A4 Official Signature Footer (Compact so 1-Page Print Never Overflows) -->
-            <div class="pt-4 border-t border-slate-300 mt-4">
-                <div class="grid grid-cols-2 gap-8 text-xs text-center">
+            <!-- A4 Official Signature Footer (Generous space for wet signature & official stamp) -->
+            <div class="pt-6 border-t border-slate-300 mt-6">
+                <div class="grid grid-cols-2 gap-10 text-xs text-center">
                     <div class="flex flex-col justify-between">
                         <div>
                             <div class="text-[10px] text-slate-500">Mengetahui / Menyerahkan,</div>
-                            <div class="font-bold text-slate-900 text-xs mt-0.5" id="a4LeftSignTitle">Pihak Penyerah / Pengirim</div>
+                            <div class="font-bold text-slate-900 text-xs mt-1" id="a4LeftSignTitle">Pihak Penyerah / Pengirim</div>
                         </div>
-                        <div class="pt-10">
+                        <div class="pt-20">
                             <div class="font-bold underline text-slate-900 tracking-wide text-xs" id="a4LeftSignName">( ........................................ )</div>
-                            <div class="text-[10px] text-slate-500 mt-0.5">Tanda Tangan &amp; Nama Terang</div>
+                            <div class="text-[10px] text-slate-500 mt-1">Tanda Tangan &amp; Nama Terang</div>
                         </div>
                     </div>
                     <div class="flex flex-col justify-between">
                         <div>
                             <div class="text-[10px] text-slate-700 font-medium">Semarang, <span id="a4SignDate" class="font-bold">{{ now()->format('d M Y') }}</span></div>
-                            <div class="font-bold text-slate-900 text-xs mt-0.5" id="a4RightSignTitle">Petugas Sekretariat / Penerima</div>
+                            <div class="font-bold text-slate-900 text-xs mt-1" id="a4RightSignTitle">Petugas Sekretariat / Penerima</div>
                         </div>
-                        <div class="pt-10">
+                        <div class="pt-20">
                             <div class="font-bold underline text-slate-900 tracking-wide text-xs" id="a4RightSignName">Sekretariat Wihara Mahabodhi</div>
-                            <div class="text-[10px] text-slate-500 mt-0.5">[logo] Cap &amp; Stempel Resmi Sekretariat Vihara</div>
+                            <div class="text-[10px] text-slate-500 mt-1">[logo] Cap &amp; Stempel Resmi Sekretariat Wihara</div>
                         </div>
                     </div>
                 </div>
@@ -2905,6 +3256,7 @@
             receipts: 'Tanda Terima & Ucapan Terima Kasih (A4 & Excel)',
             documents: 'Arsip Persuratan & Dokumen Resmi Sekretariat',
             marriages: 'Administrasi Surat Nikah & Pemberkatan Perkawinan Buddhis',
+            'vihara-profile': 'Profil & Informasi Wihara (Landing Page)',
             schedules: 'Jadwal Ibadah, Puja Bakti & Meditasi',
             galleries: 'Galeri Dokumentasi Kegiatan',
             articles: 'Berita Kegiatan & Renungan Dharma',
@@ -3133,16 +3485,67 @@
             return 'Rp ' + num.toLocaleString('id-ID');
         }
 
+        const defaultA4Signer = @json([
+            'title' => $viharaProfile->default_signer_title ?? '',
+            'name' => $viharaProfile->default_signer_name ?? '',
+        ]);
+
+        function toggleA4SignerEditor() {
+            const panel = document.getElementById('a4SignerEditorPanel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+
+        function setA4Signers({ date, leftTitle, leftName, rightTitle, rightName }) {
+            const finalRightTitle = defaultA4Signer.title || rightTitle;
+            const finalRightName = defaultA4Signer.name || rightName;
+
+            document.getElementById('a4SignDate').textContent = date;
+            document.getElementById('a4LeftSignTitle').textContent = leftTitle;
+            document.getElementById('a4LeftSignName').textContent = leftName;
+            document.getElementById('a4RightSignTitle').textContent = finalRightTitle;
+            document.getElementById('a4RightSignName').textContent = finalRightName;
+
+            const editDate = document.getElementById('a4EditSignDate');
+            const editLeftTitle = document.getElementById('a4EditLeftTitle');
+            const editLeftName = document.getElementById('a4EditLeftName');
+            const editRightTitle = document.getElementById('a4EditRightTitle');
+            const editRightName = document.getElementById('a4EditRightName');
+
+            if (editDate) editDate.value = date;
+            if (editLeftTitle) editLeftTitle.value = leftTitle;
+            if (editLeftName) editLeftName.value = leftName;
+            if (editRightTitle) editRightTitle.value = finalRightTitle;
+            if (editRightName) editRightName.value = finalRightName;
+        }
+
+        function syncA4SignersFromEditor() {
+            const editDate = document.getElementById('a4EditSignDate');
+            const editLeftTitle = document.getElementById('a4EditLeftTitle');
+            const editLeftName = document.getElementById('a4EditLeftName');
+            const editRightTitle = document.getElementById('a4EditRightTitle');
+            const editRightName = document.getElementById('a4EditRightName');
+
+            if (editDate) document.getElementById('a4SignDate').textContent = editDate.value;
+            if (editLeftTitle) document.getElementById('a4LeftSignTitle').textContent = editLeftTitle.value;
+            if (editLeftName) document.getElementById('a4LeftSignName').textContent = editLeftName.value;
+            if (editRightTitle) document.getElementById('a4RightSignTitle').textContent = editRightTitle.value;
+            if (editRightName) document.getElementById('a4RightSignName').textContent = editRightName.value;
+        }
+
         function openReceiptPrintModal(receipt, mode) {
             const wrapper = document.getElementById('a4PrintWrapper');
             const content = document.getElementById('a4DocumentContent');
             const dateStr = (receipt.receipt_date || '').substring(0, 10);
 
-            document.getElementById('a4SignDate').textContent = dateStr;
-            document.getElementById('a4LeftSignTitle').textContent = 'Pihak Penyerah / Donatur';
-            document.getElementById('a4LeftSignName').textContent = receipt.donor_name || 'Donatur';
-            document.getElementById('a4RightSignTitle').textContent = 'Petugas Penerima Sekretariat';
-            document.getElementById('a4RightSignName').textContent = receipt.receiver_name || 'Sekretariat Wihara Mahabodhi';
+            setA4Signers({
+                date: dateStr,
+                leftTitle: 'Pihak Penyerah / Donatur',
+                leftName: receipt.donor_name || 'Donatur',
+                rightTitle: 'Petugas Penerima Sekretariat',
+                rightName: receipt.receiver_name || 'Sekretariat Wihara Mahabodhi',
+            });
 
             if (mode === 'thank_you') {
                 content.innerHTML = `
@@ -3221,7 +3624,7 @@
                 content.innerHTML = `
                     <!-- Formal Official Receipt Title -->
                     <div class="text-center border-b border-slate-300 pb-3 space-y-1">
-                        <div class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Bukti Resmi Penerimaan Sekretariat Vihara</div>
+                        <div class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Bukti Resmi Penerimaan Sekretariat Wihara</div>
                         <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 underline tracking-wide">
                             BUKTI TANDA TERIMA ${escapeHtml((receipt.receipt_type || '').toUpperCase())}
                         </h3>
@@ -3265,7 +3668,7 @@
                         </tr>
                         <tr>
                             <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Catatan Pemeriksaan Sekretariat</td>
-                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.notes || 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat vihara.')}</td>
+                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.notes || 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat wihara.')}</td>
                         </tr>
                     </table>
 
@@ -3289,11 +3692,13 @@
             const content = document.getElementById('a4DocumentContent');
             const dateStr = (doc.document_date || '').substring(0, 10);
 
-            document.getElementById('a4SignDate').textContent = dateStr;
-            document.getElementById('a4LeftSignTitle').textContent = 'Pihak Pengirim / Pembuat Naskah';
-            document.getElementById('a4LeftSignName').textContent = doc.sender || 'Pengirim';
-            document.getElementById('a4RightSignTitle').textContent = 'Penerima / Arsiparis Sekretariat';
-            document.getElementById('a4RightSignName').textContent = doc.recipient || 'Sekretariat Wihara Mahabodhi';
+            setA4Signers({
+                date: dateStr,
+                leftTitle: 'Pihak Pengirim / Pembuat Naskah',
+                leftName: doc.sender || 'Pengirim',
+                rightTitle: 'Penerima / Arsiparis Sekretariat',
+                rightName: doc.recipient || 'Sekretariat Wihara Mahabodhi',
+            });
 
             content.innerHTML = `
                 <!-- Formal Master Document Sheet Title -->
@@ -3336,7 +3741,7 @@
                 </div>
 
                 <div class="p-3 rounded-lg bg-slate-50 border border-slate-300 text-[11px] text-slate-600 flex items-center justify-between">
-                    <span>Status Registrasi: <strong>Tercatat dalam Buku Agenda Sekretariat Vihara</strong></span>
+                    <span>Status Registrasi: <strong>Tercatat dalam Buku Agenda Sekretariat Wihara</strong></span>
                     <span>Lampiran Digital: <strong>${escapeHtml(doc.attachment_name || 'Arsip Fisik Sekretariat')}</strong></span>
                 </div>
             `;
@@ -3350,11 +3755,13 @@
             const weddingDateStr = (marriage.wedding_date || '').substring(0, 10);
             const regDateStr = (marriage.registration_date || '').substring(0, 10);
 
-            document.getElementById('a4SignDate').textContent = weddingDateStr;
-            document.getElementById('a4LeftSignTitle').textContent = 'Rohaniwan / Pandita Pemimpin Pemberkatan';
-            document.getElementById('a4LeftSignName').textContent = marriage.officiant_name || 'Romo Pandita';
-            document.getElementById('a4RightSignTitle').textContent = 'Ketua / Pengurus Sekretariat Wihara';
-            document.getElementById('a4RightSignName').textContent = 'Sekretariat Wihara Mahabodhi';
+            setA4Signers({
+                date: weddingDateStr,
+                leftTitle: 'Rohaniwan / Pandita Pemimpin Pemberkatan',
+                leftName: marriage.officiant_name || 'Romo Pandita',
+                rightTitle: 'Ketua / Pengurus Sekretariat Wihara',
+                rightName: 'Sekretariat Wihara Mahabodhi',
+            });
 
             if (mode === 'checklist') {
                 content.innerHTML = `
@@ -3411,7 +3818,7 @@
                             <thead class="bg-slate-100 font-bold text-slate-800 border-b border-slate-300">
                                 <tr>
                                     <th class="p-2 border-r border-slate-300 w-10 text-center">No</th>
-                                    <th class="p-2 border-r border-slate-300">Dokumen Persyaratan Administrasi Vihara &amp; Dukcapil</th>
+                                    <th class="p-2 border-r border-slate-300">Dokumen Persyaratan Administrasi Wihara &amp; Dukcapil</th>
                                     <th class="p-2 w-44 text-center">Status Verifikasi</th>
                                 </tr>
                             </thead>
@@ -3558,22 +3965,22 @@
                     </p>
 
                     <!-- Bride, Groom & Witnesses Signature Row -->
-                    <div class="grid grid-cols-4 gap-2.5 pt-1 text-[10px] text-center">
-                        <div class="border border-slate-300 rounded-lg p-2 bg-slate-50/40">
+                    <div class="grid grid-cols-4 gap-3 pt-3 text-[10px] text-center">
+                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
                             <div class="font-semibold text-slate-600">Mempelai Pria</div>
-                            <div class="pt-7 font-bold underline text-slate-900">${escapeHtml(marriage.groom_name)}</div>
+                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.groom_name)}</div>
                         </div>
-                        <div class="border border-slate-300 rounded-lg p-2 bg-slate-50/40">
+                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
                             <div class="font-semibold text-slate-600">Mempelai Wanita</div>
-                            <div class="pt-7 font-bold underline text-slate-900">${escapeHtml(marriage.bride_name)}</div>
+                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.bride_name)}</div>
                         </div>
-                        <div class="border border-slate-300 rounded-lg p-2 bg-slate-50/40">
+                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
                             <div class="font-semibold text-slate-600">Saksi I</div>
-                            <div class="pt-7 font-bold underline text-slate-900">${escapeHtml(marriage.witness_one)}</div>
+                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.witness_one)}</div>
                         </div>
-                        <div class="border border-slate-300 rounded-lg p-2 bg-slate-50/40">
+                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
                             <div class="font-semibold text-slate-600">Saksi II</div>
-                            <div class="pt-7 font-bold underline text-slate-900">${escapeHtml(marriage.witness_two)}</div>
+                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.witness_two)}</div>
                         </div>
                     </div>
                 `;
@@ -3708,7 +4115,7 @@
                     <div class="p-4 rounded-xl bg-white border border-slate-200 text-xs text-slate-500 text-center space-y-1">
                         <i class="fa-regular fa-calendar text-lg text-slate-400 block mb-1"></i>
                         <div class="font-semibold text-slate-700">Tidak ada jadwal khusus pada hari ${escapeHtml(dayName)}</div>
-                        <div>Pilih hari Minggu, Rabu, atau Sabtu untuk melihat jadwal rutin ibadah vihara.</div>
+                        <div>Pilih hari Minggu, Rabu, atau Sabtu untuk melihat jadwal rutin ibadah wihara.</div>
                     </div>
                 `;
                 return;

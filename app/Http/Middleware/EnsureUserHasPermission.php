@@ -19,7 +19,7 @@ class EnsureUserHasPermission
         $user = $request->user();
 
         if ($user === null) {
-            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mengakses Sistem Manajemen Vihara.');
+            return redirect()->route('login')->with('error', 'Silakan masuk terlebih dahulu untuk mengakses Sistem Manajemen Wihara.');
         }
 
         if (! $user->is_active) {

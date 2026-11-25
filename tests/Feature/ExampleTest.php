@@ -17,6 +17,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('Vihara Mahabodhi Buddhist Centre');
+        $response->assertSee('Wihara Mahabodhi Buddhist Centre');
     }
 }
