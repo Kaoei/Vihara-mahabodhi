@@ -381,9 +381,11 @@ class ViharaSystemTest extends TestCase
 
     public function test_admin_can_edit_wihara_profile_and_manage_landing_info_cards(): void
     {
+        Storage::fake('public');
         $admin = User::factory()->admin()->create();
+        $heroFile = UploadedFile::fake()->create('hero-wihara-baru.jpg', 300, 'image/jpeg');
 
-        // 1. Update main Wihara profile
+        // 1. Update main Wihara profile, hero image & footer content
         $updateResp = $this->actingAs($admin)->put(route('management.vihara-profile.update'), [
             'name' => 'Wihara Mahabodhi Buddhist Centre Semarang Baru',
             'short_name' => 'Wihara Mahabodhi Baru',
@@ -396,6 +398,11 @@ class ViharaSystemTest extends TestCase
             'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
             'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
             'default_signer_name' => 'Upasaka Dharmadi Wijaya',
+            'hero_image_file' => $heroFile,
+            'footer_description' => 'Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.',
+            'footer_services_title' => 'Layanan Umat & Sekretariat',
+            'footer_services_text' => "Konsultasi Dharma\nPemberkatan Perkawinan\nBakti Sosial Rutin",
+            'footer_copyright' => 'Semoga Semua Makhluk Berbahagia.',
         ]);
 
         $updateResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
@@ -404,12 +411,20 @@ class ViharaSystemTest extends TestCase
             'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
             'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
             'default_signer_name' => 'Upasaka Dharmadi Wijaya',
+            'footer_description' => 'Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.',
+            'footer_services_title' => 'Layanan Umat & Sekretariat',
+            'footer_copyright' => 'Semoga Semua Makhluk Berbahagia.',
         ]);
+
+        $profileAfterUpdate = ViharaProfile::current()->fresh();
+        $this->assertStringContainsString('/storage/hero/', (string) $profileAfterUpdate->hero_image);
 
         $mgmtDashboard = $this->actingAs($admin)->get(route('management.dashboard', ['tab' => 'vihara-profile']));
         $mgmtDashboard->assertStatus(200);
         $mgmtDashboard->assertSee('Edit Penandatangan');
         $mgmtDashboard->assertSee('Upasaka Dharmadi Wijaya');
+        $mgmtDashboard->assertSee('Gambar Hero Utama');
+        $mgmtDashboard->assertSee('Konten Footer Halaman Publik');
 
         // 2. Add a new facility / information card
         $createPage = $this->actingAs($admin)->get(route('management.vihara-profile.facilities.create'));
@@ -438,7 +453,7 @@ class ViharaSystemTest extends TestCase
         ]);
         $editResp->assertRedirect(route('management.dashboard', ['tab' => 'vihara-profile']));
 
-        // 4. Verify updated profile and new card appear on the public landing page
+        // 4. Verify updated profile, hero image, footer content, and new card appear on the public landing page
         $landingResp = $this->get(route('landing'));
         $landingResp->assertStatus(200);
         $landingResp->assertSee('Wihara Mahabodhi Buddhist Centre Semarang Baru');
@@ -446,6 +461,11 @@ class ViharaSystemTest extends TestCase
         $landingResp->assertSee('Setiap Hari: 06.30 – 21.00 WIB');
         $landingResp->assertSee('Sekolah Minggu Buddhis Mahabodhi');
         $landingResp->assertSee('Kelas Dhamma anak dan remaja setiap Minggu pagi pukul 09.00 WIB.');
+        $landingResp->assertSee($profileAfterUpdate->hero_image, false);
+        $landingResp->assertSee('Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.');
+        $landingResp->assertSee('Layanan Umat &amp; Sekretariat', false);
+        $landingResp->assertSee('Bakti Sosial Rutin');
+        $landingResp->assertSee('Semoga Semua Makhluk Berbahagia.');
 
         // 5. Delete the facility / information card
         $deleteResp = $this->actingAs($admin)->delete(route('management.vihara-profile.facilities.destroy', $facilityId));

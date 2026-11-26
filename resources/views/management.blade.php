@@ -2278,7 +2278,7 @@
                                 </a>
                             </div>
 
-                            <form method="POST" action="{{ route('management.vihara-profile.update') }}" class="space-y-4">
+                            <form method="POST" action="{{ route('management.vihara-profile.update') }}" enctype="multipart/form-data" class="space-y-5">
                                 @csrf
                                 @method('PUT')
 
@@ -2402,6 +2402,108 @@
                                                 placeholder="Contoh: Upasaka Dharmadi Wijaya"
                                                 class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
                                             >
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hero Image Editor -->
+                                <div class="pt-4 border-t border-slate-100 space-y-3">
+                                    <div>
+                                        <div class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                                            <i class="fa-solid fa-image text-amber-600"></i>
+                                            <span>Gambar Hero Utama (Hero Image Landing Page)</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">Unggah foto latar belakang baru untuk bagian atas (Hero) halaman utama, atau masukkan tautan URL gambar.</p>
+                                    </div>
+                                    @php($currentHeroImage = $viharaProfile->hero_image ?: '/Assets/Img/hero.png')
+                                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                                        <div class="lg:col-span-5">
+                                            <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-video relative shadow-2xs">
+                                                <img src="{{ $currentHeroImage }}" alt="Preview Hero Image" class="w-full h-full object-cover">
+                                                <span class="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-slate-950/75 text-white text-[11px] font-semibold backdrop-blur-xs">
+                                                    Pratinjau Hero Saat Ini
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="lg:col-span-7 space-y-3">
+                                            <div>
+                                                <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Unggah File Gambar Baru (.jpg, .png, .webp &bull; Maks 5 MB)</label>
+                                                <input
+                                                    type="file"
+                                                    name="hero_image_file"
+                                                    accept=".jpg,.jpeg,.png,.webp"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-900 file:text-white file:text-xs file:font-semibold hover:file:bg-slate-800"
+                                                >
+                                            </div>
+                                            <div>
+                                                <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Atau URL Gambar Hero</label>
+                                                <input
+                                                    type="text"
+                                                    name="hero_image_url"
+                                                    value="{{ old('hero_image_url', $currentHeroImage) }}"
+                                                    placeholder="/Assets/Img/hero.png atau https://..."
+                                                    class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                                >
+                                            </div>
+                                            <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                                                <input type="checkbox" name="reset_hero_image" value="1" class="rounded border-slate-300 text-slate-900 focus:ring-slate-900">
+                                                <span>Kembalikan ke gambar hero bawaan (<code>/Assets/Img/hero.png</code>)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer Content Editor -->
+                                <div class="pt-4 border-t border-slate-100 space-y-3">
+                                    <div>
+                                        <div class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+                                            <i class="fa-solid fa-shoe-prints text-amber-600"></i>
+                                            <span>Konten Footer Halaman Publik</span>
+                                        </div>
+                                        <p class="text-xs text-slate-500 mt-0.5">Sesuaikan teks deskripsi singkat, daftar layanan di bagian bawah halaman (Footer), dan kalimat penutup hak cipta.</p>
+                                    </div>
+                                    @php($defaultProfileData = \App\Models\ViharaProfile::defaultData())
+                                    @php($footerServicesList = is_array($viharaProfile->footer_services) && count($viharaProfile->footer_services) > 0 ? $viharaProfile->footer_services : $defaultProfileData['footer_services'])
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="sm:col-span-2">
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Deskripsi Singkat Footer (Kolom Kiri) *</label>
+                                            <textarea
+                                                name="footer_description"
+                                                rows="3"
+                                                required
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >{{ old('footer_description', $viharaProfile->footer_description ?: $defaultProfileData['footer_description']) }}</textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Judul Kolom Layanan (Footer Kanan) *</label>
+                                            <input
+                                                type="text"
+                                                name="footer_services_title"
+                                                value="{{ old('footer_services_title', $viharaProfile->footer_services_title ?: $defaultProfileData['footer_services_title']) }}"
+                                                required
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Teks Penutup / Copyright Bar *</label>
+                                            <input
+                                                type="text"
+                                                name="footer_copyright"
+                                                value="{{ old('footer_copyright', $viharaProfile->footer_copyright ?: $defaultProfileData['footer_copyright']) }}"
+                                                required
+                                                placeholder="Sabbe Satta Bhavantu Sukhitatta."
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Daftar Poin Layanan di Footer (1 baris = 1 poin) *</label>
+                                            <textarea
+                                                name="footer_services_text"
+                                                rows="4"
+                                                required
+                                                placeholder="Tanda Terima Dana &amp; Barang&#10;Administrasi Pemberkatan Nikah"
+                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                            >{{ old('footer_services_text', implode("\n", $footerServicesList)) }}</textarea>
                                         </div>
                                     </div>
                                 </div>

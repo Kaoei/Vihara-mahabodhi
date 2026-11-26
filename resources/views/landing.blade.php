@@ -272,7 +272,7 @@
     <!-- ========================================================= -->
 
     <!-- Hero Section with Full Device Height (min-h-screen), Centered Content & Public Hero Image -->
-    <section id="beranda" class="relative hero-banner text-white py-20 sm:py-24 lg:py-32 min-h-screen flex items-center justify-center w-full overflow-hidden">
+    <section id="beranda" class="relative hero-banner text-white py-20 sm:py-24 lg:py-32 min-h-screen flex items-center justify-center w-full overflow-hidden" style="background-image: linear-gradient(to bottom, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.55) 50%, rgba(15, 23, 42, 0.72) 100%), url('{{ e($vihara['hero_image'] ?? '/Assets/Img/hero.png') }}');">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
             <div class="max-w-3xl mx-auto text-center flex flex-col items-center space-y-5 sm:space-y-6 reveal-on-scroll is-visible">
                 <div class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-1.5 rounded-2xl sm:rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-medium max-w-full leading-snug">
@@ -730,8 +730,8 @@
                             <div class="text-xs text-gold-400 mt-0.5">{{ $vihara['address_short'] }}</div>
                         </div>
                     </div>
-                    <p class="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md">
-                        Pusat pembinaan spiritual Buddhis, pelaksanaan Puja Bakti, latihan meditasi Samatha-Vipassana, serta pelayanan sosial dan administrasi umat di Kota Semarang.
+                    <p class="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md whitespace-pre-line">
+                        {{ $vihara['footer_description'] ?? 'Pusat pembinaan spiritual Buddhis, pelaksanaan Puja Bakti, latihan meditasi Samatha-Vipassana, serta pelayanan sosial dan administrasi umat di Kota Semarang.' }}
                     </p>
                 </div>
 
@@ -765,25 +765,15 @@
                 <div class="md:col-span-3 space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-gold-400 flex items-center gap-2">
                         <i class="fa-solid fa-hands-holding-circle"></i>
-                        <span>Layanan Sekretariat</span>
+                        <span>{{ $vihara['footer_services_title'] ?? 'Layanan Sekretariat' }}</span>
                     </h3>
                     <ul class="space-y-2 text-xs sm:text-sm text-slate-400">
-                        <li class="flex items-center gap-2">
-                            <i class="fa-solid fa-check text-gold-400 text-xs"></i>
-                            <span>Tanda Terima Dana &amp; Barang</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fa-solid fa-check text-gold-400 text-xs"></i>
-                            <span>Administrasi Pemberkatan Nikah</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fa-solid fa-check text-gold-400 text-xs"></i>
-                            <span>Persuratan &amp; Dokumen Resmi</span>
-                        </li>
-                        <li class="flex items-center gap-2">
-                            <i class="fa-solid fa-check text-gold-400 text-xs"></i>
-                            <span>Jadwal Puja Bakti &amp; Meditasi</span>
-                        </li>
+                        @foreach (($vihara['footer_services'] ?? ['Tanda Terima Dana & Barang', 'Administrasi Pemberkatan Nikah', 'Persuratan & Dokumen Resmi', 'Jadwal Puja Bakti & Meditasi']) as $serviceItem)
+                            <li class="flex items-center gap-2">
+                                <i class="fa-solid fa-check text-gold-400 text-xs shrink-0"></i>
+                                <span>{{ $serviceItem }}</span>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
             </div>
@@ -791,7 +781,7 @@
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400 text-center sm:text-left">
                 <div class="flex items-center justify-center sm:justify-start gap-2">
                     <i class="fa-solid fa-dharmachakra text-gold-400 shrink-0"></i>
-                    <span class="break-words">&copy; {{ date('Y') }} {{ $vihara['name'] }}. Sabbe Satta Bhavantu Sukhitatta.</span>
+                    <span class="break-words">&copy; {{ date('Y') }} {{ $vihara['name'] }}. {{ $vihara['footer_copyright'] ?? 'Sabbe Satta Bhavantu Sukhitatta.' }}</span>
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
                     <a href="{{ !empty($isArticleDetail) ? route('landing').'#profil' : '#profil' }}" class="hover:text-white transition">Profil</a>

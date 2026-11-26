@@ -17,8 +17,13 @@ use Illuminate\Database\Eloquent\Model;
     'operational_hours',
     'tagline',
     'about',
+    'hero_image',
     'default_signer_title',
     'default_signer_name',
+    'footer_description',
+    'footer_services_title',
+    'footer_services',
+    'footer_copyright',
     'facilities',
     'dhammapada_quotes',
 ])]
@@ -37,6 +42,7 @@ class ViharaProfile extends Model
         return [
             'facilities' => 'array',
             'dhammapada_quotes' => 'array',
+            'footer_services' => 'array',
         ];
     }
 
@@ -57,8 +63,18 @@ class ViharaProfile extends Model
             'operational_hours' => 'Setiap Hari: 07.00 – 21.00 WIB (Sekretariat: 08.00 – 17.00 WIB)',
             'tagline' => 'Harmoni Kesadaran, Welas Asih, dan Kebijaksanaan di Jantung Kota Semarang',
             'about' => 'Wihara Mahabodhi Buddhist Centre merupakan pusat pembinaan spiritual, Puja Bakti, latihan meditasi, dan pelayanan sosial kemasyarakatan yang berlokasi di Jl. Seroja Timur No. 9-11 Semarang. Dengan semangat cinta kasih universal (Metta) dan welas asih (Karuna), wihara ini terbuka bagi seluruh umat dan masyarakat yang ingin mempelajari serta mempraktikkan Dhamma dalam keheningan yang teduh.',
+            'hero_image' => '/Assets/Img/hero.png',
             'default_signer_title' => null,
             'default_signer_name' => null,
+            'footer_description' => 'Pusat pembinaan spiritual Buddhis, pelaksanaan Puja Bakti, latihan meditasi Samatha-Vipassana, serta pelayanan sosial dan administrasi umat di Kota Semarang.',
+            'footer_services_title' => 'Layanan Sekretariat',
+            'footer_services' => [
+                'Tanda Terima Dana & Barang',
+                'Administrasi Pemberkatan Nikah',
+                'Persuratan & Dokumen Resmi',
+                'Jadwal Puja Bakti & Meditasi',
+            ],
+            'footer_copyright' => 'Sabbe Satta Bhavantu Sukhitatta.',
             'facilities' => [
                 [
                     'id' => 'dharmasala-agung',
@@ -159,6 +175,13 @@ class ViharaProfile extends Model
             'operational_hours' => $this->operational_hours ?: $defaults['operational_hours'],
             'tagline' => $this->tagline ?: $defaults['tagline'],
             'about' => $this->about ?: $defaults['about'],
+            'hero_image' => $this->hero_image ?: $defaults['hero_image'],
+            'footer_description' => $this->footer_description ?: $defaults['footer_description'],
+            'footer_services_title' => $this->footer_services_title ?: $defaults['footer_services_title'],
+            'footer_services' => is_array($this->footer_services) && count($this->footer_services) > 0
+                ? $this->footer_services
+                : $defaults['footer_services'],
+            'footer_copyright' => $this->footer_copyright ?: $defaults['footer_copyright'],
             'facilities' => is_array($this->facilities) ? $this->facilities : $defaults['facilities'],
             'dhammapada_quotes' => is_array($this->dhammapada_quotes) && count($this->dhammapada_quotes) > 0
                 ? $this->dhammapada_quotes

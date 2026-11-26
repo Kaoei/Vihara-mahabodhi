@@ -1460,14 +1460,54 @@ class ManagementController extends Controller
             'operational_hours' => ['required', 'string', 'max:255'],
             'default_signer_title' => ['nullable', 'string', 'max:150'],
             'default_signer_name' => ['nullable', 'string', 'max:150'],
+            'hero_image_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'hero_image_url' => ['nullable', 'string', 'max:500'],
+            'reset_hero_image' => ['nullable', 'boolean'],
+            'footer_description' => ['required', 'string', 'max:1000'],
+            'footer_services_title' => ['required', 'string', 'max:150'],
+            'footer_services_text' => ['required', 'string', 'max:1500'],
+            'footer_copyright' => ['required', 'string', 'max:255'],
         ]);
 
         $profile = ViharaProfile::current();
-        $profile->update($validated);
+
+        $heroImage = $profile->hero_image ?: '/Assets/Img/hero.png';
+        if ($request->boolean('reset_hero_image')) {
+            $heroImage = '/Assets/Img/hero.png';
+        } elseif ($request->hasFile('hero_image_file')) {
+            $storedPath = $request->file('hero_image_file')->store('hero', 'public');
+            $heroImage = asset('storage/'.$storedPath);
+        } elseif (! empty($validated['hero_image_url'])) {
+            $heroImage = trim($validated['hero_image_url']);
+        }
+
+        $footerServices = array_values(array_filter(
+            array_map('trim', preg_split('/\r\n|\r|\n/', $validated['footer_services_text']) ?: []),
+            static fn (string $line): bool => $line !== ''
+        ));
+
+        $profile->update([
+            'name' => $validated['name'],
+            'short_name' => $validated['short_name'],
+            'tagline' => $validated['tagline'],
+            'about' => $validated['about'],
+            'address_short' => $validated['address_short'],
+            'address' => $validated['address'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'operational_hours' => $validated['operational_hours'],
+            'default_signer_title' => $validated['default_signer_title'] ?? null,
+            'default_signer_name' => $validated['default_signer_name'] ?? null,
+            'hero_image' => $heroImage,
+            'footer_description' => $validated['footer_description'],
+            'footer_services_title' => $validated['footer_services_title'],
+            'footer_services' => $footerServices,
+            'footer_copyright' => $validated['footer_copyright'],
+        ]);
 
         return redirect()
             ->route('management.dashboard', ['tab' => 'vihara-profile'])
-            ->with('success', 'Profil dan informasi utama wihara pada halaman landing page berhasil diperbarui.');
+            ->with('success', 'Profil, gambar hero, dan konten footer wihara pada halaman landing page berhasil diperbarui.');
     }
 
     /**
