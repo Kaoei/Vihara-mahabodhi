@@ -106,22 +106,46 @@
             }
         }
 
-        /* Dedicated Single-Page A4 Print Styling (Strictly 1 Sheet) */
+        /* Preserve faithful Word (.docx) layout inside template editor & A4 print */
+        .docx-template-content img {
+            display: inline-block;
+            max-width: 100%;
+            height: auto;
+        }
+        .docx-template-content ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin: 0.25rem 0 0.5rem 0;
+        }
+        .docx-template-content ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+            margin: 0.25rem 0 0.5rem 0;
+        }
+        .docx-template-content table {
+            border-collapse: collapse;
+            max-width: 100%;
+        }
+        .docx-template-content h1 { font-size: 1.65em; font-weight: 700; }
+        .docx-template-content h2 { font-size: 1.4em; font-weight: 700; }
+        .docx-template-content h3 { font-size: 1.2em; font-weight: 700; }
+        .docx-template-content h4 { font-size: 1.05em; font-weight: 700; }
+
+        /* Dedicated A4 Print Styling */
         @page {
             size: A4 portrait;
-            margin: 6mm 9mm;
+            margin: 6mm 8mm;
         }
 
         @media print {
             html, body {
                 width: 210mm !important;
                 height: auto !important;
-                max-height: 282mm !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 background: #FFFFFF !important;
                 color: #0f172a !important;
-                overflow: hidden !important;
+                overflow: visible !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -135,26 +159,24 @@
                 display: block !important;
                 position: static !important;
                 width: 100% !important;
-                max-height: 282mm !important;
                 background: transparent !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                overflow: hidden !important;
+                overflow: visible !important;
             }
             .a4-sheet {
                 width: 100% !important;
                 max-width: 100% !important;
                 min-height: 0 !important;
                 height: auto !important;
-                max-height: 280mm !important;
                 box-shadow: none !important;
                 border: none !important;
+                border-radius: 0 !important;
                 padding: 2mm 4mm !important;
                 margin: 0 !important;
-                page-break-inside: avoid !important;
-                break-inside: avoid !important;
-                page-break-after: avoid !important;
-                break-after: avoid !important;
+            }
+            .a4-sheet.is-custom-full-template {
+                padding: 0 !important;
             }
         }
     </style>
@@ -747,15 +769,15 @@
                             $hasCustomReceiptTpl = ! empty($viharaProfile->receipt_template_html);
                             $hasCustomThankYouTpl = ! empty($viharaProfile->thank_you_template_html);
                         @endphp
-                        <div class="max-w-5xl mx-auto space-y-6">
+                        <div class="max-w-6xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-block">Custom Template Word &amp; Web Editor</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-block">Full-Page Template Word &amp; Web Editor (Header + Isi + Tanda Tangan)</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2.5">
                                         <i class="fa-solid fa-file-word text-blue-600 shrink-0"></i>
                                         <span class="break-words">Editor Template Surat Tanda Terima &amp; Ucapan Terima Kasih</span>
                                     </h2>
-                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Unggah template surat dari Microsoft Word (<code>.docx</code>), lalu sesuaikan teks, tabel, maupun placeholder otomatis langsung di web sebelum dicetak ke A4.</p>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Unggah seluruh dokumen Word (<code>.docx</code>) lengkap dengan <strong>Kop/Header, Logo/Gambar, Tabel, Isi, hingga Bagian Tanda Tangan &amp; Footer</strong>, lalu ubah bagian mana pun langsung di web.</p>
                                 </div>
                                 <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
@@ -763,7 +785,7 @@
                                 </a>
                             </div>
 
-                            <!-- Card 1: Upload Word (.docx) Template -->
+                            <!-- Card 1: Full-Document Upload from Microsoft Word (.docx) -->
                             <form
                                 method="POST"
                                 action="{{ route('management.receipts.template.upload-docx') }}"
@@ -776,8 +798,8 @@
                                         <i class="fa-solid fa-file-arrow-up"></i>
                                     </div>
                                     <div class="min-w-0">
-                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Upload File Template Microsoft Word (.docx)</h3>
-                                        <p class="text-xs text-slate-500 mt-0.5">Isi paragraf, format cetak tebal/miring, daftar, dan tabel dari file <code>.docx</code> akan dikonversi otomatis ke editor web di bawah.</p>
+                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Upload Full Template dari Microsoft Word (.docx)</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Header/Kop Surat, Footer, gambar/logo tertanam, jenis &amp; ukuran huruf, warna, garis kop ganda, tabel tanpa/dengan garis, serta jarak tanda tangan dari file <code>.docx</code> akan diimpor utuh sesuai aslinya. Saat dicetak A4, sistem akan memakai 100% template ini tanpa menimpa header/tanda tangan bawaan.</p>
                                     </div>
                                 </div>
 
@@ -785,12 +807,12 @@
                                     <div class="md:col-span-4">
                                         <label class="block font-bold text-slate-800 text-xs mb-1.5">Terapkan ke Template *</label>
                                         <select name="target_template" required class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                            <option value="receipt" @selected($initialEditorTab === 'receipt')>Bukti Tanda Terima</option>
-                                            <option value="thank_you" @selected($initialEditorTab === 'thank_you')>Surat Ucapan Terima Kasih</option>
+                                            <option value="receipt" @selected($initialEditorTab === 'receipt')>Bukti Tanda Terima (Full A4)</option>
+                                            <option value="thank_you" @selected($initialEditorTab === 'thank_you')>Surat Ucapan Terima Kasih (Full A4)</option>
                                         </select>
                                     </div>
                                     <div class="md:col-span-5">
-                                        <label class="block font-bold text-slate-800 text-xs mb-1.5">Pilih File Word (.docx &bull; Maks 5 MB) *</label>
+                                        <label class="block font-bold text-slate-800 text-xs mb-1.5">Pilih File Word (.docx &bull; Maks 10 MB) *</label>
                                         <input
                                             type="file"
                                             name="docx_file"
@@ -802,13 +824,13 @@
                                     <div class="md:col-span-3">
                                         <button type="submit" class="w-full px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-xs">
                                             <i class="fa-solid fa-cloud-arrow-up"></i>
-                                            <span>Impor dari Word</span>
+                                            <span>Impor Full Word</span>
                                         </button>
                                     </div>
                                 </div>
                             </form>
 
-                            <!-- Card 2: Interactive Web Rich-Text Template Editor -->
+                            <!-- Card 2: Interactive Full-Page A4 Web Editor (Header + Body + Signature) -->
                             <form
                                 method="POST"
                                 action="{{ route('management.receipts.template.update') }}"
@@ -818,43 +840,86 @@
                                 @csrf
                                 @method('PUT')
 
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                     <div>
-                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Edit Isi Template Langsung di Web</h3>
-                                        <p class="text-xs text-slate-500 mt-0.5">Klik placeholder di bawah untuk menyisipkan data otomatis (nama donatur, nomor, daftar barang multi-input, nominal, dll.).</p>
+                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Edit Seluruh Halaman Surat di Web (Header, Isi &amp; Tanda Tangan)</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Klik langsung pada bagian Kop/Header, isi surat, atau kolom tanda tangan di kertas A4 di bawah untuk mengedit teks, gambar, maupun placeholder.</p>
                                     </div>
-                                    <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
-                                        <button type="button" id="tplTabBtn-receipt" onclick="switchTemplateEditorTab('receipt')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'receipt' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
-                                            Bukti Tanda Terima {{ $hasCustomReceiptTpl ? '• Custom' : '' }}
-                                        </button>
-                                        <button type="button" id="tplTabBtn-thank_you" onclick="switchTemplateEditorTab('thank_you')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'thank_you' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
-                                            Ucapan Terima Kasih {{ $hasCustomThankYouTpl ? '• Custom' : '' }}
+                                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                                            <button type="button" id="tplTabBtn-receipt" onclick="switchTemplateEditorTab('receipt')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'receipt' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                                Bukti Tanda Terima {{ $hasCustomReceiptTpl ? '• Custom' : '' }}
+                                            </button>
+                                            <button type="button" id="tplTabBtn-thank_you" onclick="switchTemplateEditorTab('thank_you')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'thank_you' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                                Ucapan Terima Kasih {{ $hasCustomThankYouTpl ? '• Custom' : '' }}
+                                            </button>
+                                        </div>
+                                        <button type="button" onclick="previewCurrentTemplateInA4()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition inline-flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-eye"></i>
+                                            <span>Pratinjau Cetak A4</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Formatting Toolbar -->
+                                <!-- Rich Word-Like Formatting Toolbar -->
                                 <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <select onchange="applyTemplateFontFamily(this.value); this.value='';" class="px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700" title="Jenis Huruf">
+                                        <option value="">Font...</option>
+                                        <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                                        <option value="Arial, Helvetica, sans-serif">Arial</option>
+                                        <option value="Calibri, 'Segoe UI', sans-serif">Calibri</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                        <option value="Inter, sans-serif">Inter</option>
+                                    </select>
+                                    <select onchange="applyTemplateFontSize(this.value); this.value='';" class="px-2 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-semibold text-slate-700" title="Ukuran Huruf">
+                                        <option value="">Ukuran...</option>
+                                        <option value="2">Kecil (10pt)</option>
+                                        <option value="3">Normal (12pt)</option>
+                                        <option value="4">Sedang (14pt)</option>
+                                        <option value="5">Besar (18pt)</option>
+                                        <option value="6">Judul Kop (22pt)</option>
+                                    </select>
+                                    <label class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-slate-200 text-xs text-slate-700 cursor-pointer" title="Warna Teks">
+                                        <i class="fa-solid fa-palette text-slate-500"></i>
+                                        <input type="color" value="#0f172a" onchange="applyTemplateColor(this.value)" class="w-4 h-4 border-0 p-0 bg-transparent cursor-pointer">
+                                    </label>
+                                    <span class="w-px h-5 bg-slate-300 mx-0.5"></span>
                                     <button type="button" onclick="execTemplateCmd('bold')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Tebal (Bold)"><i class="fa-solid fa-bold"></i></button>
                                     <button type="button" onclick="execTemplateCmd('italic')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Miring (Italic)"><i class="fa-solid fa-italic"></i></button>
                                     <button type="button" onclick="execTemplateCmd('underline')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Garis Bawah"><i class="fa-solid fa-underline"></i></button>
-                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
+                                    <button type="button" onclick="execTemplateCmd('strikeThrough')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Coret"><i class="fa-solid fa-strikethrough"></i></button>
+                                    <span class="w-px h-5 bg-slate-300 mx-0.5"></span>
                                     <button type="button" onclick="execTemplateCmd('justifyLeft')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kiri"><i class="fa-solid fa-align-left"></i></button>
                                     <button type="button" onclick="execTemplateCmd('justifyCenter')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Tengah"><i class="fa-solid fa-align-center"></i></button>
                                     <button type="button" onclick="execTemplateCmd('justifyRight')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kanan"><i class="fa-solid fa-align-right"></i></button>
                                     <button type="button" onclick="execTemplateCmd('justifyFull')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kiri-Kanan"><i class="fa-solid fa-align-justify"></i></button>
-                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
+                                    <span class="w-px h-5 bg-slate-300 mx-0.5"></span>
                                     <button type="button" onclick="execTemplateCmd('insertUnorderedList')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Daftar Poin"><i class="fa-solid fa-list-ul"></i></button>
                                     <button type="button" onclick="execTemplateCmd('insertOrderedList')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Daftar Bernomor"><i class="fa-solid fa-list-ol"></i></button>
                                     <button type="button" onclick="execTemplateCmd('insertHorizontalRule')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Garis Pemisah"><i class="fa-solid fa-minus"></i></button>
-                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
-                                    <button type="button" onclick="execTemplateHeading('H3')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Judul Surat">H3</button>
-                                    <button type="button" onclick="execTemplateHeading('P')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700" title="Paragraf Normal">Paragraf</button>
+                                    <span class="w-px h-5 bg-slate-300 mx-0.5"></span>
+                                    <button type="button" onclick="document.getElementById('tplInsertImageInput').click()" class="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-xs font-bold text-blue-700 inline-flex items-center gap-1" title="Sisipkan Gambar / Logo / Stempel">
+                                        <i class="fa-regular fa-image"></i>
+                                        <span>Sisip Gambar</span>
+                                    </button>
+                                    <input type="file" id="tplInsertImageInput" accept=".png,.jpg,.jpeg,.webp,.svg,.gif" class="hidden" onchange="insertTemplateImageFile(this)">
+                                    <button type="button" onclick="insertTemplateKopBlock()" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1" title="Sisipkan Blok Kop Surat (Header)">
+                                        <i class="fa-solid fa-heading"></i>
+                                        <span>+ Kop</span>
+                                    </button>
+                                    <button type="button" onclick="insertTemplateSignatureBlock()" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 inline-flex items-center gap-1" title="Sisipkan Blok Tanda Tangan 2 Kolom">
+                                        <i class="fa-solid fa-signature"></i>
+                                        <span>+ TTD</span>
+                                    </button>
+                                    <button type="button" id="tplSourceModeBtn" onclick="toggleTemplateSourceMode()" class="ml-auto px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold inline-flex items-center gap-1" title="Beralih antara Tampilan Kertas Visual dan Kode HTML">
+                                        <i class="fa-solid fa-code"></i>
+                                        <span>Mode HTML</span>
+                                    </button>
                                 </div>
 
                                 <!-- Placeholder Chips -->
                                 <div class="space-y-1.5">
-                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sisipkan Data Otomatis (Klik untuk menambahkan ke kursor):</div>
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sisipkan Data Otomatis (Header, Isi &amp; Tanda Tangan):</div>
                                     <div class="flex flex-wrap gap-1.5">
                                         @foreach ($templatePlaceholders ?? [] as $phKey => $phLabel)
                                             <button
@@ -870,37 +935,66 @@
                                     </div>
                                 </div>
 
-                                <!-- Editable Visual Paper Area -->
-                                <div id="tplEditorWrap-receipt" class="{{ $initialEditorTab === 'receipt' ? '' : 'hidden' }} space-y-1.5">
-                                    <div class="text-xs font-bold text-slate-700">Pratinjau &amp; Area Edit: Template Bukti Tanda Terima</div>
-                                    <div
-                                        id="receiptTemplateEditor"
-                                        contenteditable="true"
-                                        class="min-h-[360px] w-full p-5 sm:p-6 rounded-xl bg-white border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-900 space-y-2 shadow-inner overflow-x-auto"
-                                    >{!! $currentReceiptTpl !!}</div>
+                                <!-- Full-Page A4 Paper Visual Editor Workspace -->
+                                <div id="tplEditorWrap-receipt" class="{{ $initialEditorTab === 'receipt' ? '' : 'hidden' }} space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold text-slate-700">Kertas A4 Full-Page: Template Bukti Tanda Terima (Header + Isi + Tanda Tangan)</span>
+                                        <span class="text-slate-500">Ukuran kertas pratinjau: 210mm (A4)</span>
+                                    </div>
+                                    <div class="bg-slate-200/75 p-3 sm:p-6 rounded-2xl border border-slate-300 overflow-x-auto">
+                                        <div
+                                            id="receiptTemplateEditor"
+                                            contenteditable="true"
+                                            class="docx-template-content w-full max-w-[210mm] min-h-[260mm] mx-auto bg-white border border-slate-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+                                        >{!! $currentReceiptTpl !!}</div>
+                                        <textarea
+                                            id="receiptTemplateSourceEditor"
+                                            rows="22"
+                                            class="hidden w-full max-w-[210mm] mx-auto block p-4 rounded-xl bg-slate-950 text-emerald-300 font-mono text-xs border border-slate-700 focus:outline-none"
+                                        >{{ $currentReceiptTpl }}</textarea>
+                                    </div>
                                 </div>
 
-                                <div id="tplEditorWrap-thank_you" class="{{ $initialEditorTab === 'thank_you' ? '' : 'hidden' }} space-y-1.5">
-                                    <div class="text-xs font-bold text-slate-700">Pratinjau &amp; Area Edit: Template Surat Ucapan Terima Kasih</div>
-                                    <div
-                                        id="thankYouTemplateEditor"
-                                        contenteditable="true"
-                                        class="min-h-[360px] w-full p-5 sm:p-6 rounded-xl bg-white border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-900 space-y-2 shadow-inner overflow-x-auto"
-                                    >{!! $currentThankYouTpl !!}</div>
+                                <div id="tplEditorWrap-thank_you" class="{{ $initialEditorTab === 'thank_you' ? '' : 'hidden' }} space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="font-bold text-slate-700">Kertas A4 Full-Page: Template Surat Ucapan Terima Kasih (Header + Isi + Tanda Tangan)</span>
+                                        <span class="text-slate-500">Ukuran kertas pratinjau: 210mm (A4)</span>
+                                    </div>
+                                    <div class="bg-slate-200/75 p-3 sm:p-6 rounded-2xl border border-slate-300 overflow-x-auto">
+                                        <div
+                                            id="thankYouTemplateEditor"
+                                            contenteditable="true"
+                                            class="docx-template-content w-full max-w-[210mm] min-h-[260mm] mx-auto bg-white border border-slate-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+                                        >{!! $currentThankYouTpl !!}</div>
+                                        <textarea
+                                            id="thankYouTemplateSourceEditor"
+                                            rows="22"
+                                            class="hidden w-full max-w-[210mm] mx-auto block p-4 rounded-xl bg-slate-950 text-emerald-300 font-mono text-xs border border-slate-700 focus:outline-none"
+                                        >{{ $currentThankYouTpl }}</textarea>
+                                    </div>
                                 </div>
 
                                 <textarea name="receipt_template_html" id="receiptTemplateHtmlInput" class="hidden">{{ $currentReceiptTpl }}</textarea>
                                 <textarea name="thank_you_template_html" id="thankYouTemplateHtmlInput" class="hidden">{{ $currentThankYouTpl }}</textarea>
 
                                 <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
-                                    <button
-                                        type="button"
-                                        onclick="if(confirm('Kembalikan template surat ke desain bawaan sistem?')) { document.getElementById('resetReceiptTemplateForm').submit(); }"
-                                        class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs sm:text-sm transition inline-flex items-center justify-center gap-2"
-                                    >
-                                        <i class="fa-solid fa-rotate-left"></i>
-                                        <span>Reset ke Template Bawaan</span>
-                                    </button>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onclick="resetSingleReceiptTemplate()"
+                                            class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs sm:text-sm transition inline-flex items-center justify-center gap-2"
+                                        >
+                                            <i class="fa-solid fa-rotate-left"></i>
+                                            <span>Reset Template Ini</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onclick="if(confirm('Kembalikan SEMUA template surat (Tanda Terima & Ucapan) ke desain bawaan sistem?')) { document.getElementById('resetTargetTemplateInput').value = 'all'; document.getElementById('resetReceiptTemplateForm').submit(); }"
+                                            class="px-3.5 py-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 font-semibold text-xs sm:text-sm transition"
+                                        >
+                                            Reset Semua
+                                        </button>
+                                    </div>
                                     <div class="flex items-center justify-end gap-2.5">
                                         <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
                                         <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
@@ -913,7 +1007,7 @@
 
                             <form id="resetReceiptTemplateForm" method="POST" action="{{ route('management.receipts.template.reset') }}" class="hidden">
                                 @csrf
-                                <input type="hidden" name="target_template" value="all">
+                                <input type="hidden" id="resetTargetTemplateInput" name="target_template" value="all">
                             </form>
                         </div>
 
@@ -3633,7 +3727,7 @@
             <div class="text-xs sm:text-sm flex items-center gap-2">
                 <i class="fa-solid fa-file-lines text-amber-400"></i>
                 <span class="font-bold">Pratinjau Cetak Kertas A4</span>
-                <span class="text-slate-400 ml-2 hidden sm:inline">Template surat resmi dengan placeholder [logo]</span>
+                <span id="a4PrintModeBadge" class="text-slate-400 ml-2 hidden sm:inline">Template surat resmi A4</span>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
                 <button type="button" onclick="window.print()" class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
@@ -3647,11 +3741,11 @@
             </div>
         </div>
 
-        <!-- Actual A4 Sheet (Strictly 1-Page A4 Official Letter Standard) -->
-        <div class="a4-sheet bg-white text-slate-900 w-full max-w-[210mm] p-4 sm:p-9 print:p-0 rounded-xl shadow-2xl border border-slate-300 space-y-4 print:space-y-3 overflow-x-auto">
+        <!-- Actual A4 Sheet -->
+        <div id="a4SheetCard" class="a4-sheet bg-white text-slate-900 w-full max-w-[210mm] p-4 sm:p-9 print:p-0 rounded-xl shadow-2xl border border-slate-300 space-y-4 print:space-y-3 overflow-x-auto">
             <div class="space-y-4 print:space-y-3">
-                <!-- KOP SURAT RESMI STANDAR TATA NASKAH DINAS DENGAN LOGO CUSTOM / [logo] -->
-                <div class="border-b-4 border-double border-slate-900 pb-3 flex items-center gap-4">
+                <!-- KOP SURAT BAWAAN (OTOMATIS DISEMBUNYIKAN BILA MEMAKAI FULL TEMPLATE CUSTOM) -->
+                <div id="a4DefaultHeader" class="border-b-4 border-double border-slate-900 pb-3 flex items-center gap-4">
                     @if (!empty($viharaProfile->logo_url))
                         <div class="w-16 h-16 shrink-0 flex items-center justify-center">
                             <img src="{{ $viharaProfile->logo_url }}" alt="Logo Wihara" class="w-16 h-16 object-contain">
@@ -3676,12 +3770,12 @@
                     </div>
                 </div>
 
-                <!-- Dynamic A4 Document Body -->
-                <div id="a4DocumentContent" class="space-y-3 print:space-y-2.5 text-xs leading-snug text-slate-900"></div>
+                <!-- Dynamic A4 Document Body (Or Full-Page Custom Word Template) -->
+                <div id="a4DocumentContent" class="docx-template-content space-y-3 print:space-y-2.5 text-xs leading-snug text-slate-900"></div>
             </div>
 
-            <!-- A4 Official Signature Footer (Generous space for wet signature & official stamp) -->
-            <div class="pt-6 border-t border-slate-300 mt-6">
+            <!-- TANDA TANGAN BAWAAN (OTOMATIS DISEMBUNYIKAN BILA MEMAKAI FULL TEMPLATE CUSTOM) -->
+            <div id="a4DefaultFooter" class="pt-6 border-t border-slate-300 mt-6">
                 <div class="grid grid-cols-2 gap-10 text-xs text-center">
                     <div class="flex flex-col justify-between">
                         <div>
@@ -3764,10 +3858,21 @@
             profile: 'Pengaturan Akun & Profil'
         };
 
-        const customReceiptTemplates = @json([
-            'receipt' => $viharaProfile->receipt_template_html,
-            'thank_you' => $viharaProfile->thank_you_template_html,
-        ]);
+        @php
+            $viharaProfileMetaPayload = [
+                'name' => $viharaProfile->name ?? 'Wihara Mahabodhi Buddhist Centre',
+                'address' => $viharaProfile->address ?? 'Jl. Seroja Timur No. 9-11, Kel. Karangkidul, Kec. Semarang Tengah, Kota Semarang, Jawa Tengah 50136',
+                'phone' => $viharaProfile->phone ?? '(024) 841-5509 / 0812-2500-8899',
+                'email' => $viharaProfile->email ?? 'sekretariat@mahabodhi.or.id',
+                'logo_url' => $viharaProfile->logo_url,
+            ];
+            $customReceiptTemplatesPayload = [
+                'receipt' => $viharaProfile->receipt_template_html,
+                'thank_you' => $viharaProfile->thank_you_template_html,
+            ];
+        @endphp
+        const customReceiptTemplates = @json($customReceiptTemplatesPayload);
+        const viharaProfileMeta = @json($viharaProfileMetaPayload);
         const categoriesByModuleData = @json($categoriesByModule ?? []);
         const categoryModuleLabelsData = @json($categoryModuleLabels ?? []);
         const categoryStoreEndpoint = @json(route('management.categories.store'));
@@ -4085,6 +4190,13 @@
             `;
         }
 
+        function buildViharaLogoPlaceholderHtml() {
+            if (viharaProfileMeta && viharaProfileMeta.logo_url) {
+                return `<img src="${escapeHtml(viharaProfileMeta.logo_url)}" alt="Logo Wihara" style="width: 64px; height: 64px; object-fit: contain; display: inline-block; vertical-align: middle;">`;
+            }
+            return `<div style="width: 62px; height: 62px; border: 2px solid #0f172a; border-radius: 8px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 10px; color: #0f172a; background: #f8fafc;">[logo]</div>`;
+        }
+
         function applyReceiptTemplatePlaceholders(templateHtml, receipt) {
             const dateStr = (receipt.receipt_date || '').substring(0, 10);
             const items = buildReceiptItemsList(receipt);
@@ -4093,6 +4205,11 @@
             const defaultNotes = 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat wihara.';
 
             const replacements = {
+                '@{{logo}}': buildViharaLogoPlaceholderHtml(),
+                '@{{nama_wihara}}': escapeHtml((viharaProfileMeta && viharaProfileMeta.name) || 'Wihara Mahabodhi Buddhist Centre'),
+                '@{{alamat_wihara}}': escapeHtml((viharaProfileMeta && viharaProfileMeta.address) || ''),
+                '@{{telepon_wihara}}': escapeHtml((viharaProfileMeta && viharaProfileMeta.phone) || ''),
+                '@{{email_wihara}}': escapeHtml((viharaProfileMeta && viharaProfileMeta.email) || ''),
                 '@{{nomor}}': escapeHtml(receipt.receipt_number || ''),
                 '@{{tanggal}}': escapeHtml(dateStr),
                 '@{{jenis}}': escapeHtml(receipt.receipt_type || ''),
@@ -4115,8 +4232,12 @@
             return result;
         }
 
-        function openReceiptPrintModal(receipt, mode) {
+        function openReceiptPrintModal(receipt, mode, overrideTemplateHtml) {
             const wrapper = document.getElementById('a4PrintWrapper');
+            const sheetCard = document.getElementById('a4SheetCard');
+            const defaultHeader = document.getElementById('a4DefaultHeader');
+            const defaultFooter = document.getElementById('a4DefaultFooter');
+            const modeBadge = document.getElementById('a4PrintModeBadge');
             const content = document.getElementById('a4DocumentContent');
             const dateStr = (receipt.receipt_date || '').substring(0, 10);
             const items = buildReceiptItemsList(receipt);
@@ -4128,15 +4249,38 @@
             document.getElementById('a4RightSignTitle').textContent = 'Petugas Penerima Sekretariat';
             document.getElementById('a4RightSignName').textContent = receipt.receiver_name || 'Sekretariat Wihara Mahabodhi';
 
-            const customTpl = mode === 'thank_you'
-                ? customReceiptTemplates.thank_you
-                : customReceiptTemplates.receipt;
+            const customTpl = overrideTemplateHtml !== undefined && overrideTemplateHtml !== null
+                ? overrideTemplateHtml
+                : (mode === 'thank_you' ? customReceiptTemplates.thank_you : customReceiptTemplates.receipt);
 
             if (customTpl && String(customTpl).trim() !== '') {
-                content.innerHTML = `<div class="space-y-3 text-xs sm:text-sm text-slate-900 leading-relaxed custom-word-template">${applyReceiptTemplatePlaceholders(customTpl, receipt)}</div>`;
+                // Full-Page Custom Word/Web Template: hide built-in Kop Surat & Signature Footer completely!
+                if (defaultHeader) defaultHeader.classList.add('hidden');
+                if (defaultFooter) defaultFooter.classList.add('hidden');
+                if (sheetCard) {
+                    sheetCard.classList.add('is-custom-full-template');
+                    sheetCard.classList.remove('p-4', 'sm:p-9', 'space-y-4');
+                    sheetCard.classList.add('p-0');
+                }
+                if (modeBadge) modeBadge.textContent = 'Full Template Custom (Header + Isi + Tanda Tangan)';
+
+                const renderedHtml = applyReceiptTemplatePlaceholders(customTpl, receipt);
+                const hasPageRoot = renderedHtml.includes('docx-page-root');
+                content.innerHTML = hasPageRoot
+                    ? renderedHtml
+                    : `<div class="docx-page-root" style="padding: 12mm 15mm; box-sizing: border-box; width: 100%;">${renderedHtml}</div>`;
                 wrapper.classList.remove('hidden');
                 return;
             }
+
+            // Built-in default layout: show built-in Kop Surat & Signature Footer
+            if (defaultHeader) defaultHeader.classList.remove('hidden');
+            if (defaultFooter) defaultFooter.classList.remove('hidden');
+            if (sheetCard) {
+                sheetCard.classList.remove('is-custom-full-template', 'p-0');
+                sheetCard.classList.add('p-4', 'sm:p-9', 'space-y-4');
+            }
+            if (modeBadge) modeBadge.textContent = 'Template surat resmi bawaan A4';
 
             if (mode === 'thank_you') {
                 content.innerHTML = `
@@ -4327,12 +4471,54 @@
         }
 
         /* ========================================================= */
-        /* WEB TEMPLATE EDITOR (WORD .DOCX -> EDITABLE HTML)         */
+        /* WEB TEMPLATE EDITOR (WORD .DOCX -> FULL-PAGE EDITABLE A4) */
         /* ========================================================= */
         let activeTemplateEditorKey = @json(request('editor') === 'thank_you' ? 'thank_you' : 'receipt');
+        let isTemplateSourceMode = false;
 
         function getActiveTemplateEditorEl() {
             return document.getElementById(activeTemplateEditorKey === 'thank_you' ? 'thankYouTemplateEditor' : 'receiptTemplateEditor');
+        }
+
+        function getActiveTemplateSourceEl() {
+            return document.getElementById(activeTemplateEditorKey === 'thank_you' ? 'thankYouTemplateSourceEditor' : 'receiptTemplateSourceEditor');
+        }
+
+        function syncVisualAndSource(direction) {
+            ['receipt', 'thank_you'].forEach(function (k) {
+                const vis = document.getElementById(k === 'thank_you' ? 'thankYouTemplateEditor' : 'receiptTemplateEditor');
+                const src = document.getElementById(k === 'thank_you' ? 'thankYouTemplateSourceEditor' : 'receiptTemplateSourceEditor');
+                if (!vis || !src) return;
+                if (direction === 'toSource') {
+                    src.value = vis.innerHTML;
+                } else {
+                    vis.innerHTML = src.value;
+                }
+            });
+        }
+
+        function toggleTemplateSourceMode() {
+            const btn = document.getElementById('tplSourceModeBtn');
+            isTemplateSourceMode = !isTemplateSourceMode;
+
+            if (isTemplateSourceMode) {
+                syncVisualAndSource('toSource');
+            } else {
+                syncVisualAndSource('toVisual');
+            }
+
+            ['receipt', 'thank_you'].forEach(function (k) {
+                const vis = document.getElementById(k === 'thank_you' ? 'thankYouTemplateEditor' : 'receiptTemplateEditor');
+                const src = document.getElementById(k === 'thank_you' ? 'thankYouTemplateSourceEditor' : 'receiptTemplateSourceEditor');
+                if (vis) vis.classList.toggle('hidden', isTemplateSourceMode);
+                if (src) src.classList.toggle('hidden', !isTemplateSourceMode);
+            });
+
+            if (btn) {
+                btn.innerHTML = isTemplateSourceMode
+                    ? '<i class="fa-solid fa-file-lines"></i><span>Mode Visual A4</span>'
+                    : '<i class="fa-solid fa-code"></i><span>Mode HTML</span>';
+            }
         }
 
         function switchTemplateEditorTab(key) {
@@ -4353,21 +4539,54 @@
             });
         }
 
-        function execTemplateCmd(cmd) {
+        function execTemplateCmd(cmd, value) {
+            if (isTemplateSourceMode) return;
             const editor = getActiveTemplateEditorEl();
             if (!editor) return;
             editor.focus();
-            document.execCommand(cmd, false, null);
+            document.execCommand(cmd, false, value === undefined ? null : value);
         }
 
-        function execTemplateHeading(tag) {
+        function applyTemplateFontFamily(fontFamily) {
+            if (!fontFamily) return;
+            execTemplateCmd('fontName', fontFamily);
+        }
+
+        function applyTemplateFontSize(sizeVal) {
+            if (!sizeVal) return;
+            execTemplateCmd('fontSize', sizeVal);
+        }
+
+        function applyTemplateColor(hexColor) {
+            if (!hexColor) return;
+            execTemplateCmd('foreColor', hexColor);
+        }
+
+        function insertTemplateHtmlAtCursor(htmlSnippet) {
+            if (isTemplateSourceMode) {
+                const src = getActiveTemplateSourceEl();
+                if (!src) return;
+                const start = src.selectionStart || 0;
+                const end = src.selectionEnd || 0;
+                src.value = src.value.slice(0, start) + htmlSnippet + src.value.slice(end);
+                src.focus();
+                return;
+            }
             const editor = getActiveTemplateEditorEl();
             if (!editor) return;
             editor.focus();
-            document.execCommand('formatBlock', false, tag);
+            if (document.queryCommandSupported && document.queryCommandSupported('insertHTML')) {
+                document.execCommand('insertHTML', false, htmlSnippet);
+            } else {
+                editor.innerHTML += htmlSnippet;
+            }
         }
 
         function insertTemplatePlaceholder(token) {
+            if (isTemplateSourceMode) {
+                insertTemplateHtmlAtCursor(token);
+                return;
+            }
             const editor = getActiveTemplateEditorEl();
             if (!editor) return;
             editor.focus();
@@ -4378,7 +4597,118 @@
             }
         }
 
+        function insertTemplateImageFile(input) {
+            if (!input || !input.files || !input.files[0]) return;
+            const file = input.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran gambar maksimal 2 MB agar tetap ringan saat dicetak.');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                const dataUrl = ev.target && ev.target.result ? String(ev.target.result) : '';
+                if (dataUrl) {
+                    insertTemplateHtmlAtCursor(`<img src="${dataUrl}" alt="Gambar Template" style="width: 80px; max-width: 100%; height: auto; display: inline-block; vertical-align: middle;">`);
+                }
+                input.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function insertTemplateKopBlock() {
+            const kopHtml = `
+                <table style="width: 100%; border-collapse: collapse; border-bottom: 3px double #0f172a; margin-bottom: 14px;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 18%; border: none; padding: 0 10px 10px 0; vertical-align: middle; text-align: center;">@{{logo}}</td>
+                            <td style="width: 82%; border: none; padding: 0 0 10px 0; vertical-align: middle; text-align: center;">
+                                <p style="margin: 0; font-size: 9pt; font-weight: bold; letter-spacing: 0.14em; text-transform: uppercase; color: #475569;">Majelis Agama Buddha &bull; Sekretariat Pengurus Wihara</p>
+                                <p style="margin: 2px 0; font-size: 16pt; font-weight: bold; text-transform: uppercase; color: #0f172a;">@{{nama_wihara}}</p>
+                                <p style="margin: 0; font-size: 9.5pt; color: #334155;">@{{alamat_wihara}}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 9pt; color: #475569;">Telp: @{{telepon_wihara}} &bull; Email: @{{email_wihara}}</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            insertTemplateHtmlAtCursor(kopHtml);
+        }
+
+        function insertTemplateSignatureBlock() {
+            const sigHtml = `
+                <table style="width: 100%; border-collapse: collapse; border-top: 1px solid #cbd5e1; margin-top: 18px;">
+                    <tbody>
+                        <tr>
+                            <td style="width: 50%; border: none; padding: 14px 10px 0 10px; text-align: center; vertical-align: top;">
+                                <p style="margin: 0; font-size: 10pt; color: #475569;">Mengetahui / Menyerahkan,</p>
+                                <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 10.5pt;">Pihak Penyerah / Donatur</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0; font-weight: bold; text-decoration: underline;">@{{nama_donatur}}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 9pt; color: #64748b;">Tanda Tangan &amp; Nama Terang</p>
+                            </td>
+                            <td style="width: 50%; border: none; padding: 14px 10px 0 10px; text-align: center; vertical-align: top;">
+                                <p style="margin: 0; font-size: 10pt; color: #334155;">Semarang, <strong>@{{tanggal}}</strong></p>
+                                <p style="margin: 2px 0 0 0; font-weight: bold; font-size: 10.5pt;">Petugas Penerima Sekretariat</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0;">&nbsp;</p>
+                                <p style="margin: 0; font-weight: bold; text-decoration: underline;">@{{penerima}}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 9pt; color: #64748b;">Cap &amp; Stempel Resmi Sekretariat Wihara</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            insertTemplateHtmlAtCursor(sigHtml);
+        }
+
+        function previewCurrentTemplateInA4() {
+            if (isTemplateSourceMode) {
+                syncVisualAndSource('toVisual');
+            }
+            const editor = getActiveTemplateEditorEl();
+            if (!editor) return;
+
+            const sampleReceipt = {
+                receipt_number: '001/TT-WMBC/XI/2026',
+                receipt_date: new Date().toISOString().substring(0, 10),
+                receipt_type: 'Barang & Dana',
+                donor_name: 'Bpk. Suryadi Kusuma',
+                donor_institution: 'Umat Wihara Mahabodhi Semarang',
+                donor_contact: '0812-3456-7890',
+                item_name: 'Beras Premium 25 Kg & Minyak Goreng',
+                quantity: '2 item (4 Karung, 6 Dus)',
+                items: [
+                    { name: 'Beras Premium 25 Kg', quantity: '4 Karung', nominal: 1400000 },
+                    { name: 'Minyak Goreng Kemasan', quantity: '6 Dus', nominal: 1100000 }
+                ],
+                nominal: 2500000,
+                receiver_name: 'Sekretariat Wihara Mahabodhi',
+                thank_you_message: 'Anumodana atas kebajikan Bapak/Ibu sekeluarga. Semoga semua makhluk berbahagia.',
+                notes: 'Diterima dalam keadaan baik dan lengkap.'
+            };
+
+            openReceiptPrintModal(sampleReceipt, activeTemplateEditorKey, editor.innerHTML);
+        }
+
+        function resetSingleReceiptTemplate() {
+            const label = activeTemplateEditorKey === 'thank_you' ? 'Surat Ucapan Terima Kasih' : 'Bukti Tanda Terima';
+            if (!confirm('Kembalikan template ' + label + ' ke desain bawaan sistem?')) {
+                return;
+            }
+            const targetInput = document.getElementById('resetTargetTemplateInput');
+            if (targetInput) targetInput.value = activeTemplateEditorKey;
+            const form = document.getElementById('resetReceiptTemplateForm');
+            if (form) form.submit();
+        }
+
         function syncTemplateEditorsBeforeSubmit() {
+            if (isTemplateSourceMode) {
+                syncVisualAndSource('toVisual');
+            }
             const recEd = document.getElementById('receiptTemplateEditor');
             const tyEd = document.getElementById('thankYouTemplateEditor');
             const recIn = document.getElementById('receiptTemplateHtmlInput');

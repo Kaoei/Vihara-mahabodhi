@@ -517,12 +517,12 @@ class ManagementController extends Controller
     {
         $validated = $request->validate([
             'target_template' => ['required', 'string', Rule::in(['receipt', 'thank_you'])],
-            'docx_file' => ['required', 'file', 'mimes:docx', 'max:5120'],
+            'docx_file' => ['required', 'file', 'mimes:docx,zip', 'max:10240'],
         ]);
 
         $file = $request->file('docx_file');
-        if ($file === null) {
-            return back()->withErrors(['docx_file' => 'File Word (.docx) tidak ditemukan.']);
+        if ($file === null || strtolower($file->getClientOriginalExtension()) !== 'docx') {
+            return back()->withErrors(['docx_file' => 'Harap unggah file Microsoft Word dengan ekstensi .docx.']);
         }
 
         $parsedHtml = $this->docxService->parseDocxToHtml($file);

@@ -160,21 +160,66 @@ class ViharaSystemTest extends TestCase
         $this->assertFalse(Route::has('management.receipts.import'));
         $this->assertFalse(Route::has('management.receipts.template'));
 
-        // 2. Access dedicated Word Template Editor page
+        // 2. Access dedicated Full-Page Word Template Editor page (includes editable Header & Signature)
         $this->actingAs($admin)
             ->get(route('management.receipts.template.edit'))
             ->assertStatus(200)
-            ->assertSee('Editor Template Surat Tanda Terima');
+            ->assertSee('Editor Template Surat Tanda Terima')
+            ->assertSee('Pratinjau Cetak A4')
+            ->assertSee('{{logo}}');
 
-        // 3. Upload a valid .docx Word template and verify HTML conversion
+        // 3. Upload a rich full-page .docx Word template (Header + embedded PNG logo + Body + Borderless Signature Table + Footer)
         $docxTmp = tempnam(sys_get_temp_dir(), 'tpl_docx_');
         $zip = new ZipArchive;
         $zip->open($docxTmp, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        $tinyPng = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', true);
+        $zip->addFromString('word/media/kop_logo.png', $tinyPng);
+
+        $docRelsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            .'<Relationship Id="rIdHdr1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/header" Target="header1.xml"/>'
+            .'<Relationship Id="rIdFtr1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>'
+            .'</Relationships>';
+        $zip->addFromString('word/_rels/document.xml.rels', $docRelsXml);
+
+        $hdrRelsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            .'<Relationship Id="rIdLogo1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/kop_logo.png"/>'
+            .'</Relationships>';
+        $zip->addFromString('word/_rels/header1.xml.rels', $hdrRelsXml);
+
+        $headerXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+            .'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '
+            .'xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" '
+            .'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+            .'<w:p><w:pPr><w:jc w:val="center"/><w:pBdr><w:bottom w:val="double" w:sz="12" w:color="1F4E79"/></w:pBdr></w:pPr>'
+            .'<w:r><w:drawing><wp:inline><wp:extent cx="571500" cy="571500"/><a:blip r:embed="rIdLogo1"/></wp:inline></w:drawing></w:r>'
+            .'<w:r><w:rPr><w:b/><w:rFonts w:ascii="Georgia"/><w:sz w:val="32"/><w:color w:val="1F4E79"/></w:rPr><w:t>KOP SURAT CUSTOM YAYASAN MAHABODHI</w:t></w:r>'
+            .'</w:p></w:hdr>';
+        $zip->addFromString('word/header1.xml', $headerXml);
+
+        $footerXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            .'<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Footer Resmi Dokumen Wihara Custom</w:t></w:r></w:p>'
+            .'</w:ftr>';
+        $zip->addFromString('word/footer1.xml', $footerXml);
+
         $documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-            .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
+            .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" '
+            .'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>'
             .'<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>SURAT TANDA TERIMA KHUSUS WIHARA</w:t></w:r></w:p>'
             .'<w:p><w:r><w:t>Terima kasih kepada {{nama_donatur}} atas bantuan:</w:t></w:r></w:p>'
             .'<w:p><w:r><w:t>{{daftar_barang}}</w:t></w:r></w:p>'
+            .'<w:tbl>'
+            .'<w:tblPr><w:tblBorders><w:top w:val="none"/><w:bottom w:val="none"/><w:left w:val="none"/><w:right w:val="none"/><w:insideH w:val="none"/><w:insideV w:val="none"/></w:tblBorders></w:tblPr>'
+            .'<w:tr>'
+            .'<w:tc><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Ketua Yayasan Custom,</w:t></w:r></w:p><w:p/><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:b/><w:u w:val="single"/><w:t>Bhante Dharmavira</w:t></w:r></w:p></w:tc>'
+            .'<w:tc><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:t>Bendahara Custom,</w:t></w:r></w:p><w:p/><w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:b/><w:t>{{penerima}}</w:t></w:r></w:p></w:tc>'
+            .'</w:tr>'
+            .'</w:tbl>'
+            .'<w:sectPr><w:headerReference w:type="default" r:id="rIdHdr1"/><w:footerReference w:type="default" r:id="rIdFtr1"/><w:pgMar w:top="850" w:right="1020" w:bottom="850" w:left="1020"/></w:sectPr>'
             .'</w:body></w:document>';
         $zip->addFromString('word/document.xml', $documentXml);
         $zip->close();
@@ -191,20 +236,33 @@ class ViharaSystemTest extends TestCase
         $uploadResp->assertRedirect(route('management.receipts.template.edit', ['editor' => 'receipt']));
 
         $profile = ViharaProfile::current()->fresh();
-        $this->assertStringContainsString('SURAT TANDA TERIMA KHUSUS WIHARA', (string) $profile->receipt_template_html);
-        $this->assertStringContainsString('{{nama_donatur}}', (string) $profile->receipt_template_html);
-        $this->assertStringContainsString('{{daftar_barang}}', (string) $profile->receipt_template_html);
+        $tplHtml = (string) $profile->receipt_template_html;
+        $this->assertStringContainsString('docx-page-root', $tplHtml);
+        $this->assertStringContainsString('KOP SURAT CUSTOM YAYASAN MAHABODHI', $tplHtml);
+        $this->assertStringContainsString('data:image/png;base64,', $tplHtml);
+        $this->assertStringContainsString('double #1F4E79', $tplHtml);
+        $this->assertStringContainsString('Georgia', $tplHtml);
+        $this->assertStringContainsString('16pt', $tplHtml);
+        $this->assertStringContainsString('SURAT TANDA TERIMA KHUSUS WIHARA', $tplHtml);
+        $this->assertStringContainsString('{{nama_donatur}}', $tplHtml);
+        $this->assertStringContainsString('{{daftar_barang}}', $tplHtml);
+        $this->assertStringContainsString('Bhante Dharmavira', $tplHtml);
+        $this->assertStringContainsString('border-top: none', $tplHtml);
+        $this->assertStringContainsString('&nbsp;', $tplHtml);
+        $this->assertStringContainsString('Footer Resmi Dokumen Wihara Custom', $tplHtml);
 
-        // 4. Edit & save custom template directly in the web editor (with XSS sanitization)
+        // 4. Edit & save custom template directly in the web editor (with XSS sanitization & embedded img preserved)
         $saveResp = $this->actingAs($admin)->put(route('management.receipts.template.update'), [
-            'receipt_template_html' => '<h3>Tanda Terima Diedit di Web</h3><p>Nomor: {{nomor}}</p><script>alert(1)</script>',
-            'thank_you_template_html' => '<h3>Ucapan Anumodana Custom</h3><p>Kepada {{nama_donatur}}</p>',
+            'receipt_template_html' => '<div class="docx-page-root"><img src="data:image/png;base64,iVBORw0KGgo=" alt="Logo"><h3>Tanda Terima Diedit di Web</h3><p>Nomor: {{nomor}}</p><script>alert(1)</script></div>',
+            'thank_you_template_html' => '<div class="docx-page-root"><h3>Ucapan Anumodana Custom</h3><p>Kepada {{nama_donatur}}</p></div>',
         ]);
         $saveResp->assertRedirect(route('management.receipts.template.edit'));
 
         $profile = ViharaProfile::current()->fresh();
         $this->assertStringContainsString('Tanda Terima Diedit di Web', (string) $profile->receipt_template_html);
+        $this->assertStringContainsString('data:image/png;base64,', (string) $profile->receipt_template_html);
         $this->assertStringNotContainsString('<script>', (string) $profile->receipt_template_html);
+        $this->assertStringNotContainsString('alert(1)', (string) $profile->receipt_template_html);
         $this->assertStringContainsString('Ucapan Anumodana Custom', (string) $profile->thank_you_template_html);
 
         // 5. Reset template back to built-in default
