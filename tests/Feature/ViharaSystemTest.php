@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Document;
 use App\Models\Gallery;
 use App\Models\MarriageCertificate;
@@ -14,8 +15,10 @@ use App\Models\ViharaProfile;
 use App\Services\ReceiptExcelService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
+use ZipArchive;
 
 class ViharaSystemTest extends TestCase
 {
@@ -116,62 +119,232 @@ class ViharaSystemTest extends TestCase
     }
 
     /**
-     * Mandatory Feature 1: Create, Edit on separate page, Print, Export, and Import Tanda Terima.
+     * Mandatory Feature 1: Multi-item Tanda Terima CRUD, Word (.docx) custom template upload, and web editor workflow.
      */
-    public function test_receipt_creation_separate_edit_and_excel_workflow(): void
+    public function test_receipt_multi_item_and_word_template_editor_workflow(): void
     {
         $admin = User::factory()->admin()->create();
 
+        // 1. Create a Receipt with multiple goods/items
         $storeResponse = $this->actingAs($admin)->post(route('management.receipts.store'), [
-            'receipt_type' => 'Bantuan Dana',
+            'receipt_type' => 'Barang',
             'receipt_date' => '2026-10-27',
             'donor_name' => 'Bpk. Dharmaputra Wijaya',
             'donor_institution' => 'Simpatisan Wihara Semarang',
             'donor_contact' => '08123456789',
-            'item_name' => 'Dana Operasional Puja Bakti & Altar',
-            'quantity' => '1 Paket Dana',
-            'nominal' => 2500000,
+            'items' => [
+                ['name' => 'Beras Premium 25 Kg', 'quantity' => '4 Karung', 'nominal' => 1400000],
+                ['name' => 'Minyak Goreng Kemasan', 'quantity' => '6 Dus', 'nominal' => 1100000],
+            ],
             'receiver_name' => 'Upasika Metta Kusuma',
         ]);
 
         $storeResponse->assertRedirect(route('management.dashboard', ['tab' => 'receipts']));
 
         $receipt = Receipt::firstOrFail();
+        $this->assertCount(2, $receipt->normalizedItems());
+        $this->assertSame('Beras Premium 25 Kg', $receipt->normalizedItems()[0]['name']);
+        $this->assertSame('Minyak Goreng Kemasan', $receipt->normalizedItems()[1]['name']);
+        $this->assertEquals(2500000.0, (float) $receipt->nominal);
 
-        // Separate Edit page for Receipt
+        // Separate Edit page for Receipt displays both items
         $this->actingAs($admin)
             ->get(route('management.receipts.edit', $receipt))
             ->assertStatus(200)
-            ->assertSee($receipt->receipt_number);
+            ->assertSee($receipt->receipt_number)
+            ->assertSee('Beras Premium 25 Kg')
+            ->assertSee('Minyak Goreng Kemasan');
 
-        // Verify Excel export returns valid OpenXML binary
-        $exportResponse = $this->actingAs($admin)->get(route('management.receipts.export'));
-        $exportResponse->assertStatus(200);
-        $exportResponse->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        // Confirm Excel export/import routes were removed from Receipts
+        $this->assertFalse(Route::has('management.receipts.export'));
+        $this->assertFalse(Route::has('management.receipts.import'));
+        $this->assertFalse(Route::has('management.receipts.template'));
 
-        // Verify Excel import from generated .xlsx template
+        // 2. Access dedicated Word Template Editor page
+        $this->actingAs($admin)
+            ->get(route('management.receipts.template.edit'))
+            ->assertStatus(200)
+            ->assertSee('Editor Template Surat Tanda Terima');
+
+        // 3. Upload a valid .docx Word template and verify HTML conversion
+        $docxTmp = tempnam(sys_get_temp_dir(), 'tpl_docx_');
+        $zip = new ZipArchive;
+        $zip->open($docxTmp, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+        $documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            .'<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'
+            .'<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>SURAT TANDA TERIMA KHUSUS WIHARA</w:t></w:r></w:p>'
+            .'<w:p><w:r><w:t>Terima kasih kepada {{nama_donatur}} atas bantuan:</w:t></w:r></w:p>'
+            .'<w:p><w:r><w:t>{{daftar_barang}}</w:t></w:r></w:p>'
+            .'</w:body></w:document>';
+        $zip->addFromString('word/document.xml', $documentXml);
+        $zip->close();
+
+        $docxBinary = (string) file_get_contents($docxTmp);
+        @unlink($docxTmp);
+
+        $docxFile = UploadedFile::fake()->createWithContent('template_tanda_terima.docx', $docxBinary);
+
+        $uploadResp = $this->actingAs($admin)->post(route('management.receipts.template.upload-docx'), [
+            'target_template' => 'receipt',
+            'docx_file' => $docxFile,
+        ]);
+        $uploadResp->assertRedirect(route('management.receipts.template.edit', ['editor' => 'receipt']));
+
+        $profile = ViharaProfile::current()->fresh();
+        $this->assertStringContainsString('SURAT TANDA TERIMA KHUSUS WIHARA', (string) $profile->receipt_template_html);
+        $this->assertStringContainsString('{{nama_donatur}}', (string) $profile->receipt_template_html);
+        $this->assertStringContainsString('{{daftar_barang}}', (string) $profile->receipt_template_html);
+
+        // 4. Edit & save custom template directly in the web editor (with XSS sanitization)
+        $saveResp = $this->actingAs($admin)->put(route('management.receipts.template.update'), [
+            'receipt_template_html' => '<h3>Tanda Terima Diedit di Web</h3><p>Nomor: {{nomor}}</p><script>alert(1)</script>',
+            'thank_you_template_html' => '<h3>Ucapan Anumodana Custom</h3><p>Kepada {{nama_donatur}}</p>',
+        ]);
+        $saveResp->assertRedirect(route('management.receipts.template.edit'));
+
+        $profile = ViharaProfile::current()->fresh();
+        $this->assertStringContainsString('Tanda Terima Diedit di Web', (string) $profile->receipt_template_html);
+        $this->assertStringNotContainsString('<script>', (string) $profile->receipt_template_html);
+        $this->assertStringContainsString('Ucapan Anumodana Custom', (string) $profile->thank_you_template_html);
+
+        // 5. Reset template back to built-in default
+        $resetResp = $this->actingAs($admin)->post(route('management.receipts.template.reset'), [
+            'target_template' => 'all',
+        ]);
+        $resetResp->assertRedirect(route('management.receipts.template.edit'));
+
+        $profile = ViharaProfile::current()->fresh();
+        $this->assertNull($profile->receipt_template_html);
+        $this->assertNull($profile->thank_you_template_html);
+    }
+
+    /**
+     * Excel Export, Template Download, and Bulk Import for Administrasi Lain (Documents & Marriages).
+     */
+    public function test_documents_and_marriages_excel_export_and_import_workflow(): void
+    {
+        $admin = User::factory()->admin()->create();
         $excelService = app(ReceiptExcelService::class);
-        $xlsxBinary = $excelService->generateXlsxBinary([
-            ['No Tanda Terima', 'Jenis', 'Tanggal', 'Nama Donatur', 'Instansi', 'Kontak', 'Uraian', 'Jumlah', 'Nominal', 'Penerima', 'Ucapan', 'Catatan'],
-            ['', 'Barang', '2026-10-27', 'Ibu Karuna Devi', 'Umat Semarang', '0811223344', 'Beras 50 Kg untuk Bakti Sosial', '5 Karung', '750000', 'Sekretariat', 'Anumodana atas bantuan beras.', 'Baik'],
+
+        // 1. Documents Export & Template Download
+        $this->actingAs($admin)
+            ->get(route('management.documents.export'))
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $this->actingAs($admin)
+            ->get(route('management.documents.template'))
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        // 2. Documents Excel Import
+        $docXlsx = $excelService->generateXlsxBinary([
+            ['Nomor Surat / Dokumen', 'Kategori', 'Judul / Perihal Dokumen', 'Tanggal Surat', 'Tanggal Diterima', 'Pengirim', 'Penerima', 'Ukuran Kertas', 'Kode Arsip', 'Ringkasan'],
+            ['201/SM/WMBC/XI/2026', 'Surat Edaran', 'Edaran Kegiatan Kathina Bersama', '2026-11-10', '2026-11-10', 'Sangha Theravada Indonesia', 'Pengurus Wihara Mahabodhi', 'A4', 'ARS-A4-201', 'Edaran resmi peringatan Kathina.'],
+        ]);
+        $docFile = UploadedFile::fake()->createWithContent('import_dokumen.xlsx', $docXlsx);
+
+        $this->actingAs($admin)
+            ->post(route('management.documents.import'), ['excel_file' => $docFile])
+            ->assertRedirect(route('management.dashboard', ['tab' => 'documents']));
+
+        $this->assertDatabaseHas('documents', [
+            'document_number' => '201/SM/WMBC/XI/2026',
+            'category' => 'Surat Edaran',
+            'title' => 'Edaran Kegiatan Kathina Bersama',
         ]);
 
-        $uploadedFile = UploadedFile::fake()->createWithContent('import_tanda_terima.xlsx', $xlsxBinary);
+        // 3. Marriages Export & Template Download
+        $this->actingAs($admin)
+            ->get(route('management.marriages.export'))
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
 
-        $importResponse = $this->actingAs($admin)->post(route('management.receipts.import'), [
-            'excel_file' => $uploadedFile,
+        $this->actingAs($admin)
+            ->get(route('management.marriages.template'))
+            ->assertStatus(200)
+            ->assertHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        // 4. Marriages Excel Import
+        $marriageXlsx = $excelService->generateXlsxBinary([
+            ['Nomor Arsip', 'Jenis Dokumen Nikah', 'Tanggal Pemberkatan', 'Nama Mempelai Pria', 'Nama Mempelai Wanita', 'Status Arsip', 'Catatan'],
+            ['055/SPP-BDH/WMBC/XI/2026', 'Surat Pemberkatan Perkawinan', '2026-11-20', 'Budi Santoso', 'Lina Hartono', 'Selesai Pemberkatan', 'Import arsip pemberkatan'],
         ]);
+        $marriageFile = UploadedFile::fake()->createWithContent('import_nikah.xlsx', $marriageXlsx);
 
-        $importResponse->assertRedirect(route('management.dashboard', ['tab' => 'receipts']));
-        $this->assertDatabaseHas('receipts', [
-            'donor_name' => 'Ibu Karuna Devi',
-            'receipt_type' => 'Barang',
-            'item_name' => 'Beras 50 Kg untuk Bakti Sosial',
+        $this->actingAs($admin)
+            ->post(route('management.marriages.import'), ['excel_file' => $marriageFile])
+            ->assertRedirect(route('management.dashboard', ['tab' => 'marriages']));
+
+        $this->assertDatabaseHas('marriage_certificates', [
+            'certificate_number' => '055/SPP-BDH/WMBC/XI/2026',
+            'groom_name' => 'Budi Santoso',
+            'bride_name' => 'Lina Hartono',
+            'status' => 'Selesai Pemberkatan',
         ]);
     }
 
     /**
-     * Mandatory Feature 2: Master Dokumen A4 CRUD, separate Edit page, and attachment.
+     * Dynamic Category Management across all 6 management modules (form & inline AJAX).
+     */
+    public function test_dynamic_category_management_across_all_modules(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        // 1. Add category via standard POST form
+        $this->actingAs($admin)
+            ->post(route('management.categories.store'), [
+                'module' => 'receipts',
+                'name' => 'Dana Kathina',
+            ])
+            ->assertRedirect(route('management.dashboard', ['tab' => 'receipts']));
+
+        $this->assertDatabaseHas('categories', [
+            'module' => 'receipts',
+            'name' => 'Dana Kathina',
+        ]);
+
+        // 2. Add category via AJAX JSON (inline + button)
+        $jsonResp = $this->actingAs($admin)->postJson(route('management.categories.store'), [
+            'module' => 'articles',
+            'name' => 'Warta Sangha',
+        ]);
+        $jsonResp->assertStatus(201)->assertJson([
+            'module' => 'articles',
+            'name' => 'Warta Sangha',
+        ]);
+
+        // 3. Create records using newly created custom categories
+        $this->actingAs($admin)->post(route('management.schedules.store'), [
+            'title' => 'Latihan Vipassana Khusus',
+            'category' => 'Retret Meditasi',
+            'day_of_week' => 'Sabtu',
+            'start_time' => '06:00',
+            'end_time' => '08:00',
+            'location' => 'Ruang Meditasi',
+            'description' => 'Sesi retret singkat akhir pekan.',
+        ])->assertRedirect(route('management.dashboard', ['tab' => 'schedules']));
+
+        $this->assertDatabaseHas('categories', [
+            'module' => 'schedules',
+            'name' => 'Retret Meditasi',
+        ]);
+        $this->assertDatabaseHas('schedules', [
+            'title' => 'Latihan Vipassana Khusus',
+            'category' => 'Retret Meditasi',
+        ]);
+
+        // 4. Delete a category
+        $createdCat = Category::where('module', 'articles')->where('name', 'Warta Sangha')->firstOrFail();
+        $this->actingAs($admin)
+            ->delete(route('management.categories.destroy', $createdCat))
+            ->assertRedirect(route('management.dashboard', ['tab' => 'articles']));
+
+        $this->assertDatabaseMissing('categories', ['id' => $createdCat->id]);
+    }
+
+    /**
+     * Mandatory Feature 2: Master Dokumen CRUD, separate Edit page, and multi-file attachments.
      */
     public function test_master_document_a4_crud_and_attachment(): void
     {
@@ -179,6 +352,7 @@ class ViharaSystemTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $pdfFile = UploadedFile::fake()->create('surat_undangan_sangha.pdf', 120, 'application/pdf');
+        $jpgFile = UploadedFile::fake()->create('lampiran_denah.jpg', 80, 'image/jpeg');
 
         $response = $this->actingAs($admin)->post(route('management.documents.store'), [
             'document_number' => '099/SM/WMBC/X/2026',
@@ -191,24 +365,43 @@ class ViharaSystemTest extends TestCase
             'paper_size' => 'A4',
             'archive_code' => 'ARS-A4-SM-09',
             'summary' => 'Surat undangan resmi menghadiri koordinasi perayaan Waisak format A4.',
-            'attachment' => $pdfFile,
+            'attachments' => [$pdfFile, $jpgFile],
         ]);
 
         $response->assertRedirect(route('management.dashboard', ['tab' => 'documents']));
 
         $doc = Document::where('document_number', '099/SM/WMBC/X/2026')->firstOrFail();
-        $this->assertNotNull($doc->attachment_path);
-        Storage::disk('public')->assertExists($doc->attachment_path);
+        $files = $doc->allAttachments();
+        $this->assertCount(2, $files);
+        Storage::disk('public')->assertExists($files[0]['path']);
+        Storage::disk('public')->assertExists($files[1]['path']);
 
         // Separate Edit page for Document
         $this->actingAs($admin)
             ->get(route('management.documents.edit', $doc))
             ->assertStatus(200)
-            ->assertSee('099/SM/WMBC/X/2026');
+            ->assertSee('099/SM/WMBC/X/2026')
+            ->assertSee('surat_undangan_sangha.pdf')
+            ->assertSee('lampiran_denah.jpg');
+
+        // Serve & download both uploaded document files by index
+        $this->actingAs($admin)
+            ->get(route('management.documents.file', ['document' => $doc, 'index' => 0]))
+            ->assertStatus(200);
+
+        $this->actingAs($admin)
+            ->get(route('management.documents.file', ['document' => $doc, 'index' => 0, 'download' => 1]))
+            ->assertStatus(200)
+            ->assertDownload('surat_undangan_sangha.pdf');
+
+        $this->actingAs($admin)
+            ->get(route('management.documents.file', ['document' => $doc, 'index' => 1, 'download' => 1]))
+            ->assertStatus(200)
+            ->assertDownload('lampiran_denah.jpg');
     }
 
     /**
-     * Buddhist Marriage Certificate / Administration CRUD, separate Edit page, and attachment.
+     * Buddhist Marriage Archive CRUD, separate Edit page, and multi-file viewing/downloading.
      */
     public function test_marriage_certificate_administration_crud_and_attachment(): void
     {
@@ -216,49 +409,71 @@ class ViharaSystemTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $pdfFile = UploadedFile::fake()->create('berkas_nikah_kevin_clara.pdf', 150, 'application/pdf');
+        $ktpFile = UploadedFile::fake()->create('scan_ktp_mempelai.jpg', 90, 'image/jpeg');
 
         $response = $this->actingAs($admin)->post(route('management.marriages.store'), [
             'certificate_number' => '010/SPP-BDH/WMBC/XI/2026',
             'document_type' => 'Surat Pemberkatan Perkawinan',
-            'registration_date' => '2026-11-01',
             'wedding_date' => '2026-11-15',
-            'wedding_time' => '09:00 - 11:00 WIB',
-            'wedding_location' => 'Dharmasala Utama Wihara Mahabodhi Buddhist Centre Semarang',
             'groom_name' => 'Kevin Wijaya Kusuma',
-            'groom_buddhist_name' => 'Upasaka Dhammapala',
-            'groom_nik' => '3374011405960001',
-            'groom_birth_info' => 'Semarang, 14 Mei 1996',
-            'groom_father_name' => 'Hendra Wijaya',
-            'groom_mother_name' => 'Lina Susanti',
-            'groom_address' => 'Jl. Gajahmada No. 88, Semarang',
             'bride_name' => 'Clara Anastasia Tan',
-            'bride_buddhist_name' => 'Upasika Metta Devi',
-            'bride_nik' => '3374022208980002',
-            'bride_birth_info' => 'Semarang, 22 Agustus 1998',
-            'bride_father_name' => 'Budianto Tan',
-            'bride_mother_name' => 'Siska Halim',
-            'bride_address' => 'Jl. Pandanaran No. 45, Semarang',
-            'officiant_name' => 'Romo Pandita Dharmaputra, S.Ag., M.Pd.B.',
-            'witness_one' => 'Drs. Suryanto Gunawan',
-            'witness_two' => 'Ir. Hartono Salim',
             'status' => 'Selesai Pemberkatan',
-            'premarital_course_done' => '1',
-            'notes' => 'Berkas persyaratan lengkap.',
-            'attachment' => $pdfFile,
+            'notes' => 'Scan arsip surat pemberkatan perkawinan.',
+            'attachments' => [$pdfFile, $ktpFile],
         ]);
 
         $response->assertRedirect(route('management.dashboard', ['tab' => 'marriages']));
 
         $marriage = MarriageCertificate::where('certificate_number', '010/SPP-BDH/WMBC/XI/2026')->firstOrFail();
-        $this->assertNotNull($marriage->attachment_path);
-        Storage::disk('public')->assertExists($marriage->attachment_path);
+        $files = $marriage->allAttachments();
+        $this->assertCount(2, $files);
+        Storage::disk('public')->assertExists($files[0]['path']);
+        Storage::disk('public')->assertExists($files[1]['path']);
 
-        // Separate Edit page for Marriage Certificate
+        // Separate Edit page for Marriage Archive
         $this->actingAs($admin)
             ->get(route('management.marriages.edit', $marriage))
             ->assertStatus(200)
             ->assertSee('010/SPP-BDH/WMBC/XI/2026')
-            ->assertSee('Kevin Wijaya Kusuma');
+            ->assertSee('Kevin Wijaya Kusuma')
+            ->assertSee('berkas_nikah_kevin_clara.pdf')
+            ->assertSee('scan_ktp_mempelai.jpg');
+
+        // Serve & download both uploaded marriage archive files
+        $this->actingAs($admin)
+            ->get(route('management.marriages.file', ['marriage' => $marriage, 'index' => 0]))
+            ->assertStatus(200);
+
+        $this->actingAs($admin)
+            ->get(route('management.marriages.file', ['marriage' => $marriage, 'index' => 0, 'download' => 1]))
+            ->assertStatus(200)
+            ->assertDownload('berkas_nikah_kevin_clara.pdf');
+
+        $this->actingAs($admin)
+            ->get(route('management.marriages.file', ['marriage' => $marriage, 'index' => 1, 'download' => 1]))
+            ->assertStatus(200)
+            ->assertDownload('scan_ktp_mempelai.jpg');
+
+        // Update: add a 3rd file and remove the 1st file
+        $extraFile = UploadedFile::fake()->create('akta_dukcapil.pdf', 110, 'application/pdf');
+        $updateResp = $this->actingAs($admin)->put(route('management.marriages.update', $marriage), [
+            'certificate_number' => '010/SPP-BDH/WMBC/XI/2026',
+            'document_type' => 'Surat Pemberkatan Perkawinan',
+            'wedding_date' => '2026-11-15',
+            'groom_name' => 'Kevin Wijaya Kusuma',
+            'bride_name' => 'Clara Anastasia Tan',
+            'status' => 'Tercatat di Dukcapil',
+            'notes' => 'Ditambah akta Dukcapil.',
+            'remove_attachments' => [$files[0]['path']],
+            'attachments' => [$extraFile],
+        ]);
+        $updateResp->assertRedirect(route('management.dashboard', ['tab' => 'marriages']));
+
+        $updatedFiles = $marriage->fresh()->allAttachments();
+        $this->assertCount(2, $updatedFiles);
+        Storage::disk('public')->assertMissing($files[0]['path']);
+        $this->assertSame('scan_ktp_mempelai.jpg', $updatedFiles[0]['name']);
+        $this->assertSame('akta_dukcapil.pdf', $updatedFiles[1]['name']);
     }
 
     /**
@@ -384,8 +599,9 @@ class ViharaSystemTest extends TestCase
         Storage::fake('public');
         $admin = User::factory()->admin()->create();
         $heroFile = UploadedFile::fake()->create('hero-wihara-baru.jpg', 300, 'image/jpeg');
+        $logoFile = UploadedFile::fake()->create('logo-mahabodhi.png', 100, 'image/png');
 
-        // 1. Update main Wihara profile, hero image & footer content
+        // 1. Update main Wihara profile, custom logo, hero image & footer content
         $updateResp = $this->actingAs($admin)->put(route('management.vihara-profile.update'), [
             'name' => 'Wihara Mahabodhi Buddhist Centre Semarang Baru',
             'short_name' => 'Wihara Mahabodhi Baru',
@@ -396,8 +612,7 @@ class ViharaSystemTest extends TestCase
             'phone' => '(024) 841-5509',
             'email' => 'info@mahabodhi.or.id',
             'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
-            'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
-            'default_signer_name' => 'Upasaka Dharmadi Wijaya',
+            'logo_file' => $logoFile,
             'hero_image_file' => $heroFile,
             'footer_description' => 'Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.',
             'footer_services_title' => 'Layanan Umat & Sekretariat',
@@ -409,8 +624,6 @@ class ViharaSystemTest extends TestCase
         $this->assertDatabaseHas('vihara_profiles', [
             'name' => 'Wihara Mahabodhi Buddhist Centre Semarang Baru',
             'operational_hours' => 'Setiap Hari: 06.30 – 21.00 WIB',
-            'default_signer_title' => 'Ketua Pengurus Wihara Mahabodhi',
-            'default_signer_name' => 'Upasaka Dharmadi Wijaya',
             'footer_description' => 'Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.',
             'footer_services_title' => 'Layanan Umat & Sekretariat',
             'footer_copyright' => 'Semoga Semua Makhluk Berbahagia.',
@@ -418,11 +631,13 @@ class ViharaSystemTest extends TestCase
 
         $profileAfterUpdate = ViharaProfile::current()->fresh();
         $this->assertStringContainsString('/storage/hero/', (string) $profileAfterUpdate->hero_image);
+        $this->assertStringContainsString('/storage/logos/', (string) $profileAfterUpdate->logo_url);
 
         $mgmtDashboard = $this->actingAs($admin)->get(route('management.dashboard', ['tab' => 'vihara-profile']));
         $mgmtDashboard->assertStatus(200);
-        $mgmtDashboard->assertSee('Edit Penandatangan');
-        $mgmtDashboard->assertSee('Upasaka Dharmadi Wijaya');
+        $mgmtDashboard->assertDontSee('Edit Penandatangan');
+        $mgmtDashboard->assertSee('Logo Resmi Wihara');
+        $mgmtDashboard->assertSee($profileAfterUpdate->logo_url, false);
         $mgmtDashboard->assertSee('Gambar Hero Utama');
         $mgmtDashboard->assertSee('Konten Footer Halaman Publik');
 
@@ -462,6 +677,7 @@ class ViharaSystemTest extends TestCase
         $landingResp->assertSee('Sekolah Minggu Buddhis Mahabodhi');
         $landingResp->assertSee('Kelas Dhamma anak dan remaja setiap Minggu pagi pukul 09.00 WIB.');
         $landingResp->assertSee($profileAfterUpdate->hero_image, false);
+        $landingResp->assertSee($profileAfterUpdate->logo_url, false);
         $landingResp->assertSee('Pusat pembelajaran Dhamma dan pelayanan sosial umat Buddha di Kota Semarang.');
         $landingResp->assertSee('Layanan Umat &amp; Sekretariat', false);
         $landingResp->assertSee('Bakti Sosial Rutin');

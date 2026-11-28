@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Document;
+use App\Models\MarriageCertificate;
 use App\Models\Receipt;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -460,6 +462,277 @@ class ReceiptExcelService
             $candidate = sprintf('TT/WMBC/%s/%s/%03d', $monthRoman, $year, $seq);
             $seq++;
         } while (Receipt::where('receipt_number', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
+     * Parse raw rows from an uploaded Excel (.xlsx) or CSV (.csv / .txt) file.
+     *
+     * @return array<int, array<int, string>>
+     */
+    public function parseRawSpreadsheet(UploadedFile $file): array
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        $realPath = $file->getRealPath() ?: $file->path();
+
+        if ($extension === 'xlsx' || $this->isZipArchive($realPath)) {
+            return $this->parseXlsx($realPath);
+        }
+
+        return $this->parseCsv($realPath);
+    }
+
+    /**
+     * Build template rows for Arsip Persuratan & Dokumen Excel import.
+     *
+     * @return array<int, array<int, string|int|float|null>>
+     */
+    public function getDocumentTemplateRows(): array
+    {
+        return [
+            [
+                'Nomor Surat / Dokumen',
+                'Kategori (Surat Masuk / Surat Keluar / SK / Piagam)',
+                'Judul / Perihal Dokumen',
+                'Tanggal Surat (YYYY-MM-DD)',
+                'Tanggal Diterima (YYYY-MM-DD)',
+                'Pengirim',
+                'Penerima / Tujuan',
+                'Ukuran Kertas',
+                'Kode Arsip',
+                'Ringkasan / Catatan',
+            ],
+            [
+                '010/SM/WMBC/XI/2026',
+                'Surat Masuk',
+                'Undangan Rapat Koordinasi Perayaan Waisak Kota Semarang',
+                now()->toDateString(),
+                now()->toDateString(),
+                'Majelis Agama Buddha Semarang',
+                'Pengurus Wihara Mahabodhi Buddhist Centre',
+                'A4',
+                'ARS-A4-SM-10',
+                'Surat undangan koordinasi kegiatan bersama lintas wihara.',
+            ],
+            [
+                '011/SK/WMBC/XI/2026',
+                'Surat Keluar',
+                'Surat Pemberitahuan Bakti Sosial Pengobatan Gratis',
+                now()->toDateString(),
+                now()->toDateString(),
+                'Sekretariat Wihara Mahabodhi Buddhist Centre',
+                'Kelurahan Karangkidul Semarang',
+                'A4',
+                'ARS-A4-SK-11',
+                'Pemberitahuan pelaksanaan kegiatan bakti sosial rutin.',
+            ],
+        ];
+    }
+
+    /**
+     * Parse uploaded Excel/CSV into normalized Document attribute rows.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseDocumentsFile(UploadedFile $file): array
+    {
+        $rawRows = $this->parseRawSpreadsheet($file);
+        if ($rawRows === []) {
+            return [];
+        }
+
+        $firstRowText = strtolower(implode(' ', $rawRows[0] ?? []));
+        $hasHeader = str_contains($firstRowText, 'nomor')
+            || str_contains($firstRowText, 'kategori')
+            || str_contains($firstRowText, 'judul')
+            || str_contains($firstRowText, 'pengirim');
+
+        $dataRows = $hasHeader ? array_slice($rawRows, 1) : $rawRows;
+        $normalized = [];
+        $seqOffset = 1;
+
+        foreach ($dataRows as $row) {
+            if (trim(implode('', $row)) === '') {
+                continue;
+            }
+
+            $docNumber = trim((string) ($row[0] ?? ''));
+            $category = trim((string) ($row[1] ?? '')) ?: 'Surat Masuk';
+            $title = trim((string) ($row[2] ?? ''));
+            $docDateRaw = trim((string) ($row[3] ?? ''));
+            $recvDateRaw = trim((string) ($row[4] ?? ''));
+            $sender = trim((string) ($row[5] ?? '')) ?: 'Pengirim Tidak Tercantum';
+            $recipient = trim((string) ($row[6] ?? '')) ?: 'Pengurus Wihara Mahabodhi Buddhist Centre';
+            $paperSize = trim((string) ($row[7] ?? '')) ?: 'A4';
+            $archiveCode = trim((string) ($row[8] ?? '')) ?: 'ARS-A4-01';
+            $summary = trim((string) ($row[9] ?? ''));
+
+            if ($title === '' && $docNumber === '') {
+                continue;
+            }
+
+            if ($docNumber === '' || Document::where('document_number', $docNumber)->exists()) {
+                $docNumber = $this->generateUniqueDocumentNumber($seqOffset);
+                $seqOffset++;
+            }
+
+            $docDate = $this->normalizeDate($docDateRaw);
+            $recvDate = $recvDateRaw !== '' ? $this->normalizeDate($recvDateRaw) : $docDate;
+
+            $normalized[] = [
+                'document_number' => $docNumber,
+                'category' => $category,
+                'title' => $title !== '' ? $title : 'Dokumen Arsip '.$docNumber,
+                'document_date' => $docDate,
+                'received_date' => $recvDate,
+                'sender' => $sender,
+                'recipient' => $recipient,
+                'paper_size' => $paperSize,
+                'archive_code' => $archiveCode,
+                'summary' => $summary,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Build template rows for Arsip Surat Nikah & Pemberkatan Excel import.
+     *
+     * @return array<int, array<int, string|int|float|null>>
+     */
+    public function getMarriageTemplateRows(): array
+    {
+        return [
+            [
+                'Nomor Arsip / Surat (Kosongkan untuk otomatis)',
+                'Jenis Dokumen Nikah',
+                'Tanggal Pemberkatan (YYYY-MM-DD)',
+                'Nama Mempelai Pria',
+                'Nama Mempelai Wanita',
+                'Status Arsip (Terdaftar & Verifikasi Berkas / Selesai Pemberkatan / Tercatat di Dukcapil)',
+                'Catatan / Keterangan Arsip',
+            ],
+            [
+                '',
+                'Surat Pemberkatan Perkawinan',
+                now()->toDateString(),
+                'Andi Pratama Wijaya',
+                'Evelyn Natalia Tan',
+                'Selesai Pemberkatan',
+                'Arsip akta pemberkatan perkawinan Buddhis.',
+            ],
+            [
+                '',
+                'Berita Acara Pemberkatan',
+                now()->toDateString(),
+                'Michael Santoso',
+                'Jessica Lim',
+                'Tercatat di Dukcapil',
+                'Salinan berita acara dan pengantar Dukcapil telah lengkap.',
+            ],
+        ];
+    }
+
+    /**
+     * Parse uploaded Excel/CSV into normalized MarriageCertificate attribute rows.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function parseMarriagesFile(UploadedFile $file): array
+    {
+        $rawRows = $this->parseRawSpreadsheet($file);
+        if ($rawRows === []) {
+            return [];
+        }
+
+        $firstRowText = strtolower(implode(' ', $rawRows[0] ?? []));
+        $hasHeader = str_contains($firstRowText, 'nomor')
+            || str_contains($firstRowText, 'mempelai')
+            || str_contains($firstRowText, 'jenis')
+            || str_contains($firstRowText, 'tanggal');
+
+        $dataRows = $hasHeader ? array_slice($rawRows, 1) : $rawRows;
+        $normalized = [];
+        $seqOffset = 1;
+
+        foreach ($dataRows as $row) {
+            if (trim(implode('', $row)) === '') {
+                continue;
+            }
+
+            $certNumber = trim((string) ($row[0] ?? ''));
+            $docType = trim((string) ($row[1] ?? '')) ?: 'Surat Pemberkatan Perkawinan';
+            $weddingDateRaw = trim((string) ($row[2] ?? ''));
+            $groomName = trim((string) ($row[3] ?? ''));
+            $brideName = trim((string) ($row[4] ?? ''));
+            $statusRaw = trim((string) ($row[5] ?? ''));
+            $notes = trim((string) ($row[6] ?? ''));
+
+            if ($groomName === '' && $brideName === '') {
+                continue;
+            }
+
+            if ($certNumber === '' || MarriageCertificate::where('certificate_number', $certNumber)->exists()) {
+                $certNumber = $this->generateUniqueMarriageNumber($seqOffset);
+                $seqOffset++;
+            }
+
+            $validStatuses = [
+                'Terdaftar & Verifikasi Berkas',
+                'Selesai Pemberkatan',
+                'Tercatat di Dukcapil',
+            ];
+            $status = in_array($statusRaw, $validStatuses, true) ? $statusRaw : 'Selesai Pemberkatan';
+            $weddingDate = $this->normalizeDate($weddingDateRaw);
+
+            $normalized[] = [
+                'certificate_number' => $certNumber,
+                'document_type' => $docType,
+                'registration_date' => $weddingDate,
+                'wedding_date' => $weddingDate,
+                'groom_name' => $groomName !== '' ? $groomName : 'Mempelai Pria',
+                'bride_name' => $brideName !== '' ? $brideName : 'Mempelai Wanita',
+                'status' => $status,
+                'premarital_course_done' => true,
+                'notes' => $notes !== '' ? $notes : null,
+            ];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Generate a unique document number for bulk imports.
+     */
+    private function generateUniqueDocumentNumber(int $offset): string
+    {
+        $year = now()->format('Y');
+        $monthRoman = Receipt::monthToRoman((int) now()->format('n'));
+        $seq = Document::count() + $offset;
+
+        do {
+            $candidate = sprintf('%03d/ARS/WMBC/%s/%s', $seq, $monthRoman, $year);
+            $seq++;
+        } while (Document::where('document_number', $candidate)->exists());
+
+        return $candidate;
+    }
+
+    /**
+     * Generate a unique marriage certificate number for bulk imports.
+     */
+    private function generateUniqueMarriageNumber(int $offset): string
+    {
+        $year = now()->format('Y');
+        $monthRoman = Receipt::monthToRoman((int) now()->format('n'));
+        $seq = MarriageCertificate::count() + $offset;
+
+        do {
+            $candidate = sprintf('%03d/SPP-BDH/WMBC/%s/%s', $seq, $monthRoman, $year);
+            $seq++;
+        } while (MarriageCertificate::where('certificate_number', $candidate)->exists());
 
         return $candidate;
     }

@@ -126,7 +126,9 @@
                 print-color-adjust: exact !important;
             }
             .no-print,
-            #importExcelModal {
+            #importExcelModal,
+            #uploadedFileViewerModal,
+            #categoryManagerModal {
                 display: none !important;
             }
             #a4PrintWrapper {
@@ -167,6 +169,9 @@
         <div class="sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
             <div class="bg-white py-8 px-6 shadow-sm rounded-2xl border border-slate-200/80 sm:px-10 space-y-6">
                 <div class="text-center border-b border-slate-100 pb-5">
+                    @if (!empty($viharaProfile?->logo_url))
+                        <img src="{{ $viharaProfile->logo_url }}" alt="{{ $viharaProfile->short_name ?? 'Logo Wihara' }}" class="w-14 h-14 object-contain mx-auto mb-3">
+                    @endif
                     <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                         Portal Pengurus
                     </h1>
@@ -269,11 +274,17 @@
             <!-- Brand Header -->
             <div class="py-5 px-5 flex items-center justify-between border-b border-slate-800 shrink-0">
                 <a href="{{ route('management.dashboard') }}" class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm tracking-wider shrink-0 shadow-xs">
-                        <i class="fa-solid fa-dharmachakra text-base"></i>
-                    </div>
+                    @if (!empty($viharaProfile->logo_url))
+                        <div class="w-10 h-10 rounded-xl bg-white/95 p-1 flex items-center justify-center shrink-0 shadow-xs overflow-hidden">
+                            <img src="{{ $viharaProfile->logo_url }}" alt="{{ $viharaProfile->short_name ?? 'Logo' }}" class="w-full h-full object-contain">
+                        </div>
+                    @else
+                        <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm tracking-wider shrink-0 shadow-xs">
+                            <i class="fa-solid fa-dharmachakra text-base"></i>
+                        </div>
+                    @endif
                     <div class="leading-tight min-w-0 space-y-0.5">
-                        <div class="text-sm font-bold text-white tracking-tight">Wihara Mahabodhi</div>
+                        <div class="text-sm font-bold text-white tracking-tight truncate">{{ $viharaProfile->short_name ?? 'Wihara Mahabodhi' }}</div>
                         <div class="text-xs text-slate-400">Management Portal</div>
                     </div>
                 </a>
@@ -454,9 +465,12 @@
                     <button type="button" onclick="toggleMobileSidebar()" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 shrink-0" aria-label="Buka Menu">
                         <i class="fa-solid fa-bars text-xl"></i>
                     </button>
+                    @if (!empty($viharaProfile->logo_url))
+                        <img src="{{ $viharaProfile->logo_url }}" alt="{{ $viharaProfile->short_name ?? 'Logo' }}" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-contain shrink-0">
+                    @endif
                     <div class="min-w-0 space-y-1">
                         <h1 id="topbarTitle" class="text-sm sm:text-xl font-bold text-slate-900 leading-snug line-clamp-1 sm:line-clamp-none break-words">Ringkasan Operasional Sekretariat</h1>
-                        <p class="text-xs text-slate-500 hidden sm:block leading-snug">Wihara Mahabodhi Buddhist Centre &bull; Jl. Seroja Timur No. 9-11 Semarang</p>
+                        <p class="text-xs text-slate-500 hidden sm:block leading-snug">{{ $viharaProfile->name ?? 'Wihara Mahabodhi Buddhist Centre' }} &bull; {{ $viharaProfile->address_short ?? 'Jl. Seroja Timur No. 9-11 Semarang' }}</p>
                     </div>
                 </div>
 
@@ -559,7 +573,20 @@
                     <!-- ================================================= -->
 
                     @if (in_array($currentMode, ['create_receipt', 'edit_receipt'], true))
-                        @php($isEdit = $currentMode === 'edit_receipt')
+                        @php
+                            $isEdit = $currentMode === 'edit_receipt';
+                            $receiptCategoryList = $categoryNames['receipts'] ?? ['Bantuan Dana', 'Barang', 'Surat / Dokumen'];
+                            $selectedReceiptType = old('receipt_type', $isEdit ? $editingRecord->receipt_type : ($receiptCategoryList[0] ?? 'Bantuan Dana'));
+                            if ($selectedReceiptType && ! in_array($selectedReceiptType, $receiptCategoryList, true)) {
+                                $receiptCategoryList[] = $selectedReceiptType;
+                            }
+                            $initialReceiptItems = old('items');
+                            if (! is_array($initialReceiptItems) || count($initialReceiptItems) === 0) {
+                                $initialReceiptItems = $isEdit
+                                    ? $editingRecord->normalizedItems()
+                                    : [['name' => '', 'quantity' => '1 Paket', 'nominal' => '']];
+                            }
+                        @endphp
                         <div class="max-w-4xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
@@ -589,12 +616,17 @@
                                         <input type="text" name="receipt_number" value="{{ old('receipt_number', $isEdit ? $editingRecord->receipt_number : $nextReceiptNumber) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis Penerimaan *</label>
-                                        <select name="receipt_type" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                            @foreach (['Bantuan Dana', 'Barang', 'Surat / Dokumen'] as $opt)
-                                                <option value="{{ $opt }}" @selected(old('receipt_type', $isEdit ? $editingRecord->receipt_type : 'Bantuan Dana') === $opt)>{{ $opt }}</option>
-                                            @endforeach
-                                        </select>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis / Kategori Penerimaan *</label>
+                                        <div class="flex items-center gap-2">
+                                            <select id="receiptTypeSelect" name="receipt_type" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($receiptCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedReceiptType === $opt)>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" onclick="quickAddCategory('receipts', 'receiptTypeSelect')" class="px-3 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Kategori Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Penerimaan *</label>
@@ -612,21 +644,80 @@
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Instansi / Alamat</label>
                                         <input type="text" name="donor_institution" value="{{ old('donor_institution', $isEdit ? $editingRecord->donor_institution : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                    <div>
+                                    <div class="sm:col-span-2">
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kontak / No. Telepon</label>
                                         <input type="text" name="donor_contact" value="{{ old('donor_contact', $isEdit ? $editingRecord->donor_contact : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                    <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jumlah / Kuantitas *</label>
-                                        <input type="text" name="quantity" value="{{ old('quantity', $isEdit ? $editingRecord->quantity : '1 Paket') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
+
+                                    <!-- MULTI-INPUT DAFTAR BARANG / URAIAN BANTUAN -->
+                                    <div class="sm:col-span-2 pt-2">
+                                        <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div>
+                                                    <div class="font-bold text-slate-900 text-xs sm:text-sm flex items-center gap-2">
+                                                        <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
+                                                        <span>Daftar Barang / Uraian Bantuan / Perihal Surat (Multi-Input) *</span>
+                                                    </div>
+                                                    <p class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Tambahkan satu atau beberapa item barang/bantuan sekaligus dalam satu surat tanda terima.</p>
+                                                </div>
+                                                <button type="button" onclick="addReceiptItemRow()" class="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs shrink-0">
+                                                    <i class="fa-solid fa-plus"></i>
+                                                    <span>Tambah Barang</span>
+                                                </button>
+                                            </div>
+
+                                            <div id="receiptItemsList" class="space-y-2.5">
+                                                @foreach ($initialReceiptItems as $itemIdx => $itemRow)
+                                                    <div class="receipt-item-row grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-white border border-slate-200 items-end">
+                                                        <div class="sm:col-span-5">
+                                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Uraian Barang / Bantuan *</label>
+                                                            <input
+                                                                type="text"
+                                                                name="items[{{ $itemIdx }}][name]"
+                                                                value="{{ $itemRow['name'] ?? '' }}"
+                                                                required
+                                                                placeholder="Contoh: Beras 5 Kg / Dana Operasional"
+                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                                            >
+                                                        </div>
+                                                        <div class="sm:col-span-3">
+                                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Jumlah / Satuan *</label>
+                                                            <input
+                                                                type="text"
+                                                                name="items[{{ $itemIdx }}][quantity]"
+                                                                value="{{ $itemRow['quantity'] ?? '1 Paket' }}"
+                                                                required
+                                                                placeholder="Contoh: 10 Karung"
+                                                                class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                                            >
+                                                        </div>
+                                                        <div class="sm:col-span-3">
+                                                            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nominal Rp (Opsional)</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0"
+                                                                name="items[{{ $itemIdx }}][nominal]"
+                                                                value="{{ $itemRow['nominal'] ?? '' }}"
+                                                                oninput="recalculateReceiptNominal()"
+                                                                placeholder="0"
+                                                                class="receipt-item-nominal w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                                                            >
+                                                        </div>
+                                                        <div class="sm:col-span-1 flex justify-end">
+                                                            <button type="button" onclick="removeReceiptItemRow(this)" class="w-9 h-9 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition" title="Hapus Baris Barang">
+                                                                <i class="fa-solid fa-trash-can text-xs"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Uraian Bantuan / Barang / Perihal Surat *</label>
-                                        <input type="text" name="item_name" value="{{ old('item_name', $isEdit ? $editingRecord->item_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                    </div>
+
                                     <div>
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nominal Rp (Opsional)</label>
-                                        <input type="number" step="0.01" min="0" name="nominal" value="{{ old('nominal', $isEdit ? $editingRecord->nominal : '') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Total Nominal Rp (Otomatis / Opsional)</label>
+                                        <input type="number" id="receiptTotalNominal" step="0.01" min="0" name="nominal" value="{{ old('nominal', $isEdit ? $editingRecord->nominal : '') }}" placeholder="Terisi otomatis dari nominal item atau isi manual" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Catatan</label>
@@ -648,8 +739,186 @@
                             </form>
                         </div>
 
+                    @elseif ($currentMode === 'edit_receipt_template')
+                        @php
+                            $initialEditorTab = request('editor') === 'thank_you' ? 'thank_you' : 'receipt';
+                            $currentReceiptTpl = $viharaProfile->receipt_template_html ?: ($defaultReceiptTemplateHtml ?? '');
+                            $currentThankYouTpl = $viharaProfile->thank_you_template_html ?: ($defaultThankYouTemplateHtml ?? '');
+                            $hasCustomReceiptTpl = ! empty($viharaProfile->receipt_template_html);
+                            $hasCustomThankYouTpl = ! empty($viharaProfile->thank_you_template_html);
+                        @endphp
+                        <div class="max-w-5xl mx-auto space-y-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                                <div class="min-w-0">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200 inline-block">Custom Template Word &amp; Web Editor</span>
+                                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2.5">
+                                        <i class="fa-solid fa-file-word text-blue-600 shrink-0"></i>
+                                        <span class="break-words">Editor Template Surat Tanda Terima &amp; Ucapan Terima Kasih</span>
+                                    </h2>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Unggah template surat dari Microsoft Word (<code>.docx</code>), lalu sesuaikan teks, tabel, maupun placeholder otomatis langsung di web sebelum dicetak ke A4.</p>
+                                </div>
+                                <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span>Kembali</span>
+                                </a>
+                            </div>
+
+                            <!-- Card 1: Upload Word (.docx) Template -->
+                            <form
+                                method="POST"
+                                action="{{ route('management.receipts.template.upload-docx') }}"
+                                enctype="multipart/form-data"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-4"
+                            >
+                                @csrf
+                                <div class="flex items-start gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shrink-0">
+                                        <i class="fa-solid fa-file-arrow-up"></i>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">1. Upload File Template Microsoft Word (.docx)</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Isi paragraf, format cetak tebal/miring, daftar, dan tabel dari file <code>.docx</code> akan dikonversi otomatis ke editor web di bawah.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                    <div class="md:col-span-4">
+                                        <label class="block font-bold text-slate-800 text-xs mb-1.5">Terapkan ke Template *</label>
+                                        <select name="target_template" required class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900">
+                                            <option value="receipt" @selected($initialEditorTab === 'receipt')>Bukti Tanda Terima</option>
+                                            <option value="thank_you" @selected($initialEditorTab === 'thank_you')>Surat Ucapan Terima Kasih</option>
+                                        </select>
+                                    </div>
+                                    <div class="md:col-span-5">
+                                        <label class="block font-bold text-slate-800 text-xs mb-1.5">Pilih File Word (.docx &bull; Maks 5 MB) *</label>
+                                        <input
+                                            type="file"
+                                            name="docx_file"
+                                            accept=".docx"
+                                            required
+                                            class="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-xs file:font-bold hover:file:bg-blue-700"
+                                        >
+                                    </div>
+                                    <div class="md:col-span-3">
+                                        <button type="submit" class="w-full px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-xs">
+                                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                                            <span>Impor dari Word</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Card 2: Interactive Web Rich-Text Template Editor -->
+                            <form
+                                method="POST"
+                                action="{{ route('management.receipts.template.update') }}"
+                                onsubmit="syncTemplateEditorsBeforeSubmit()"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs space-y-5"
+                            >
+                                @csrf
+                                @method('PUT')
+
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                    <div>
+                                        <h3 class="text-sm sm:text-base font-bold text-slate-900">2. Edit Isi Template Langsung di Web</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Klik placeholder di bawah untuk menyisipkan data otomatis (nama donatur, nomor, daftar barang multi-input, nominal, dll.).</p>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl shrink-0">
+                                        <button type="button" id="tplTabBtn-receipt" onclick="switchTemplateEditorTab('receipt')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'receipt' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                            Bukti Tanda Terima {{ $hasCustomReceiptTpl ? '• Custom' : '' }}
+                                        </button>
+                                        <button type="button" id="tplTabBtn-thank_you" onclick="switchTemplateEditorTab('thank_you')" class="px-3.5 py-2 rounded-lg text-xs font-bold transition {{ $initialEditorTab === 'thank_you' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900' }}">
+                                            Ucapan Terima Kasih {{ $hasCustomThankYouTpl ? '• Custom' : '' }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Formatting Toolbar -->
+                                <div class="flex flex-wrap items-center gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                                    <button type="button" onclick="execTemplateCmd('bold')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Tebal (Bold)"><i class="fa-solid fa-bold"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('italic')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Miring (Italic)"><i class="fa-solid fa-italic"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('underline')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Garis Bawah"><i class="fa-solid fa-underline"></i></button>
+                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
+                                    <button type="button" onclick="execTemplateCmd('justifyLeft')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kiri"><i class="fa-solid fa-align-left"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('justifyCenter')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Tengah"><i class="fa-solid fa-align-center"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('justifyRight')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kanan"><i class="fa-solid fa-align-right"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('justifyFull')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Rata Kiri-Kanan"><i class="fa-solid fa-align-justify"></i></button>
+                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
+                                    <button type="button" onclick="execTemplateCmd('insertUnorderedList')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Daftar Poin"><i class="fa-solid fa-list-ul"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('insertOrderedList')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Daftar Bernomor"><i class="fa-solid fa-list-ol"></i></button>
+                                    <button type="button" onclick="execTemplateCmd('insertHorizontalRule')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs text-slate-700" title="Garis Pemisah"><i class="fa-solid fa-minus"></i></button>
+                                    <span class="w-px h-5 bg-slate-300 mx-1"></span>
+                                    <button type="button" onclick="execTemplateHeading('H3')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700" title="Judul Surat">H3</button>
+                                    <button type="button" onclick="execTemplateHeading('P')" class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700" title="Paragraf Normal">Paragraf</button>
+                                </div>
+
+                                <!-- Placeholder Chips -->
+                                <div class="space-y-1.5">
+                                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Sisipkan Data Otomatis (Klik untuk menambahkan ke kursor):</div>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        @foreach ($templatePlaceholders ?? [] as $phKey => $phLabel)
+                                            <button
+                                                type="button"
+                                                onclick="insertTemplatePlaceholder(@js($phKey))"
+                                                class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-semibold transition"
+                                                title="{{ $phLabel }}"
+                                            >
+                                                <code>{{ $phKey }}</code>
+                                                <span class="text-[10px] text-amber-700 ml-1">({{ $phLabel }})</span>
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <!-- Editable Visual Paper Area -->
+                                <div id="tplEditorWrap-receipt" class="{{ $initialEditorTab === 'receipt' ? '' : 'hidden' }} space-y-1.5">
+                                    <div class="text-xs font-bold text-slate-700">Pratinjau &amp; Area Edit: Template Bukti Tanda Terima</div>
+                                    <div
+                                        id="receiptTemplateEditor"
+                                        contenteditable="true"
+                                        class="min-h-[360px] w-full p-5 sm:p-6 rounded-xl bg-white border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-900 space-y-2 shadow-inner overflow-x-auto"
+                                    >{!! $currentReceiptTpl !!}</div>
+                                </div>
+
+                                <div id="tplEditorWrap-thank_you" class="{{ $initialEditorTab === 'thank_you' ? '' : 'hidden' }} space-y-1.5">
+                                    <div class="text-xs font-bold text-slate-700">Pratinjau &amp; Area Edit: Template Surat Ucapan Terima Kasih</div>
+                                    <div
+                                        id="thankYouTemplateEditor"
+                                        contenteditable="true"
+                                        class="min-h-[360px] w-full p-5 sm:p-6 rounded-xl bg-white border-2 border-slate-300 focus:border-slate-900 focus:outline-none text-xs sm:text-sm leading-relaxed text-slate-900 space-y-2 shadow-inner overflow-x-auto"
+                                    >{!! $currentThankYouTpl !!}</div>
+                                </div>
+
+                                <textarea name="receipt_template_html" id="receiptTemplateHtmlInput" class="hidden">{{ $currentReceiptTpl }}</textarea>
+                                <textarea name="thank_you_template_html" id="thankYouTemplateHtmlInput" class="hidden">{{ $currentThankYouTpl }}</textarea>
+
+                                <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onclick="if(confirm('Kembalikan template surat ke desain bawaan sistem?')) { document.getElementById('resetReceiptTemplateForm').submit(); }"
+                                        class="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs sm:text-sm transition inline-flex items-center justify-center gap-2"
+                                    >
+                                        <i class="fa-solid fa-rotate-left"></i>
+                                        <span>Reset ke Template Bawaan</span>
+                                    </button>
+                                    <div class="flex items-center justify-end gap-2.5">
+                                        <a href="{{ route('management.dashboard', ['tab' => 'receipts']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
+                                        <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
+                                            <i class="fa-solid fa-floppy-disk"></i>
+                                            <span>Simpan Template Surat</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <form id="resetReceiptTemplateForm" method="POST" action="{{ route('management.receipts.template.reset') }}" class="hidden">
+                                @csrf
+                                <input type="hidden" name="target_template" value="all">
+                            </form>
+                        </div>
+
                     @elseif (in_array($currentMode, ['create_document', 'edit_document'], true))
-                        @php($isEdit = $currentMode === 'edit_document')
+                        @php $isEdit = $currentMode === 'edit_document'; @endphp
                         <div class="max-w-4xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
@@ -680,12 +949,24 @@
                                         <input type="text" name="document_number" value="{{ old('document_number', $isEdit ? $editingRecord->document_number : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
+                                        @php
+                                            $docCategoryList = $categoryNames['documents'] ?? ['Surat Masuk', 'Surat Keluar', 'SK / Piagam'];
+                                            $selectedDocCat = old('category', $isEdit ? $editingRecord->category : ($docCategoryList[0] ?? 'Surat Masuk'));
+                                            if ($selectedDocCat && ! in_array($selectedDocCat, $docCategoryList, true)) {
+                                                $docCategoryList[] = $selectedDocCat;
+                                            }
+                                        @endphp
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori Dokumen *</label>
-                                        <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                            @foreach (['Surat Masuk', 'Surat Keluar', 'SK / Piagam'] as $opt)
-                                                <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Surat Masuk') === $opt)>{{ $opt }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="flex items-center gap-2">
+                                            <select id="documentCategorySelect" name="category" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($docCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedDocCat === $opt)>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" onclick="quickAddCategory('documents', 'documentCategorySelect')" class="px-3 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Kategori Dokumen Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Surat *</label>
@@ -716,12 +997,49 @@
                                         <input type="text" name="archive_code" value="{{ old('archive_code', $isEdit ? $editingRecord->archive_code : 'ARS-A4-01') }}" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Lampiran Berkas Digital (PDF/DOCX/JPG)</label>
-                                        <input type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-3.5 file:rounded-xl file:border file:border-slate-300 file:bg-slate-50 file:text-slate-700">
+                                        @php
+                                            $existingDocFiles = $isEdit ? $editingRecord->allAttachments() : [];
+                                        @endphp
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">
+                                            File Dokumen Arsip — Bisa Lebih dari 1 File (PDF / JPG / PNG / DOC / DOCX &bull; Maks 10 MB/file) {{ $isEdit ? '(Opsional: tambah file baru)' : '*' }}
+                                        </label>
+                                        <div class="p-4 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/70 space-y-3">
+                                            <input
+                                                type="file"
+                                                id="documentAttachmentsInput"
+                                                name="attachments[]"
+                                                multiple
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                                @required(! $isEdit)
+                                                onchange="handleMultiFileSelect(this, 'documentSelectedFilesList')"
+                                                class="w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:font-semibold hover:file:bg-slate-800"
+                                            >
+                                            <p class="text-[11px] text-slate-500">Anda dapat memilih beberapa file sekaligus, atau klik pilih file lagi untuk menambahkan berkas tambahan ke daftar unggahan.</p>
+                                            <div id="documentSelectedFilesList" class="space-y-1.5 empty:hidden"></div>
+                                            @if ($isEdit && count($existingDocFiles) > 0)
+                                                <div class="pt-2 border-t border-slate-200 space-y-2">
+                                                    <div class="text-xs font-bold text-slate-700">File Tersimpan Saat Ini ({{ count($existingDocFiles) }} file):</div>
+                                                    @foreach ($existingDocFiles as $fileIdx => $docFile)
+                                                        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-xs">
+                                                            <div class="flex items-center gap-2 min-w-0">
+                                                                <i class="fa-solid fa-file-circle-check text-emerald-600 shrink-0"></i>
+                                                                <a href="{{ route('management.documents.file', ['document' => $editingRecord, 'index' => $fileIdx]) }}" target="_blank" class="font-semibold text-blue-700 hover:underline truncate">
+                                                                    {{ $docFile['name'] }}
+                                                                </a>
+                                                            </div>
+                                                            <label class="inline-flex items-center gap-1.5 text-rose-600 font-semibold cursor-pointer shrink-0">
+                                                                <input type="checkbox" name="remove_attachments[]" value="{{ $docFile['path'] }}" class="rounded border-rose-300 text-rose-600 focus:ring-rose-500">
+                                                                <span>Hapus</span>
+                                                            </label>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="sm:col-span-2">
-                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ringkasan Isi Surat / Dokumen A4 *</label>
-                                        <textarea name="summary" rows="3" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('summary', $isEdit ? $editingRecord->summary : '') }}</textarea>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Ringkasan / Catatan Arsip (Opsional)</label>
+                                        <textarea name="summary" rows="3" placeholder="Catatan singkat isi surat atau lokasi penyimpanan fisik..." class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('summary', $isEdit ? $editingRecord->summary : '') }}</textarea>
                                     </div>
                                 </div>
 
@@ -729,22 +1047,23 @@
                                     <a href="{{ route('management.dashboard', ['tab' => 'documents']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
                                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
                                         <i class="fa-solid fa-floppy-disk"></i>
-                                        <span>{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Dokumen A4' }}</span>
+                                        <span>{{ $isEdit ? 'Simpan Perubahan' : 'Simpan Arsip Dokumen' }}</span>
                                     </button>
                                 </div>
                             </form>
                         </div>
 
                     @elseif (in_array($currentMode, ['create_marriage', 'edit_marriage'], true))
-                        @php($isEdit = $currentMode === 'edit_marriage')
-                        <div class="max-w-5xl mx-auto space-y-6">
+                        @php $isEdit = $currentMode === 'edit_marriage'; @endphp
+                        <div class="max-w-3xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 inline-block">{{ $isEdit ? 'Mode Edit Surat Nikah' : 'Registrasi Pemberkatan Perkawinan' }}</span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 inline-block">{{ $isEdit ? 'Edit Arsip Surat Nikah' : 'Upload Arsip Surat Nikah' }}</span>
                                     <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug mt-2 flex items-center gap-2.5">
                                         <i class="fa-solid fa-ring text-rose-600 shrink-0"></i>
-                                        <span class="break-words">{{ $isEdit ? 'Edit Surat Nikah '.$editingRecord->certificate_number : 'Buat Administrasi Surat Nikah & Pemberkatan Perkawinan Buddhis' }}</span>
+                                        <span class="break-words">{{ $isEdit ? 'Edit Arsip Pernikahan '.$editingRecord->certificate_number : 'Simpan Arsip Surat Pernikahan & Pemberkatan' }}</span>
                                     </h2>
+                                    <p class="text-xs sm:text-sm text-slate-500 mt-1">Unggah file dokumen surat pernikahan/pemberkatan (PDF atau gambar hasil scan) untuk diarsipkan secara digital.</p>
                                 </div>
                                 <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="self-start sm:self-auto px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-bold transition shrink-0 flex items-center gap-2 shadow-2xs">
                                     <i class="fa-solid fa-arrow-left"></i>
@@ -756,184 +1075,115 @@
                                 method="POST"
                                 action="{{ $isEdit ? route('management.marriages.update', $editingRecord) : route('management.marriages.store') }}"
                                 enctype="multipart/form-data"
-                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-8"
+                                class="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-5"
                             >
                                 @csrf
                                 @if ($isEdit) @method('PUT') @endif
 
-                                <!-- Section 1: Data Surat & Jadwal Pemberkatan -->
-                                <div class="space-y-4">
-                                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
-                                        <span class="w-7 h-7 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">1</span>
-                                        <h3 class="text-base font-bold text-slate-900">Data Nomor Surat &amp; Jadwal Pemberkatan Perkawinan</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nomor Arsip / Surat *</label>
+                                        <input type="text" name="certificate_number" value="{{ old('certificate_number', $isEdit ? $editingRecord->certificate_number : ($nextMarriageNumber ?? '001/SPP-BDH/WMBC/XI/2026')) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nomor Surat / Akta Pemberkatan *</label>
-                                            <input type="text" name="certificate_number" value="{{ old('certificate_number', $isEdit ? $editingRecord->certificate_number : ($nextMarriageNumber ?? '001/SPP-BDH/WMBC/XI/2026')) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis Dokumen Nikah *</label>
-                                            <select name="document_type" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                                @foreach (['Surat Pemberkatan Perkawinan', 'Berita Acara Pemberkatan', 'Sertifikat Bimbingan Pra-Nikah', 'Surat Pengantar Dukcapil'] as $opt)
-                                                    <option value="{{ $opt }}" @selected(old('document_type', $isEdit ? $editingRecord->document_type : 'Surat Pemberkatan Perkawinan') === $opt)>{{ $opt }}</option>
+                                    <div>
+                                        @php
+                                            $marriageCategoryList = $categoryNames['marriages'] ?? ['Surat Pemberkatan Perkawinan', 'Berita Acara Pemberkatan', 'Sertifikat Bimbingan Pra-Nikah', 'Surat Pengantar Dukcapil'];
+                                            $selectedMarriageCat = old('document_type', $isEdit ? $editingRecord->document_type : ($marriageCategoryList[0] ?? 'Surat Pemberkatan Perkawinan'));
+                                            if ($selectedMarriageCat && ! in_array($selectedMarriageCat, $marriageCategoryList, true)) {
+                                                $marriageCategoryList[] = $selectedMarriageCat;
+                                            }
+                                        @endphp
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis Dokumen Arsip *</label>
+                                        <div class="flex items-center gap-2">
+                                            <select id="marriageCategorySelect" name="document_type" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($marriageCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedMarriageCat === $opt)>{{ $opt }}</option>
                                                 @endforeach
                                             </select>
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Status Administrasi *</label>
-                                            <select name="status" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                                @foreach (['Terdaftar & Verifikasi Berkas', 'Selesai Pemberkatan', 'Tercatat di Dukcapil'] as $opt)
-                                                    <option value="{{ $opt }}" @selected(old('status', $isEdit ? $editingRecord->status : 'Selesai Pemberkatan') === $opt)>{{ $opt }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Pendaftaran Berkas *</label>
-                                            <input type="date" name="registration_date" value="{{ old('registration_date', $isEdit ? $editingRecord->registration_date->format('Y-m-d') : now()->toDateString()) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Pemberkatan Perkawinan *</label>
-                                            <input type="date" name="wedding_date" value="{{ old('wedding_date', $isEdit ? $editingRecord->wedding_date->format('Y-m-d') : now()->toDateString()) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Waktu Pemberkatan *</label>
-                                            <input type="text" name="wedding_time" value="{{ old('wedding_time', $isEdit ? $editingRecord->wedding_time : '09:00 - 11:00 WIB') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tempat / Altar Pemberkatan *</label>
-                                            <input type="text" name="wedding_location" value="{{ old('wedding_location', $isEdit ? $editingRecord->wedding_location : 'Dharmasala Utama Wihara Mahabodhi Buddhist Centre Semarang') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div class="flex items-end pb-2">
-                                            <label class="inline-flex items-center gap-2.5 cursor-pointer font-semibold text-sm text-slate-800">
-                                                <input type="checkbox" name="premarital_course_done" value="1" @checked(old('premarital_course_done', $isEdit ? $editingRecord->premarital_course_done : true)) class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900">
-                                                <span>Lulus Bimbingan Pra-Nikah Buddhis</span>
-                                            </label>
+                                            <button type="button" onclick="quickAddCategory('marriages', 'marriageCategorySelect')" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Jenis Dokumen Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Section 2: Data Mempelai Pria -->
-                                <div class="space-y-4">
-                                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
-                                        <span class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">2</span>
-                                        <h3 class="text-base font-bold text-slate-900">Biodata Mempelai Pria (Upasaka)</h3>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tanggal Pemberkatan / Dokumen *</label>
+                                        <input type="date" name="wedding_date" value="{{ old('wedding_date', $isEdit ? $editingRecord->wedding_date->format('Y-m-d') : now()->toDateString()) }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Lengkap Mempelai Pria (Sesuai KTP) *</label>
-                                            <input type="text" name="groom_name" value="{{ old('groom_name', $isEdit ? $editingRecord->groom_name : '') }}" required placeholder="Contoh: Kevin Wijaya Kusuma, S.Kom." class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Buddhis Pria (Opsional)</label>
-                                            <input type="text" name="groom_buddhist_name" value="{{ old('groom_buddhist_name', $isEdit ? $editingRecord->groom_buddhist_name : '') }}" placeholder="Contoh: Upasaka Dhammapala" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">NIK KTP Mempelai Pria</label>
-                                            <input type="text" name="groom_nik" value="{{ old('groom_nik', $isEdit ? $editingRecord->groom_nik : '') }}" placeholder="16 digit NIK KTP" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tempat, Tanggal Lahir Pria *</label>
-                                            <input type="text" name="groom_birth_info" value="{{ old('groom_birth_info', $isEdit ? $editingRecord->groom_birth_info : '') }}" required placeholder="Contoh: Semarang, 14 Mei 1996" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Ayah Kandung Pria *</label>
-                                            <input type="text" name="groom_father_name" value="{{ old('groom_father_name', $isEdit ? $editingRecord->groom_father_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Ibu Kandung Pria *</label>
-                                            <input type="text" name="groom_mother_name" value="{{ old('groom_mother_name', $isEdit ? $editingRecord->groom_mother_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Alamat Lengkap Mempelai Pria *</label>
-                                            <input type="text" name="groom_address" value="{{ old('groom_address', $isEdit ? $editingRecord->groom_address : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Status Arsip *</label>
+                                        <select name="status" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                            @foreach (['Terdaftar & Verifikasi Berkas', 'Selesai Pemberkatan', 'Tercatat di Dukcapil'] as $opt)
+                                                <option value="{{ $opt }}" @selected(old('status', $isEdit ? $editingRecord->status : 'Selesai Pemberkatan') === $opt)>{{ $opt }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                </div>
-
-                                <!-- Section 3: Data Mempelai Wanita -->
-                                <div class="space-y-4">
-                                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
-                                        <span class="w-7 h-7 rounded-lg bg-pink-100 text-pink-700 flex items-center justify-center font-bold text-xs">3</span>
-                                        <h3 class="text-base font-bold text-slate-900">Biodata Mempelai Wanita (Upasika)</h3>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Mempelai Pria *</label>
+                                        <input type="text" name="groom_name" value="{{ old('groom_name', $isEdit ? $editingRecord->groom_name : '') }}" required placeholder="Contoh: Kevin Wijaya Kusuma" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Lengkap Mempelai Wanita (Sesuai KTP) *</label>
-                                            <input type="text" name="bride_name" value="{{ old('bride_name', $isEdit ? $editingRecord->bride_name : '') }}" required placeholder="Contoh: Clara Anastasia Tan, S.E." class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Buddhis Wanita (Opsional)</label>
-                                            <input type="text" name="bride_buddhist_name" value="{{ old('bride_buddhist_name', $isEdit ? $editingRecord->bride_buddhist_name : '') }}" placeholder="Contoh: Upasika Metta Devi" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">NIK KTP Mempelai Wanita</label>
-                                            <input type="text" name="bride_nik" value="{{ old('bride_nik', $isEdit ? $editingRecord->bride_nik : '') }}" placeholder="16 digit NIK KTP" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Tempat, Tanggal Lahir Wanita *</label>
-                                            <input type="text" name="bride_birth_info" value="{{ old('bride_birth_info', $isEdit ? $editingRecord->bride_birth_info : '') }}" required placeholder="Contoh: Semarang, 22 Agustus 1998" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Ayah Kandung Wanita *</label>
-                                            <input type="text" name="bride_father_name" value="{{ old('bride_father_name', $isEdit ? $editingRecord->bride_father_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Ibu Kandung Wanita *</label>
-                                            <input type="text" name="bride_mother_name" value="{{ old('bride_mother_name', $isEdit ? $editingRecord->bride_mother_name : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div class="sm:col-span-2">
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Alamat Lengkap Mempelai Wanita *</label>
-                                            <input type="text" name="bride_address" value="{{ old('bride_address', $isEdit ? $editingRecord->bride_address : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
+                                    <div>
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Mempelai Wanita *</label>
+                                        <input type="text" name="bride_name" value="{{ old('bride_name', $isEdit ? $editingRecord->bride_name : '') }}" required placeholder="Contoh: Clara Anastasia Tan" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
-                                </div>
-
-                                <!-- Section 4: Pandita, Saksi & Berkas Persyaratan -->
-                                <div class="space-y-4">
-                                    <div class="flex items-center gap-2.5 pb-2.5 border-b border-slate-200">
-                                        <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xs">4</span>
-                                        <h3 class="text-base font-bold text-slate-900">Rohaniwan / Pandita Pemimpin Pemberkatan, Saksi &amp; Berkas</h3>
-                                    </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Pandita / Rohaniwan Pemimpin *</label>
-                                            <input type="text" name="officiant_name" value="{{ old('officiant_name', $isEdit ? $editingRecord->officiant_name : 'Romo Pandita Dharmaputra, S.Ag., M.Pd.B.') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Saksi I (Pihak Pria) *</label>
-                                            <input type="text" name="witness_one" value="{{ old('witness_one', $isEdit ? $editingRecord->witness_one : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Saksi II (Pihak Wanita) *</label>
-                                            <input type="text" name="witness_two" value="{{ old('witness_two', $isEdit ? $editingRecord->witness_two : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
-                                        </div>
-                                        <div class="sm:col-span-3">
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Lampiran Berkas Persyaratan (PDF/JPG: KTP, KK, Surat N1-N4, Pas Foto Gandeng)</label>
-                                            <input type="file" name="attachment" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-slate-900 file:text-white file:font-semibold">
-                                            @if ($isEdit && $editingRecord->attachment_name)
-                                                <div class="text-xs text-slate-500 mt-1">Berkas tersimpan saat ini: {{ $editingRecord->attachment_name }}</div>
+                                    <div class="sm:col-span-2">
+                                        @php
+                                            $existingMarriageFiles = $isEdit ? $editingRecord->allAttachments() : [];
+                                        @endphp
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">
+                                            File Dokumen Pernikahan / Pemberkatan — Bisa Lebih dari 1 File (PDF / JPG / PNG / DOC / DOCX &bull; Maks 10 MB/file) {{ $isEdit ? '(Opsional: tambah file baru)' : '*' }}
+                                        </label>
+                                        <div class="p-4 rounded-xl border-2 border-dashed border-rose-200 bg-rose-50/40 space-y-3">
+                                            <input
+                                                type="file"
+                                                id="marriageAttachmentsInput"
+                                                name="attachments[]"
+                                                multiple
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                                                @required(! $isEdit)
+                                                onchange="handleMultiFileSelect(this, 'marriageSelectedFilesList')"
+                                                class="w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:bg-rose-600 file:text-white file:font-semibold hover:file:bg-rose-700"
+                                            >
+                                            <p class="text-[11px] text-slate-500">Anda dapat memilih beberapa file sekaligus (mis. akta pemberkatan, berita acara, scan KTP/KK), atau klik pilih file lagi untuk menambah berkas.</p>
+                                            <div id="marriageSelectedFilesList" class="space-y-1.5 empty:hidden"></div>
+                                            @if ($isEdit && count($existingMarriageFiles) > 0)
+                                                <div class="pt-2 border-t border-rose-200/70 space-y-2">
+                                                    <div class="text-xs font-bold text-slate-700">File Tersimpan Saat Ini ({{ count($existingMarriageFiles) }} file):</div>
+                                                    @foreach ($existingMarriageFiles as $fileIdx => $mFile)
+                                                        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 rounded-lg bg-white border border-rose-200/80 text-xs">
+                                                            <div class="flex items-center gap-2 min-w-0">
+                                                                <i class="fa-solid fa-file-circle-check text-emerald-600 shrink-0"></i>
+                                                                <a href="{{ route('management.marriages.file', ['marriage' => $editingRecord, 'index' => $fileIdx]) }}" target="_blank" class="font-semibold text-rose-700 hover:underline truncate">
+                                                                    {{ $mFile['name'] }}
+                                                                </a>
+                                                            </div>
+                                                            <label class="inline-flex items-center gap-1.5 text-rose-600 font-semibold cursor-pointer shrink-0">
+                                                                <input type="checkbox" name="remove_attachments[]" value="{{ $mFile['path'] }}" class="rounded border-rose-300 text-rose-600 focus:ring-rose-500">
+                                                                <span>Hapus</span>
+                                                            </label>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
                                             @endif
                                         </div>
-                                        <div class="sm:col-span-3">
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Catatan Kelengkapan Administrasi Sekretariat</label>
-                                            <textarea name="notes" rows="3" placeholder="Contoh: Fotokopi KTP, KK, Akta Kelahiran, Surat Pengantar N1-N4 Kelurahan, dan Pas Foto Gandeng 4x6 telah diverifikasi lengkap." class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('notes', $isEdit ? $editingRecord->notes : '') }}</textarea>
-                                        </div>
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Catatan / Keterangan Arsip (Opsional)</label>
+                                        <textarea name="notes" rows="3" placeholder="Contoh: Scan akta pemberkatan, berita acara, atau berkas pengantar Dukcapil..." class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">{{ old('notes', $isEdit ? $editingRecord->notes : '') }}</textarea>
                                     </div>
                                 </div>
 
                                 <div class="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-5 border-t border-slate-100">
                                     <a href="{{ route('management.dashboard', ['tab' => 'marriages']) }}" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm text-center">Batal</a>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
-                                        <i class="fa-solid fa-floppy-disk"></i>
-                                        <span>{{ $isEdit ? 'Simpan Perubahan Data Nikah' : 'Simpan & Terbitkan Surat Nikah Buddhis' }}</span>
+                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm sm:text-base transition flex items-center justify-center gap-2 shadow-xs">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span>{{ $isEdit ? 'Simpan Perubahan Arsip' : 'Simpan Arsip Dokumen' }}</span>
                                     </button>
                                 </div>
                             </form>
                         </div>
 
                     @elseif (in_array($currentMode, ['create_schedule', 'edit_schedule'], true))
-                        @php($isEdit = $currentMode === 'edit_schedule')
+                        @php $isEdit = $currentMode === 'edit_schedule'; @endphp
                         <div class="max-w-3xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
@@ -960,12 +1210,24 @@
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
+                                        @php
+                                            $scheduleCategoryList = $categoryNames['schedules'] ?? ['Puja Bakti', 'Meditasi', 'Kelas Dharma', 'Perayaan Hari Besar', 'Kegiatan Sosial'];
+                                            $selectedScheduleCat = old('category', $isEdit ? $editingRecord->category : ($scheduleCategoryList[0] ?? 'Puja Bakti'));
+                                            if ($selectedScheduleCat && ! in_array($selectedScheduleCat, $scheduleCategoryList, true)) {
+                                                $scheduleCategoryList[] = $selectedScheduleCat;
+                                            }
+                                        @endphp
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori *</label>
-                                        <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                            @foreach (['Puja Bakti', 'Meditasi', 'Kelas Dharma', 'Perayaan Hari Besar', 'Kegiatan Sosial'] as $opt)
-                                                <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Puja Bakti') === $opt)>{{ $opt }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="flex items-center gap-2">
+                                            <select id="scheduleCategorySelect" name="category" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($scheduleCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedScheduleCat === $opt)>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" onclick="quickAddCategory('schedules', 'scheduleCategorySelect')" class="px-3 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Kategori Jadwal Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Hari Pelaksanaan *</label>
@@ -1006,8 +1268,8 @@
                         </div>
 
                     @elseif (in_array($currentMode, ['create_gallery', 'edit_gallery'], true))
-                        @php($isEdit = $currentMode === 'edit_gallery')
-                        @php($currentMediaType = old('media_type', $isEdit ? $editingRecord->media_type : 'photo'))
+                        @php $isEdit = $currentMode === 'edit_gallery'; @endphp
+                        @php $currentMediaType = old('media_type', $isEdit ? $editingRecord->media_type : 'photo'); @endphp
                         <div class="max-w-3xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <div class="min-w-0">
@@ -1038,8 +1300,24 @@
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required placeholder="Contoh: Puja Bakti Minggu Pagi & Dhamma Talk" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
+                                        @php
+                                            $galleryCategoryList = $categoryNames['galleries'] ?? ['Puja Bakti', 'Meditasi', 'Bakti Sosial', 'Dhamma Talk', 'Perayaan Hari Besar'];
+                                            $selectedGalleryCat = old('category', $isEdit ? $editingRecord->category : ($galleryCategoryList[0] ?? 'Puja Bakti'));
+                                            if ($selectedGalleryCat && ! in_array($selectedGalleryCat, $galleryCategoryList, true)) {
+                                                $galleryCategoryList[] = $selectedGalleryCat;
+                                            }
+                                        @endphp
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori Kegiatan *</label>
-                                        <input type="text" name="category" value="{{ old('category', $isEdit ? $editingRecord->category : 'Puja Bakti') }}" required placeholder="Puja Bakti / Meditasi / Bakti Sosial" class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
+                                        <div class="flex items-center gap-2">
+                                            <select id="galleryCategorySelect" name="category" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($galleryCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedGalleryCat === $opt)>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" onclick="quickAddCategory('galleries', 'galleryCategorySelect')" class="px-3 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Kategori Galeri Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jenis Media Dokumentasi *</label>
@@ -1135,7 +1413,7 @@
                         </script>
 
                     @elseif (in_array($currentMode, ['create_article', 'edit_article'], true))
-                        @php($isEdit = $currentMode === 'edit_article')
+                        @php $isEdit = $currentMode === 'edit_article'; @endphp
                         <div class="max-w-4xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
@@ -1162,12 +1440,24 @@
                                         <input type="text" name="title" value="{{ old('title', $isEdit ? $editingRecord->title : '') }}" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900">
                                     </div>
                                     <div>
+                                        @php
+                                            $articleCategoryList = $categoryNames['articles'] ?? ['Berita Kegiatan', 'Renungan Dharma', 'Pengumuman', 'Artikel Buddhis'];
+                                            $selectedArticleCat = old('category', $isEdit ? $editingRecord->category : ($articleCategoryList[0] ?? 'Berita Kegiatan'));
+                                            if ($selectedArticleCat && ! in_array($selectedArticleCat, $articleCategoryList, true)) {
+                                                $articleCategoryList[] = $selectedArticleCat;
+                                            }
+                                        @endphp
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Kategori *</label>
-                                        <select name="category" required class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
-                                            @foreach (['Berita Kegiatan', 'Renungan Dharma', 'Pengumuman', 'Artikel Buddhis'] as $opt)
-                                                <option value="{{ $opt }}" @selected(old('category', $isEdit ? $editingRecord->category : 'Berita Kegiatan') === $opt)>{{ $opt }}</option>
-                                            @endforeach
-                                        </select>
+                                        <div class="flex items-center gap-2">
+                                            <select id="articleCategorySelect" name="category" required class="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900 font-medium">
+                                                @foreach ($articleCategoryList as $opt)
+                                                    <option value="{{ $opt }}" @selected($selectedArticleCat === $opt)>{{ $opt }}</option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" onclick="quickAddCategory('articles', 'articleCategorySelect')" class="px-3 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-bold text-xs sm:text-sm transition shrink-0" title="Tambah Kategori Artikel Baru">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Penulis *</label>
@@ -1199,7 +1489,7 @@
                         </div>
 
                     @elseif (in_array($currentMode, ['create_role', 'edit_role'], true))
-                        @php($isEdit = $currentMode === 'edit_role')
+                        @php $isEdit = $currentMode === 'edit_role'; @endphp
                         <div class="max-w-3xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
@@ -1260,7 +1550,7 @@
                         </div>
 
                     @elseif (in_array($currentMode, ['create_user', 'edit_user'], true))
-                        @php($isEdit = $currentMode === 'edit_user')
+                        @php $isEdit = $currentMode === 'edit_user'; @endphp
                         <div class="max-w-3xl mx-auto space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                                 <h2 class="text-xl sm:text-2xl font-black text-slate-900 leading-snug flex items-center gap-2">
@@ -1324,7 +1614,7 @@
                         </div>
 
                     @elseif ($currentMode === 'create_vihara_facility' || $currentMode === 'edit_vihara_facility')
-                        @php($isEdit = $currentMode === 'edit_vihara_facility' && $editingRecord)
+                        @php $isEdit = $currentMode === 'edit_vihara_facility' && $editingRecord; @endphp
                         <div class="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-8 shadow-2xs space-y-6">
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                 <div>
@@ -1369,7 +1659,7 @@
                                         required
                                         class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
                                     >
-                                        @php($selectedIcon = old('icon', $isEdit ? ($editingRecord->icon ?? 'fa-hands-praying') : 'fa-hands-praying'))
+                                        @php $selectedIcon = old('icon', $isEdit ? ($editingRecord->icon ?? 'fa-hands-praying') : 'fa-hands-praying'); @endphp
                                         @foreach ($availableFacilityIcons as $iconClass => $iconLabel)
                                             <option value="{{ $iconClass }}" @selected($selectedIcon === $iconClass)>{{ $iconLabel }} ({{ $iconClass }})</option>
                                         @endforeach
@@ -1425,7 +1715,7 @@
                                 <div class="flex items-center justify-between gap-2 relative z-10">
                                     <span class="text-amber-100 text-xs uppercase font-bold tracking-wider">Tanda Terima Bantuan / Barang / Surat</span>
                                     <span class="px-2.5 py-1 rounded-full bg-white/20 text-white text-xs font-bold backdrop-blur-xs shrink-0">
-                                        <i class="fa-solid fa-print mr-1"></i> A4 &amp; Excel
+                                        <i class="fa-solid fa-print mr-1"></i> A4 &amp; Word
                                     </span>
                                 </div>
                                 <div class="relative z-10">
@@ -1684,10 +1974,24 @@
                                                 <div class="text-slate-600 text-xs sm:text-sm mt-0.5 leading-snug break-words">{{ $d->document_number }} &bull; Dari: {{ $d->sender }}</div>
                                                 <div class="text-xs text-slate-400 mt-0.5 break-words">{{ $d->document_date->format('d M Y') }} &bull; {{ $d->archive_code }}</div>
                                             </div>
-                                            <button type="button" onclick="openDocumentPrintModal(@js($d))" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shrink-0 transition shadow-xs flex items-center gap-1.5">
-                                                <i class="fa-solid fa-print"></i>
-                                                <span>Cetak A4</span>
-                                            </button>
+                                            @php
+                                                $overviewDocFiles = collect($d->allAttachments())->values()->map(fn ($f, $idx) => [
+                                                    'url' => route('management.documents.file', ['document' => $d, 'index' => $idx]),
+                                                    'downloadUrl' => route('management.documents.file', ['document' => $d, 'index' => $idx, 'download' => 1]),
+                                                    'name' => $f['name'],
+                                                ])->all();
+                                            @endphp
+                                            @if (count($overviewDocFiles) > 0)
+                                                <button type="button" onclick="openUploadedFilesModal(@js($overviewDocFiles), 0, @js($d->title))" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shrink-0 transition shadow-xs flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-file-pdf"></i>
+                                                    <span>Lihat / Cetak{{ count($overviewDocFiles) > 1 ? ' ('.count($overviewDocFiles).')' : '' }}</span>
+                                                </button>
+                                            @else
+                                                <a href="{{ route('management.documents.edit', $d) }}" class="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold shrink-0 transition flex items-center gap-1.5">
+                                                    <i class="fa-solid fa-upload"></i>
+                                                    <span>Upload File</span>
+                                                </a>
+                                            @endif
                                         </div>
                                     @empty
                                         <div class="py-8 text-center text-slate-400 text-sm">Belum ada dokumen diarsipkan.</div>
@@ -1700,23 +2004,27 @@
                     </section>
 
                     <!-- ================================================= -->
-                    <!-- TAB 1: TANDA TERIMA & UCAPAN (PRINT A4 & EXCEL)   -->
+                    <!-- TAB 1: TANDA TERIMA & UCAPAN (PRINT A4 & WORD)    -->
                     <!-- ================================================= -->
                     @if ($canReceipts)
                     <section id="tab-receipts" class="mgmt-tab-panel hidden space-y-6">
-                        <!-- Top Header Banner with Separated Primary Create Button -->
-                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <!-- Top Header Banner with Template Editor & Create Buttons -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                             <div class="min-w-0">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
                                     <i class="fa-solid fa-receipt text-amber-600 text-xl shrink-0"></i>
                                     <span class="break-words">Tanda Terima Bantuan / Barang / Surat &amp; Ucapan Terima Kasih</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                    Kelola penerimaan wihara, cetak A4 berlogo <code>[logo]</code>, serta ekspor &amp; impor data Excel (<code>.xlsx</code>).
+                                    Kelola penerimaan wihara (multi-input barang), atur template surat dari Word (<code>.docx</code>) &amp; edit langsung di web, lalu cetak format A4.
                                 </p>
                             </div>
-                            <div class="shrink-0">
-                                <a href="{{ route('management.receipts.create') }}" class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
+                            <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                <a href="{{ route('management.receipts.template.edit') }}" class="flex-1 sm:flex-none justify-center px-4 py-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-2xs">
+                                    <i class="fa-solid fa-file-word text-base"></i>
+                                    <span>Template Surat (Word)</span>
+                                </a>
+                                <a href="{{ route('management.receipts.create') }}" class="flex-1 sm:flex-none justify-center px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
                                     <i class="fa-solid fa-circle-plus text-base"></i>
                                     <span>Buat Tanda Terima Baru</span>
                                 </a>
@@ -1725,7 +2033,7 @@
 
                         <!-- Receipts Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                            <!-- Search, Filter & Excel Actions Toolbar -->
+                            <!-- Search, Filter & Category Actions Toolbar -->
                             <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 min-w-0">
                                     <div class="relative w-full sm:w-72">
@@ -1739,23 +2047,17 @@
                                     </div>
                                     <select id="receiptFilterType" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
                                         <option value="all">Semua Jenis</option>
-                                        <option value="Bantuan Dana">Bantuan Dana</option>
-                                        <option value="Barang">Barang</option>
-                                        <option value="Surat / Dokumen">Surat / Dokumen</option>
+                                        @foreach ($categoryNames['receipts'] ?? ['Bantuan Dana', 'Barang', 'Surat / Dokumen'] as $recCat)
+                                            <option value="{{ $recCat }}">{{ $recCat }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
 
                                 <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
-                                    <div class="flex items-center flex-wrap gap-2">
-                                        <a href="{{ route('management.receipts.export') }}" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-2xs">
-                                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                                            <span>Export (.xlsx)</span>
-                                        </a>
-                                        <button type="button" onclick="openImportExcelModal()" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
-                                            <i class="fa-solid fa-file-import text-blue-600"></i>
-                                            <span>Import Excel</span>
-                                        </button>
-                                    </div>
+                                    <button type="button" onclick="openCategoryManagerModal('receipts')" class="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                        <i class="fa-solid fa-tags text-amber-600"></i>
+                                        <span>Kelola Kategori</span>
+                                    </button>
                                     <div id="receiptsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
                                 </div>
                             </div>
@@ -1797,7 +2099,18 @@
                                                     @endif
                                                 </td>
                                                 <td data-label="Uraian &amp; Penerima" class="py-3.5 px-4 align-top">
-                                                    <div class="text-slate-900 font-semibold text-sm sm:text-base leading-snug break-words">{{ $receipt->item_name }}</div>
+                                                    @php
+                                                        $rowItems = $receipt->normalizedItems();
+                                                    @endphp
+                                                    @if (count($rowItems) > 1)
+                                                        <ul class="space-y-0.5 text-xs sm:text-sm text-slate-900 font-semibold leading-snug">
+                                                            @foreach ($rowItems as $rItem)
+                                                                <li class="break-words">&bull; {{ $rItem['name'] }} <span class="text-slate-500 font-normal">({{ $rItem['quantity'] }})</span></li>
+                                                            @endforeach
+                                                        </ul>
+                                                    @else
+                                                        <div class="text-slate-900 font-semibold text-sm sm:text-base leading-snug break-words">{{ $receipt->item_name }}</div>
+                                                    @endif
                                                     <div class="text-xs sm:text-sm text-slate-500 mt-1 leading-snug break-words">{{ $receipt->quantity }} &bull; Penerima: {{ $receipt->receiver_name }}</div>
                                                 </td>
                                                 <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
@@ -1862,10 +2175,10 @@
 
                         <!-- Documents Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                            <!-- Search & Filter Category Pills -->
-                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                                <div class="flex flex-wrap items-center gap-2.5 min-w-0">
-                                    <div class="relative w-full sm:w-72">
+                            <!-- Search, Filter Category Pills & Excel Actions -->
+                            <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-3">
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                    <div class="relative w-full lg:w-80">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
                                             type="search"
@@ -1874,14 +2187,33 @@
                                             class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <button type="button" data-filter="all" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 text-white">Semua</button>
-                                        <button type="button" data-filter="Surat Masuk" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-inbox text-blue-600"></i> Surat Masuk</button>
-                                        <button type="button" data-filter="Surat Keluar" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-paper-plane text-emerald-600"></i> Surat Keluar</button>
-                                        <button type="button" data-filter="SK / Piagam" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5"><i class="fa-solid fa-award text-purple-600"></i> SK / Piagam</button>
+                                    <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
+                                        <div class="flex items-center flex-wrap gap-2">
+                                            <a href="{{ route('management.documents.export') }}" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                                                <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                                                <span>Export (.xlsx)</span>
+                                            </a>
+                                            <button type="button" onclick="openImportExcelModal('documents')" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                                <i class="fa-solid fa-file-import text-blue-600"></i>
+                                                <span>Import Excel</span>
+                                            </button>
+                                            <button type="button" onclick="openCategoryManagerModal('documents')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                                <i class="fa-solid fa-tags text-blue-600"></i>
+                                                <span>Kategori</span>
+                                            </button>
+                                        </div>
+                                        <div id="docsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
                                     </div>
                                 </div>
-                                <div id="docsCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" data-filter="all" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-900 text-white">Semua</button>
+                                    @foreach ($categoryNames['documents'] ?? ['Surat Masuk', 'Surat Keluar', 'SK / Piagam'] as $docCat)
+                                        <button type="button" data-filter="{{ $docCat }}" class="doc-filter-pill px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-folder text-blue-600 text-[11px]"></i>
+                                            <span>{{ $docCat }}</span>
+                                        </button>
+                                    @endforeach
+                                </div>
                             </div>
 
                             <!-- Responsive Table Wrapper -->
@@ -1914,11 +2246,27 @@
                                                 <td data-label="Perihal &amp; Ringkasan" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">{{ $doc->title }}</div>
                                                     <div class="text-xs sm:text-sm text-slate-600 leading-snug mt-1 break-words">{{ $doc->summary }}</div>
-                                                    @if ($doc->attachment_path)
-                                                        <a href="{{ asset('storage/'.$doc->attachment_path) }}" target="_blank" class="inline-flex items-center gap-1.5 mt-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline break-all">
-                                                            <i class="fa-solid fa-paperclip shrink-0"></i>
-                                                            <span>Lampiran: {{ $doc->attachment_name ?? 'Berkas' }}</span>
-                                                        </a>
+                                                    @php
+                                                        $docFileItems = collect($doc->allAttachments())->values()->map(fn ($f, $idx) => [
+                                                            'url' => route('management.documents.file', ['document' => $doc, 'index' => $idx]),
+                                                            'downloadUrl' => route('management.documents.file', ['document' => $doc, 'index' => $idx, 'download' => 1]),
+                                                            'name' => $f['name'],
+                                                        ])->all();
+                                                    @endphp
+                                                    @if (count($docFileItems) > 0)
+                                                        <div class="flex flex-wrap gap-1.5 mt-1.5">
+                                                            @foreach ($docFileItems as $fIdx => $fItem)
+                                                                <button type="button" onclick="openUploadedFilesModal(@js($docFileItems), {{ $fIdx }}, @js($doc->title))" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 border border-blue-200 text-xs font-semibold text-blue-700 transition break-all text-left">
+                                                                    <i class="fa-solid fa-paperclip shrink-0 text-[10px]"></i>
+                                                                    <span>{{ $fItem['name'] }}</span>
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 mt-1.5 text-xs text-slate-400 italic">
+                                                            <i class="fa-regular fa-file"></i>
+                                                            <span>Belum ada file diunggah</span>
+                                                        </span>
                                                     @endif
                                                 </td>
                                                 <td data-label="Pengirim &rarr; Penerima" class="py-3.5 px-4 align-top text-xs sm:text-sm text-slate-700 leading-snug break-words">
@@ -1927,10 +2275,20 @@
                                                 </td>
                                                 <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
-                                                        <button type="button" onclick="openDocumentPrintModal(@js($doc))" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5">
-                                                            <i class="fa-solid fa-print"></i>
-                                                            <span>Cetak A4</span>
-                                                        </button>
+                                                        @if (count($docFileItems) > 0)
+                                                            <button type="button" onclick="openUploadedFilesModal(@js($docFileItems), 0, @js($doc->title))" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5" title="Lihat & Cetak File Dokumen">
+                                                                <i class="fa-solid fa-eye"></i>
+                                                                <span>Lihat / Cetak{{ count($docFileItems) > 1 ? ' ('.count($docFileItems).')' : '' }}</span>
+                                                            </button>
+                                                            <a href="{{ route('management.documents.file', ['document' => $doc, 'index' => 0, 'download' => 1]) }}" class="p-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold text-xs transition inline-flex items-center justify-center w-8 h-8" title="Unduh File Pertama">
+                                                                <i class="fa-solid fa-download"></i>
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('management.documents.edit', $doc) }}" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-semibold text-xs transition inline-flex items-center gap-1" title="Unggah File Dokumen">
+                                                                <i class="fa-solid fa-upload"></i>
+                                                                <span>Upload</span>
+                                                            </a>
+                                                        @endif
                                                         <a href="{{ route('management.documents.edit', $doc) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
                                                         </a>
@@ -1960,51 +2318,67 @@
                     @endif
 
                     <!-- ================================================= -->
-                    <!-- TAB 2B: ADMINISTRASI SURAT NIKAH & PEMBERKATAN    -->
+                    <!-- TAB 2B: ARSIP SURAT NIKAH & PEMBERKATAN           -->
                     <!-- ================================================= -->
                     @if ($canMarriages)
                     <section id="tab-marriages" class="mgmt-tab-panel hidden space-y-6">
-                        <!-- Top Header Banner with Separated Primary Create Button -->
+                        <!-- Top Header Banner with Separated Primary Upload Button -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div class="min-w-0">
                                 <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2.5">
                                     <i class="fa-solid fa-ring text-rose-600 text-xl shrink-0"></i>
-                                    <span class="break-words">Administrasi Surat Nikah &amp; Pemberkatan Perkawinan Buddhis</span>
+                                    <span class="break-words">Arsip Surat Nikah &amp; Pemberkatan Perkawinan Buddhis</span>
                                 </h2>
                                 <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                    Arsip resmi Akta / Surat Keterangan Pemberkatan Perkawinan Buddhis, Bimbingan Pra-Nikah, berita acara saksi, dan cetak piagam A4 berlogo <code>[logo]</code>.
+                                    Penyimpanan arsip digital berkas surat pernikahan, berita acara pemberkatan, sertifikat pra-nikah, dan surat pengantar Dukcapil.
                                 </p>
                             </div>
                             <div class="shrink-0">
                                 <a href="{{ route('management.marriages.create') }}" class="w-full sm:w-auto justify-center px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition flex items-center gap-2 shadow-xs">
-                                    <i class="fa-solid fa-circle-plus text-base"></i>
-                                    <span>Buat Surat Nikah Baru</span>
+                                    <i class="fa-solid fa-cloud-arrow-up text-base"></i>
+                                    <span>Upload Arsip Surat Nikah</span>
                                 </a>
                             </div>
                         </div>
 
                         <!-- Marriages Table Card (Responsive Stacked Mobile + Overflow-X Auto) -->
                         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
-                            <!-- Search & Filter Toolbar -->
+                            <!-- Search, Filter & Excel Toolbar -->
                             <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                                 <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 min-w-0">
-                                    <div class="relative w-full sm:w-80">
+                                    <div class="relative w-full sm:w-72">
                                         <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
                                         <input
                                             type="search"
                                             id="marriageSearchInput"
-                                            placeholder="Cari no surat, nama mempelai, pandita, saksi..."
+                                            placeholder="Cari no arsip, nama mempelai, atau nama file..."
                                             class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white focus:border-slate-400"
                                         >
                                     </div>
                                     <select id="marriageFilterStatus" class="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
-                                        <option value="all">Semua Status Administrasi</option>
+                                        <option value="all">Semua Status Arsip</option>
                                         <option value="Terdaftar & Verifikasi Berkas">Terdaftar &amp; Verifikasi Berkas</option>
                                         <option value="Selesai Pemberkatan">Selesai Pemberkatan</option>
                                         <option value="Tercatat di Dukcapil">Tercatat di Dukcapil</option>
                                     </select>
                                 </div>
-                                <div id="marriagesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
+                                <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
+                                    <div class="flex items-center flex-wrap gap-2">
+                                        <a href="{{ route('management.marriages.export') }}" class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                                            <span>Export (.xlsx)</span>
+                                        </a>
+                                        <button type="button" onclick="openImportExcelModal('marriages')" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-file-import text-blue-600"></i>
+                                            <span>Import Excel</span>
+                                        </button>
+                                        <button type="button" onclick="openCategoryManagerModal('marriages')" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                            <i class="fa-solid fa-tags text-rose-600"></i>
+                                            <span>Kategori</span>
+                                        </button>
+                                    </div>
+                                    <div id="marriagesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
+                                </div>
                             </div>
 
                             <!-- Responsive Table Wrapper -->
@@ -2012,78 +2386,83 @@
                                 <table class="mgmt-responsive-table w-full table-auto text-left border-collapse">
                                     <thead>
                                         <tr class="border-b border-slate-200/80 text-slate-600 bg-slate-50/70 text-xs sm:text-sm font-bold uppercase tracking-wider">
-                                            <th class="py-3.5 px-4 w-[21%]">No. Surat &amp; Status</th>
-                                            <th class="py-3.5 px-4 w-[26%]">Mempelai Pria &amp; Wanita</th>
-                                            <th class="py-3.5 px-4 w-[18%]">Jadwal &amp; Lokasi</th>
-                                            <th class="py-3.5 px-4 w-[17%]">Pandita &amp; Saksi</th>
+                                            <th class="py-3.5 px-4 w-[22%]">No. Arsip &amp; Status</th>
+                                            <th class="py-3.5 px-4 w-[28%]">Pasangan Mempelai</th>
+                                            <th class="py-3.5 px-4 w-[14%]">Tanggal</th>
+                                            <th class="py-3.5 px-4 w-[18%]">File Dokumen</th>
                                             <th class="py-3.5 px-4 text-right w-[18%]">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="marriagesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($marriages ?? [] as $marriage)
                                             <tr data-category="{{ $marriage->status }}" class="marriage-row hover:bg-slate-50/80 transition">
-                                                <td data-label="No. Surat &amp; Status" class="py-3.5 px-4 align-top">
+                                                <td data-label="No. Arsip &amp; Status" class="py-3.5 px-4 align-top">
                                                     <div class="font-bold text-slate-900 text-sm sm:text-base break-words">{{ $marriage->certificate_number }}</div>
                                                     <div class="flex flex-wrap items-center gap-1 mt-1">
                                                         <span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                                             {{ $marriage->document_type }}
                                                         </span>
-                                                        @php($statusBadgeClass = $marriage->status === 'Tercatat di Dukcapil' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($marriage->status === 'Selesai Pemberkatan' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-800 border-amber-200'))
+                                                        @php $statusBadgeClass = $marriage->status === 'Tercatat di Dukcapil' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : ($marriage->status === 'Selesai Pemberkatan' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-amber-50 text-amber-800 border-amber-200'); @endphp
                                                         <span class="inline-block px-2 py-0.5 rounded-md text-[11px] font-bold border {{ $statusBadgeClass }}">
                                                             {{ $marriage->status }}
                                                         </span>
                                                     </div>
-                                                    <div class="mt-1.5 text-xs text-slate-500 flex items-center gap-1">
-                                                        <i class="fa-solid {{ $marriage->premarital_course_done ? 'fa-circle-check text-emerald-600' : 'fa-clock text-amber-500' }}"></i>
-                                                        <span>{{ $marriage->premarital_course_done ? 'Pra-Nikah Selesai' : 'Belum Pra-Nikah' }}</span>
+                                                </td>
+                                                <td data-label="Pasangan Mempelai" class="py-3.5 px-4 align-top">
+                                                    <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
+                                                        <i class="fa-solid fa-mars text-blue-600 mr-1"></i>{{ $marriage->groom_name }}
                                                     </div>
-                                                    @if ($marriage->attachment_path)
-                                                        <a href="{{ asset('storage/'.$marriage->attachment_path) }}" target="_blank" class="inline-flex items-center gap-1 mt-1 text-xs font-semibold text-blue-600 hover:underline">
-                                                            <i class="fa-solid fa-paperclip"></i>
-                                                            <span>Lihat Berkas</span>
-                                                        </a>
+                                                    <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words mt-1">
+                                                        <i class="fa-solid fa-venus text-pink-600 mr-1"></i>{{ $marriage->bride_name }}
+                                                    </div>
+                                                    @if ($marriage->notes)
+                                                        <div class="text-xs text-slate-500 mt-1.5 leading-snug break-words">{{ $marriage->notes }}</div>
                                                     @endif
                                                 </td>
-                                                <td data-label="Mempelai Pria &amp; Wanita" class="py-3.5 px-4 align-top">
-                                                    <div class="space-y-1.5">
-                                                        <div>
-                                                            <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
-                                                                <i class="fa-solid fa-mars text-blue-600 mr-1"></i>{{ $marriage->groom_name }}
-                                                            </div>
-                                                            <div class="text-xs text-slate-500 leading-snug break-words">
-                                                                {{ $marriage->groom_buddhist_name ? $marriage->groom_buddhist_name.' • ' : '' }}Putra Bpk. {{ $marriage->groom_father_name }} &amp; Ibu {{ $marriage->groom_mother_name }}
-                                                            </div>
-                                                        </div>
-                                                        <div class="pt-1 border-t border-slate-100">
-                                                            <div class="font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
-                                                                <i class="fa-solid fa-venus text-pink-600 mr-1"></i>{{ $marriage->bride_name }}
-                                                            </div>
-                                                            <div class="text-xs text-slate-500 leading-snug break-words">
-                                                                {{ $marriage->bride_buddhist_name ? $marriage->bride_buddhist_name.' • ' : '' }}Putri Bpk. {{ $marriage->bride_father_name }} &amp; Ibu {{ $marriage->bride_mother_name }}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td data-label="Jadwal &amp; Lokasi" class="py-3.5 px-4 align-top text-xs sm:text-sm">
+                                                <td data-label="Tanggal" class="py-3.5 px-4 align-top text-xs sm:text-sm">
                                                     <div class="font-bold text-slate-900">{{ $marriage->wedding_date->format('d M Y') }}</div>
-                                                    <div class="text-slate-600 mt-0.5">{{ $marriage->wedding_time }}</div>
-                                                    <div class="text-xs text-slate-500 mt-1 leading-snug break-words">{{ $marriage->wedding_location }}</div>
                                                 </td>
-                                                <td data-label="Pandita &amp; Saksi" class="py-3.5 px-4 align-top text-xs sm:text-sm">
-                                                    <div class="font-bold text-slate-900 leading-snug break-words">{{ $marriage->officiant_name }}</div>
-                                                    <div class="text-xs text-slate-600 mt-1 break-words">Saksi I: {{ $marriage->witness_one }}</div>
-                                                    <div class="text-xs text-slate-600 break-words">Saksi II: {{ $marriage->witness_two }}</div>
+                                                @php
+                                                    $marriageTitle = $marriage->document_type.' — '.$marriage->groom_name.' & '.$marriage->bride_name;
+                                                    $marriageFileItems = collect($marriage->allAttachments())->values()->map(fn ($f, $idx) => [
+                                                        'url' => route('management.marriages.file', ['marriage' => $marriage, 'index' => $idx]),
+                                                        'downloadUrl' => route('management.marriages.file', ['marriage' => $marriage, 'index' => $idx, 'download' => 1]),
+                                                        'name' => $f['name'],
+                                                    ])->all();
+                                                @endphp
+                                                <td data-label="File Dokumen" class="py-3.5 px-4 align-top text-xs sm:text-sm">
+                                                    @if (count($marriageFileItems) > 0)
+                                                        <div class="flex flex-col items-start gap-1.5">
+                                                            @foreach ($marriageFileItems as $fIdx => $fItem)
+                                                                <button type="button" onclick="openUploadedFilesModal(@js($marriageFileItems), {{ $fIdx }}, @js($marriageTitle))" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xs font-semibold text-rose-700 transition break-all text-left">
+                                                                    <i class="fa-solid fa-file-lines shrink-0 text-[10px]"></i>
+                                                                    <span>{{ $fItem['name'] }}</span>
+                                                                </button>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 text-xs text-slate-400 italic">
+                                                            <i class="fa-regular fa-file"></i>
+                                                            <span>Belum ada file</span>
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td data-label="Aksi" class="mgmt-actions-cell py-3.5 px-4 align-top text-right">
                                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
-                                                        <button type="button" onclick="openMarriagePrintModal(@js($marriage), 'certificate')" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5" title="Cetak Surat Pemberkatan Perkawinan A4">
-                                                            <i class="fa-solid fa-print"></i>
-                                                            <span>Surat A4</span>
-                                                        </button>
-                                                        <button type="button" onclick="openMarriagePrintModal(@js($marriage), 'checklist')" class="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 font-semibold text-xs transition inline-flex items-center gap-1.5" title="Cetak Berita Acara & Saksi">
-                                                            <i class="fa-solid fa-file-signature"></i>
-                                                            <span>Berita Acara</span>
-                                                        </button>
+                                                        @if (count($marriageFileItems) > 0)
+                                                            <button type="button" onclick="openUploadedFilesModal(@js($marriageFileItems), 0, @js($marriageTitle))" class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition shadow-xs inline-flex items-center gap-1.5" title="Lihat & Cetak File Arsip">
+                                                                <i class="fa-solid fa-eye"></i>
+                                                                <span>Lihat / Cetak{{ count($marriageFileItems) > 1 ? ' ('.count($marriageFileItems).')' : '' }}</span>
+                                                            </button>
+                                                            <a href="{{ route('management.marriages.file', ['marriage' => $marriage, 'index' => 0, 'download' => 1]) }}" class="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-xs transition inline-flex items-center justify-center w-8 h-8" title="Unduh File Pertama">
+                                                                <i class="fa-solid fa-download"></i>
+                                                            </a>
+                                                        @else
+                                                            <a href="{{ route('management.marriages.edit', $marriage) }}" class="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 font-semibold text-xs transition inline-flex items-center gap-1" title="Unggah File Arsip">
+                                                                <i class="fa-solid fa-upload"></i>
+                                                                <span>Upload</span>
+                                                            </a>
+                                                        @endif
                                                         <a href="{{ route('management.marriages.edit', $marriage) }}" class="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition inline-flex items-center justify-center w-8 h-8" title="Edit">
                                                             <i class="fa-solid fa-pen-to-square"></i>
                                                         </a>
@@ -2374,34 +2753,53 @@
                                     </div>
                                 </div>
 
+                                <!-- Custom Logo Wihara (Landing Navbar/Footer, Management Sidebar/Navbar & Kop Surat A4) -->
                                 <div class="pt-4 border-t border-slate-100 space-y-3">
                                     <div>
                                         <div class="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-                                            <i class="fa-solid fa-signature text-amber-600"></i>
-                                            <span>Default Penandatangan Semua Dokumen Cetak (A4)</span>
+                                            <i class="fa-solid fa-shield-halved text-amber-600"></i>
+                                            <span>Logo Resmi Wihara (Seluruh Web: Landing, Sidebar, Navbar &amp; Kop A4)</span>
                                         </div>
-                                        <p class="text-xs text-slate-500 mt-0.5">Opsional. Jika diisi, jabatan &amp; nama ini otomatis menjadi penandatangan default (kolom kanan) di semua surat cetak A4. Anda juga tetap bisa mengubah penandatangan langsung di jendela pratinjau cetak.</p>
+                                        <p class="text-xs text-slate-500 mt-0.5">Unggah logo wihara Anda sendiri (disarankan PNG/SVG transparan). Logo akan otomatis tampil di navbar &amp; footer Landing Page, sidebar &amp; navbar Management, serta Kop Surat A4.</p>
                                     </div>
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Jabatan Penandatangan Default</label>
-                                            <input
-                                                type="text"
-                                                name="default_signer_title"
-                                                value="{{ old('default_signer_title', $viharaProfile->default_signer_title) }}"
-                                                placeholder="Contoh: Ketua Pengurus Wihara Mahabodhi"
-                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
-                                            >
+                                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                                        <div class="lg:col-span-4">
+                                            <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3.5">
+                                                @if (!empty($viharaProfile->logo_url))
+                                                    <div class="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                                                        <img src="{{ $viharaProfile->logo_url }}" alt="Pratinjau Logo Wihara" class="w-full h-full object-contain">
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <div class="text-xs font-bold text-emerald-700">Logo Custom Aktif</div>
+                                                        <div class="text-[11px] text-slate-500 truncate mt-0.5">{{ basename($viharaProfile->logo_url) }}</div>
+                                                    </div>
+                                                @else
+                                                    <div class="w-14 h-14 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shrink-0 shadow-2xs">
+                                                        <i class="fa-solid fa-dharmachakra text-2xl"></i>
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <div class="text-xs font-bold text-slate-800">Ikon Bawaan Sistem</div>
+                                                        <div class="text-[11px] text-slate-500 mt-0.5">Belum ada logo unggahan</div>
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Nama Penandatangan Default</label>
-                                            <input
-                                                type="text"
-                                                name="default_signer_name"
-                                                value="{{ old('default_signer_name', $viharaProfile->default_signer_name) }}"
-                                                placeholder="Contoh: Upasaka Dharmadi Wijaya"
-                                                class="w-full px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-slate-900"
-                                            >
+                                        <div class="lg:col-span-8 space-y-2.5">
+                                            <div>
+                                                <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Unggah File Logo Baru (.png, .jpg, .webp, .svg &bull; Maks 2 MB)</label>
+                                                <input
+                                                    type="file"
+                                                    name="logo_file"
+                                                    accept=".png,.jpg,.jpeg,.webp,.svg"
+                                                    class="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-300 text-xs sm:text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-amber-500 file:text-slate-950 file:text-xs file:font-bold hover:file:bg-amber-600"
+                                                >
+                                            </div>
+                                            @if (!empty($viharaProfile->logo_url))
+                                                <label class="inline-flex items-center gap-2 text-xs font-semibold text-rose-700 cursor-pointer">
+                                                    <input type="checkbox" name="reset_logo" value="1" class="rounded border-rose-300 text-rose-600 focus:ring-rose-500">
+                                                    <span>Hapus logo custom &amp; kembalikan ke ikon bawaan</span>
+                                                </label>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -2415,7 +2813,7 @@
                                         </div>
                                         <p class="text-xs text-slate-500 mt-0.5">Unggah foto latar belakang baru untuk bagian atas (Hero) halaman utama, atau masukkan tautan URL gambar.</p>
                                     </div>
-                                    @php($currentHeroImage = $viharaProfile->hero_image ?: '/Assets/Img/hero.png')
+                                    @php $currentHeroImage = $viharaProfile->hero_image ?: '/Assets/Img/hero.png'; @endphp
                                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                                         <div class="lg:col-span-5">
                                             <div class="rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-video relative shadow-2xs">
@@ -2462,8 +2860,8 @@
                                         </div>
                                         <p class="text-xs text-slate-500 mt-0.5">Sesuaikan teks deskripsi singkat, daftar layanan di bagian bawah halaman (Footer), dan kalimat penutup hak cipta.</p>
                                     </div>
-                                    @php($defaultProfileData = \App\Models\ViharaProfile::defaultData())
-                                    @php($footerServicesList = is_array($viharaProfile->footer_services) && count($viharaProfile->footer_services) > 0 ? $viharaProfile->footer_services : $defaultProfileData['footer_services'])
+                                    @php $defaultProfileData = \App\Models\ViharaProfile::defaultData(); @endphp
+                                    @php $footerServicesList = is_array($viharaProfile->footer_services) && count($viharaProfile->footer_services) > 0 ? $viharaProfile->footer_services : $defaultProfileData['footer_services']; @endphp
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div class="sm:col-span-2">
                                             <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-1.5">Deskripsi Singkat Footer (Kolom Kiri) *</label>
@@ -2606,18 +3004,32 @@
                                 </a>
                             </div>
 
-                            <!-- Search & Filter Controls -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div class="relative w-full sm:w-72">
-                                    <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
-                                    <input
-                                        type="search"
-                                        id="scheduleSearchInput"
-                                        placeholder="Cari jadwal, hari, atau lokasi..."
-                                        class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
-                                    >
+                            <!-- Search, Category Filter & Manage Categories Controls -->
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 min-w-0">
+                                    <div class="relative w-full sm:w-72">
+                                        <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
+                                        <input
+                                            type="search"
+                                            id="scheduleSearchInput"
+                                            placeholder="Cari jadwal, hari, atau lokasi..."
+                                            class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
+                                        >
+                                    </div>
+                                    <select id="scheduleFilterCategory" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
+                                        <option value="all">Semua Kategori</option>
+                                        @foreach ($categoryNames['schedules'] ?? [] as $schCat)
+                                            <option value="{{ $schCat }}">{{ $schCat }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div id="schedulesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
+                                <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
+                                    <button type="button" onclick="openCategoryManagerModal('schedules')" class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                        <i class="fa-solid fa-tags text-emerald-600"></i>
+                                        <span>Kelola Kategori</span>
+                                    </button>
+                                    <div id="schedulesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
+                                </div>
                             </div>
 
                             <!-- Responsive Table / Mobile Card View -->
@@ -2634,7 +3046,7 @@
                                     </thead>
                                     <tbody id="schedulesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($schedules as $sch)
-                                            <tr class="schedule-row hover:bg-slate-50/80 transition">
+                                            <tr data-category="{{ $sch->category }}" class="schedule-row hover:bg-slate-50/80 transition">
                                                 <td data-label="Kegiatan" class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
                                                     {{ $sch->title }}
                                                 </td>
@@ -2723,7 +3135,13 @@
                                         <option value="video">Video Kegiatan (YouTube)</option>
                                     </select>
                                 </div>
-                                <div id="galleriesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
+                                <div class="flex items-center flex-wrap gap-2 justify-between sm:justify-end">
+                                    <button type="button" onclick="openCategoryManagerModal('galleries')" class="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                        <i class="fa-solid fa-tags text-blue-600"></i>
+                                        <span>Kelola Kategori</span>
+                                    </button>
+                                    <div id="galleriesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
+                                </div>
                             </div>
 
                             <!-- Responsive Table / Mobile Card View -->
@@ -2839,18 +3257,32 @@
                                 </a>
                             </div>
 
-                            <!-- Search & Filter Controls -->
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                <div class="relative w-full sm:w-72">
-                                    <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
-                                    <input
-                                        type="search"
-                                        id="articleSearchInput"
-                                        placeholder="Cari judul artikel atau pengumuman..."
-                                        class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
-                                    >
+                            <!-- Search, Category Filter & Manage Categories Controls -->
+                            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                                <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 min-w-0">
+                                    <div class="relative w-full sm:w-72">
+                                        <i class="fa-solid fa-magnifying-glass text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 text-xs"></i>
+                                        <input
+                                            type="search"
+                                            id="articleSearchInput"
+                                            placeholder="Cari judul artikel atau pengumuman..."
+                                            class="w-full pl-9 pr-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm focus:outline-none focus:bg-white"
+                                        >
+                                    </div>
+                                    <select id="articleFilterCategory" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none focus:bg-white">
+                                        <option value="all">Semua Kategori</option>
+                                        @foreach ($categoryNames['articles'] ?? [] as $artCat)
+                                            <option value="{{ $artCat }}">{{ $artCat }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                <div id="articlesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600"></div>
+                                <div class="flex items-center flex-wrap gap-2 justify-between lg:justify-end">
+                                    <button type="button" onclick="openCategoryManagerModal('articles')" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-2xs">
+                                        <i class="fa-solid fa-tags text-rose-600"></i>
+                                        <span>Kelola Kategori</span>
+                                    </button>
+                                    <div id="articlesCountInfo" class="text-xs sm:text-sm font-semibold text-slate-600 sm:pl-2 sm:border-l sm:border-slate-200"></div>
+                                </div>
                             </div>
 
                             <!-- Responsive Table / Mobile Card View -->
@@ -2867,7 +3299,7 @@
                                     </thead>
                                     <tbody id="articlesTableBody" class="divide-y divide-slate-100">
                                         @forelse ($articles as $art)
-                                            <tr class="article-row hover:bg-slate-50/80 transition">
+                                            <tr data-category="{{ $art->category }}" class="article-row hover:bg-slate-50/80 transition">
                                                 <td data-label="Judul Artikel" class="py-3.5 px-4 align-top font-bold text-slate-900 text-sm sm:text-base leading-snug break-words">
                                                     <a href="{{ route('landing.article', $art->slug) }}" target="_blank" class="hover:underline inline-flex items-center gap-1.5">
                                                         <span>{{ $art->title }}</span>
@@ -3027,7 +3459,7 @@
     </div>
 
     <!-- ========================================================= -->
-    <!-- MODAL IMPORT EXCEL DATA TANDA TERIMA DENGAN DOKUMENTASI   -->
+    <!-- MODAL IMPORT EXCEL (DOKUMEN & SURAT NIKAH)                -->
     <!-- ========================================================= -->
     <div id="importExcelModal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-6 flex flex-col items-center justify-center">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
@@ -3038,8 +3470,8 @@
                         <i class="fa-solid fa-file-excel"></i>
                     </div>
                     <div class="min-w-0">
-                        <h3 class="text-sm sm:text-lg font-bold text-slate-900 leading-snug">Import Data Tanda Terima via Excel (.xlsx / .csv)</h3>
-                        <p class="text-xs text-slate-500">Unggah berkas spreadsheet untuk memasukkan data penerimaan donasi dan bantuan secara massal.</p>
+                        <h3 id="importModalTitle" class="text-sm sm:text-lg font-bold text-slate-900 leading-snug">Import Data Arsip via Excel (.xlsx / .csv)</h3>
+                        <p id="importModalSubtitle" class="text-xs text-slate-500">Unggah berkas spreadsheet untuk memasukkan data arsip administrasi secara massal.</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeImportExcelModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 flex items-center justify-center shrink-0 transition" title="Tutup Modal">
@@ -3057,17 +3489,17 @@
                         </div>
                         <div>
                             <div class="text-sm font-bold text-emerald-950">Gunakan Format Template Resmi Wihara Mahabodhi</div>
-                            <p class="text-xs text-emerald-800/90 mt-0.5">Pastikan susunan kolom pada berkas Excel Anda persis mengikuti template resmi agar seluruh baris data dapat diproses otomatis.</p>
+                            <p class="text-xs text-emerald-800/90 mt-0.5">Pastikan susunan kolom pada berkas Excel Anda mengikuti template resmi agar seluruh baris data dapat diproses otomatis.</p>
                         </div>
                     </div>
-                    <a href="{{ route('management.receipts.template') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shrink-0 flex items-center justify-center gap-2 shadow-xs transition">
+                    <a id="importModalTemplateBtn" href="{{ route('management.documents.template') }}" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shrink-0 flex items-center justify-center gap-2 shadow-xs transition">
                         <i class="fa-solid fa-download"></i>
                         <span>Unduh Template (.xlsx)</span>
                     </a>
                 </div>
 
                 <!-- Step 2: Upload File Form -->
-                <form id="importExcelForm" method="POST" action="{{ route('management.receipts.import') }}" enctype="multipart/form-data" class="space-y-4">
+                <form id="importExcelForm" method="POST" action="{{ route('management.documents.import') }}" enctype="multipart/form-data" class="space-y-4">
                     @csrf
                     <div>
                         <label class="block font-bold text-slate-800 text-xs sm:text-sm mb-2">Pilih Berkas Excel / CSV *</label>
@@ -3108,119 +3540,21 @@
                             </h4>
                             <p class="text-xs text-slate-500 mt-0.5">Panduan aturan pengisian untuk setiap kolom pada baris data Excel.</p>
                         </div>
-                        <span class="self-start sm:self-auto px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs shrink-0">Total: 12 Kolom</span>
+                        <span id="importModalColsBadge" class="self-start sm:self-auto px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs shrink-0">Total: 10 Kolom</span>
                     </div>
 
                     <div class="w-full rounded-xl border border-slate-200 shadow-2xs overflow-x-auto">
-                        <table class="w-full min-w-[640px] table-auto text-left text-xs border-collapse">
+                        <table class="w-full min-w-[600px] table-auto text-left text-xs border-collapse">
                             <thead class="bg-slate-100/90 text-slate-700 font-bold uppercase tracking-wider border-b border-slate-200">
                                 <tr>
-                                    <th class="p-3 w-[6%] text-center">No</th>
-                                    <th class="p-3 w-[20%]">Header Kolom</th>
-                                    <th class="p-3 w-[12%] text-center">Status</th>
-                                    <th class="p-3 w-[14%]">Tipe Data</th>
-                                    <th class="p-3 w-[32%]">Aturan &amp; Penjelasan Pengisian</th>
-                                    <th class="p-3 w-[16%]">Contoh Nilai</th>
+                                    <th class="p-3 w-[8%] text-center">No</th>
+                                    <th class="p-3 w-[24%]">Header Kolom</th>
+                                    <th class="p-3 w-[14%] text-center">Status</th>
+                                    <th class="p-3 w-[34%]">Aturan &amp; Penjelasan Pengisian</th>
+                                    <th class="p-3 w-[20%]">Contoh Nilai</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100 bg-white">
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">1</td>
-                                    <td class="p-3 font-bold text-slate-900">No Tanda Terima</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks</td>
-                                    <td class="p-3 text-slate-600">Boleh dikosongkan. Jika kosong, sistem otomatis membuatkan nomor tanda terima resmi wihara (format: <code>001/TT-WMBC/XI/2026</code>).</td>
-                                    <td class="p-3 text-slate-800 font-mono text-[11px]">001/TT-WMBC/XI/2026</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">2</td>
-                                    <td class="p-3 font-bold text-slate-900">Jenis</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Pilihan Baku</td>
-                                    <td class="p-3 text-slate-600">Wajib diisi persis salah satu dari tiga opsi: <code>Bantuan Dana</code>, <code>Barang</code>, atau <code>Surat / Dokumen</code>.</td>
-                                    <td class="p-3 text-slate-800 font-semibold">Bantuan Dana</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">3</td>
-                                    <td class="p-3 font-bold text-slate-900">Tanggal</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Format Tanggal</td>
-                                    <td class="p-3 text-slate-600">Tanggal penyerahan donasi atau barang di sekretariat wihara. Format yang disarankan: <code>YYYY-MM-DD</code> atau <code>DD/MM/YYYY</code>.</td>
-                                    <td class="p-3 text-slate-800 font-mono text-[11px]">2026-11-08</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">4</td>
-                                    <td class="p-3 font-bold text-slate-900">Nama Penyerah / Donatur</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Nama lengkap umat, perorangan, keluarga, atau donatur yang menyerahkan dana/barang/surat.</td>
-                                    <td class="p-3 text-slate-800">Bpk. Suryadi Kusuma</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">5</td>
-                                    <td class="p-3 font-bold text-slate-900">Instansi / Alamat</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Nama instansi, badan usaha, yayasan, atau alamat domisili donatur.</td>
-                                    <td class="p-3 text-slate-800">Umat Wihara Mahabodhi Semarang</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">6</td>
-                                    <td class="p-3 font-bold text-slate-900">Kontak / Telepon</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks / Angka</td>
-                                    <td class="p-3 text-slate-600">Nomor handphone atau WhatsApp donatur untuk kemudahan konfirmasi tanda terima.</td>
-                                    <td class="p-3 text-slate-800">081234567890</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">7</td>
-                                    <td class="p-3 font-bold text-slate-900">Uraian Bantuan / Barang / Surat</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Keterangan rincian barang, peruntukan dana kebajikan, atau perihal dokumen surat yang diserahkan.</td>
-                                    <td class="p-3 text-slate-800">Dana Paramita Operasional Puja Bakti &amp; Pelita Altar</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">8</td>
-                                    <td class="p-3 font-bold text-slate-900">Jumlah / Kuantitas</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-bold text-[11px]">Wajib</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks / Satuan</td>
-                                    <td class="p-3 text-slate-600">Besaran kuantitas bantuan, contoh: <code>1 Paket Dana</code>, <code>10 Karung @ 25 Kg</code>, <code>1 Berkas</code>.</td>
-                                    <td class="p-3 text-slate-800">1 Paket Dana</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">9</td>
-                                    <td class="p-3 font-bold text-slate-900">Nominal (Rp)</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold text-[11px]">Khusus Dana</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Angka Numerik</td>
-                                    <td class="p-3 text-slate-600">Angka nominal murni <strong>tanpa simbol Rp, titik, atau koma</strong>. Wajib diisi jika Jenis adalah Bantuan Dana. Boleh kosong jika Barang/Surat.</td>
-                                    <td class="p-3 text-slate-800 font-mono text-[11px]">1000000</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">10</td>
-                                    <td class="p-3 font-bold text-slate-900">Petugas Penerima</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Nama pengurus wihara yang bertugas menerima. Jika dikosongkan, sistem otomatis memakai nama pengurus yang sedang login saat import.</td>
-                                    <td class="p-3 text-slate-800">Upasika Metta Kusuma</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">11</td>
-                                    <td class="p-3 font-bold text-slate-900">Ucapan Terima Kasih (Anumodana)</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Pesan anumodana khusus untuk dicetak pada lembar surat terima kasih. Jika kosong, sistem otomatis mengisi dengan kalimat doa baku.</td>
-                                    <td class="p-3 text-slate-800">Anumodana atas kebajikan Bapak sekeluarga. Semoga semua makhluk berbahagia.</td>
-                                </tr>
-                                <tr class="hover:bg-slate-50/80 transition">
-                                    <td class="p-3 text-center font-bold text-slate-400">12</td>
-                                    <td class="p-3 font-bold text-slate-900">Catatan</td>
-                                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-bold text-[11px]">Opsional</span></td>
-                                    <td class="p-3 text-slate-600 font-medium">Teks Bebas</td>
-                                    <td class="p-3 text-slate-600">Catatan internal sekretariat wihara (misal: lokasi penyimpanan di gudang, transfer via rekening BCA, kondisi barang, dll).</td>
-                                    <td class="p-3 text-slate-800">Diterima via Sekretariat Wihara</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="importModalSpecBody" class="divide-y divide-slate-100 bg-white"></tbody>
                         </table>
                     </div>
                 </div>
@@ -3238,21 +3572,70 @@
     </div>
 
     <!-- ========================================================= -->
+    <!-- MODAL KELOLA KATEGORI DINAMIS (SEMUA MODUL MANAGEMENT)    -->
+    <!-- ========================================================= -->
+    <div id="categoryManagerModal" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-6 flex flex-col items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden my-auto">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/80 shrink-0">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-base shrink-0">
+                        <i class="fa-solid fa-tags"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <h3 id="categoryManagerTitle" class="text-sm sm:text-base font-bold text-slate-900 truncate">Kelola Kategori</h3>
+                        <p class="text-xs text-slate-500">Tambah atau hapus daftar kategori untuk modul ini.</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCategoryManagerModal()" class="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 flex items-center justify-center shrink-0 transition" title="Tutup">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 overflow-y-auto space-y-4 flex-1">
+                <!-- Add New Category Form -->
+                <form method="POST" action="{{ route('management.categories.store') }}" class="flex items-center gap-2">
+                    @csrf
+                    <input type="hidden" name="module" id="categoryManagerModuleInput" value="receipts">
+                    <input
+                        type="text"
+                        name="name"
+                        id="categoryManagerNameInput"
+                        required
+                        maxlength="100"
+                        placeholder="Ketik nama kategori baru..."
+                        class="flex-1 min-w-0 px-3.5 py-2.5 rounded-xl bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                    >
+                    <button type="submit" class="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition flex items-center gap-1.5 shrink-0 shadow-xs">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah</span>
+                    </button>
+                </form>
+
+                <!-- Existing Categories List -->
+                <div class="space-y-2">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Daftar Kategori Aktif</div>
+                    <div id="categoryManagerList" class="divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden bg-white"></div>
+                </div>
+            </div>
+
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+                <button type="button" onclick="closeCategoryManagerModal()" class="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
     <!-- MODAL & LEMBAR CETAK STANDAR KERTAS A4 DENGAN KOP [logo]  -->
     <!-- ========================================================= -->
     <div id="a4PrintWrapper" class="fixed inset-0 z-50 hidden bg-slate-900/75 backdrop-blur-xs overflow-y-auto p-3 sm:p-8 flex flex-col items-center">
         <!-- Control Bar -->
-        <div class="no-print max-w-[210mm] w-full mb-3 bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+        <div class="no-print max-w-[210mm] w-full mb-4 bg-slate-900 text-white px-4 sm:px-5 py-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
             <div class="text-xs sm:text-sm flex items-center gap-2">
                 <i class="fa-solid fa-file-lines text-amber-400"></i>
                 <span class="font-bold">Pratinjau Cetak Kertas A4</span>
                 <span class="text-slate-400 ml-2 hidden sm:inline">Template surat resmi dengan placeholder [logo]</span>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
-                <button type="button" onclick="toggleA4SignerEditor()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
-                    <i class="fa-solid fa-signature"></i>
-                    <span>Edit Penandatangan</span>
-                </button>
                 <button type="button" onclick="window.print()" class="flex-1 sm:flex-none justify-center px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
                     <i class="fa-solid fa-print"></i>
                     <span>Cetak / Simpan PDF (A4)</span>
@@ -3264,58 +3647,31 @@
             </div>
         </div>
 
-        <!-- Live Signatory Editor Panel (Hidden When Printing) -->
-        <div id="a4SignerEditorPanel" class="no-print hidden max-w-[210mm] w-full mb-4 bg-white text-slate-900 px-4 sm:px-5 py-4 rounded-xl border border-amber-300 shadow-lg space-y-3">
-            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                <div class="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-nib text-amber-600"></i>
-                    <span>Ubah Penandatangan Surat Ini (Langsung Terlihat di Pratinjau)</span>
-                </div>
-                <button type="button" onclick="toggleA4SignerEditor()" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Sembunyikan</button>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs">
-                <div>
-                    <label for="a4EditLeftTitle" class="block font-bold text-slate-700 mb-1">Jabatan Kiri</label>
-                    <input type="text" id="a4EditLeftTitle" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="a4EditLeftName" class="block font-bold text-slate-700 mb-1">Nama Kiri</label>
-                    <input type="text" id="a4EditLeftName" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="a4EditRightTitle" class="block font-bold text-slate-700 mb-1">Jabatan Kanan</label>
-                    <input type="text" id="a4EditRightTitle" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="a4EditRightName" class="block font-bold text-slate-700 mb-1">Nama Kanan</label>
-                    <input type="text" id="a4EditRightName" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                </div>
-                <div>
-                    <label for="a4EditSignDate" class="block font-bold text-slate-700 mb-1">Tanggal TTD</label>
-                    <input type="text" id="a4EditSignDate" oninput="syncA4SignersFromEditor()" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                </div>
-            </div>
-        </div>
-
         <!-- Actual A4 Sheet (Strictly 1-Page A4 Official Letter Standard) -->
         <div class="a4-sheet bg-white text-slate-900 w-full max-w-[210mm] p-4 sm:p-9 print:p-0 rounded-xl shadow-2xl border border-slate-300 space-y-4 print:space-y-3 overflow-x-auto">
             <div class="space-y-4 print:space-y-3">
-                <!-- KOP SURAT RESMI STANDAR TATA NASKAH DINAS DENGAN PLACEHOLDER [logo] -->
+                <!-- KOP SURAT RESMI STANDAR TATA NASKAH DINAS DENGAN LOGO CUSTOM / [logo] -->
                 <div class="border-b-4 border-double border-slate-900 pb-3 flex items-center gap-4">
-                    <div class="w-16 h-16 rounded-lg border-2 border-slate-800 bg-slate-50 flex flex-col items-center justify-center shrink-0 text-slate-900 p-1.5 text-center">
-                        <i class="fa-solid fa-dharmachakra text-lg text-amber-700 mb-0.5"></i>
-                        <span class="font-bold text-[11px] tracking-wider">[logo]</span>
-                    </div>
+                    @if (!empty($viharaProfile->logo_url))
+                        <div class="w-16 h-16 shrink-0 flex items-center justify-center">
+                            <img src="{{ $viharaProfile->logo_url }}" alt="Logo Wihara" class="w-16 h-16 object-contain">
+                        </div>
+                    @else
+                        <div class="w-16 h-16 rounded-lg border-2 border-slate-800 bg-slate-50 flex flex-col items-center justify-center shrink-0 text-slate-900 p-1.5 text-center">
+                            <i class="fa-solid fa-dharmachakra text-lg text-amber-700 mb-0.5"></i>
+                            <span class="font-bold text-[11px] tracking-wider">[logo]</span>
+                        </div>
+                    @endif
                     <div class="flex-1 min-w-0 text-center pr-2">
                         <div class="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">Majelis Agama Buddha &bull; Sekretariat Pengurus Wihara</div>
                         <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 uppercase tracking-wide mt-0.5">
-                            Wihara Mahabodhi Buddhist Centre
+                            {{ $viharaProfile->name ?? 'Wihara Mahabodhi Buddhist Centre' }}
                         </h2>
                         <p class="text-[11px] text-slate-700 font-medium mt-0.5">
-                            Jl. Seroja Timur No. 9-11, Kel. Karangkidul, Kec. Semarang Tengah, Kota Semarang, Jawa Tengah 50136
+                            {{ $viharaProfile->address ?? 'Jl. Seroja Timur No. 9-11, Kel. Karangkidul, Kec. Semarang Tengah, Kota Semarang, Jawa Tengah 50136' }}
                         </p>
                         <p class="text-[10px] text-slate-600">
-                            Telp: (024) 841-5509 / 0812-2500-8899 &bull; Email: sekretariat@mahabodhi.or.id &bull; Kode Pos: 50136
+                            Telp: {{ $viharaProfile->phone ?? '(024) 841-5509 / 0812-2500-8899' }} &bull; Email: {{ $viharaProfile->email ?? 'sekretariat@mahabodhi.or.id' }}
                         </p>
                     </div>
                 </div>
@@ -3352,10 +3708,52 @@
         </div>
     </div>
 
+    <!-- ========================================================= -->
+    <!-- MODAL PRATINJAU & CETAK FILE ARSIP YANG DIUNGGAH          -->
+    <!-- ========================================================= -->
+    <div id="uploadedFileViewerModal" class="no-print fixed inset-0 z-50 hidden bg-slate-900/80 backdrop-blur-xs p-3 sm:p-6 flex flex-col items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full h-[90vh] flex flex-col overflow-hidden">
+            <!-- Header Control Bar -->
+            <div class="px-4 sm:px-6 py-3.5 bg-slate-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+                <div class="min-w-0">
+                    <div class="text-sm sm:text-base font-bold truncate flex items-center gap-2">
+                        <i class="fa-solid fa-file-shield text-amber-400 shrink-0"></i>
+                        <span id="uploadedFileModalTitle" class="truncate">Pratinjau Dokumen Arsip</span>
+                    </div>
+                    <div id="uploadedFileModalName" class="text-xs text-slate-400 truncate mt-0.5"></div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                    <button type="button" id="uploadedFilePrintBtn" onclick="printUploadedFile()" class="px-3.5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Cetak Dokumen</span>
+                    </button>
+                    <a id="uploadedFileNewTabLink" href="#" target="_blank" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        <span>Tab Baru</span>
+                    </a>
+                    <a id="uploadedFileDownloadLink" href="#" class="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Unduh</span>
+                    </a>
+                    <button type="button" onclick="closeUploadedFileModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-xmark"></i>
+                        <span>Tutup</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multi-File Switcher Bar (Visible when archive has 2+ files) -->
+            <div id="uploadedFileTabsBar" class="hidden px-4 sm:px-6 py-2.5 bg-slate-800 border-t border-slate-700 flex items-center gap-2 overflow-x-auto shrink-0"></div>
+
+            <!-- Viewer Content Body -->
+            <div id="uploadedFileViewerBody" class="flex-1 bg-slate-100 overflow-auto flex items-center justify-center p-2 sm:p-4"></div>
+        </div>
+    </div>
+
     <script>
         const tabTitles = {
             overview: 'Ringkasan Operasional Sekretariat',
-            receipts: 'Tanda Terima & Ucapan Terima Kasih (A4 & Excel)',
+            receipts: 'Tanda Terima & Ucapan Terima Kasih (A4 & Template Word)',
             documents: 'Arsip Persuratan & Dokumen Resmi Sekretariat',
             marriages: 'Administrasi Surat Nikah & Pemberkatan Perkawinan Buddhis',
             'vihara-profile': 'Profil & Informasi Wihara (Landing Page)',
@@ -3364,6 +3762,54 @@
             articles: 'Berita Kegiatan & Renungan Dharma',
             roles: 'Manajemen Role & Akun Pengurus',
             profile: 'Pengaturan Akun & Profil'
+        };
+
+        const customReceiptTemplates = @json([
+            'receipt' => $viharaProfile->receipt_template_html,
+            'thank_you' => $viharaProfile->thank_you_template_html,
+        ]);
+        const categoriesByModuleData = @json($categoriesByModule ?? []);
+        const categoryModuleLabelsData = @json($categoryModuleLabels ?? []);
+        const categoryStoreEndpoint = @json(route('management.categories.store'));
+        const categoryDeleteUrlBase = @json(url('/management/categories'));
+        const csrfTokenValue = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        const importExcelConfigs = {
+            documents: {
+                title: 'Import Data Arsip Persuratan & Dokumen via Excel (.xlsx / .csv)',
+                subtitle: 'Unggah berkas spreadsheet untuk memasukkan arsip surat masuk, surat keluar, dan SK secara massal.',
+                templateUrl: @json(route('management.documents.template')),
+                importUrl: @json(route('management.documents.import')),
+                colsLabel: 'Total: 10 Kolom',
+                specs: [
+                    ['Nomor Surat / Dokumen', 'Opsional', 'Kosongkan untuk nomor otomatis sistem (mis. 001/ARS/WMBC/XI/2026).', '010/SM/WMBC/XI/2026'],
+                    ['Kategori', 'Wajib', 'Nama kategori dokumen (Surat Masuk, Surat Keluar, SK / Piagam, atau kategori custom).', 'Surat Masuk'],
+                    ['Judul / Perihal Dokumen', 'Wajib', 'Perihal atau judul lengkap surat/dokumen.', 'Undangan Rapat Waisak'],
+                    ['Tanggal Surat', 'Wajib', 'Format YYYY-MM-DD atau DD/MM/YYYY.', '2026-11-28'],
+                    ['Tanggal Diterima', 'Opsional', 'Format YYYY-MM-DD. Jika kosong mengikuti tanggal surat.', '2026-11-28'],
+                    ['Pengirim', 'Wajib', 'Instansi atau pihak pengirim dokumen.', 'Majelis Agama Buddha'],
+                    ['Penerima / Tujuan', 'Opsional', 'Pihak penerima/tujuan surat.', 'Pengurus Wihara Mahabodhi'],
+                    ['Ukuran Kertas', 'Opsional', 'Default A4 jika dikosongkan.', 'A4'],
+                    ['Kode Arsip', 'Opsional', 'Kode map penyimpanan arsip fisik.', 'ARS-A4-SM-10'],
+                    ['Ringkasan / Catatan', 'Opsional', 'Ringkasan isi surat atau catatan arsip.', 'Undangan koordinasi lintas wihara']
+                ]
+            },
+            marriages: {
+                title: 'Import Data Arsip Surat Nikah & Pemberkatan via Excel (.xlsx / .csv)',
+                subtitle: 'Unggah berkas spreadsheet untuk memasukkan catatan arsip surat nikah & pemberkatan secara massal.',
+                templateUrl: @json(route('management.marriages.template')),
+                importUrl: @json(route('management.marriages.import')),
+                colsLabel: 'Total: 7 Kolom',
+                specs: [
+                    ['Nomor Arsip / Surat', 'Opsional', 'Kosongkan agar sistem membuatkan nomor otomatis (mis. 001/SPP-BDH/WMBC/XI/2026).', '001/SPP-BDH/WMBC/XI/2026'],
+                    ['Jenis Dokumen Nikah', 'Wajib', 'Kategori/jenis surat (Surat Pemberkatan Perkawinan, Berita Acara, atau kategori custom).', 'Surat Pemberkatan Perkawinan'],
+                    ['Tanggal Pemberkatan', 'Wajib', 'Tanggal pemberkatan/dokumen, format YYYY-MM-DD.', '2026-11-28'],
+                    ['Nama Mempelai Pria', 'Wajib', 'Nama lengkap mempelai pria.', 'Andi Pratama Wijaya'],
+                    ['Nama Mempelai Wanita', 'Wajib', 'Nama lengkap mempelai wanita.', 'Evelyn Natalia Tan'],
+                    ['Status Arsip', 'Opsional', 'Terdaftar & Verifikasi Berkas / Selesai Pemberkatan / Tercatat di Dukcapil.', 'Selesai Pemberkatan'],
+                    ['Catatan / Keterangan', 'Opsional', 'Catatan tambahan mengenai arsip berkas pernikahan.', 'Berkas lengkap + pengantar Dukcapil']
+                ]
+            }
         };
 
         function toggleMobileSidebar() {
@@ -3587,67 +4033,110 @@
             return 'Rp ' + num.toLocaleString('id-ID');
         }
 
-        const defaultA4Signer = @json([
-            'title' => $viharaProfile->default_signer_title ?? '',
-            'name' => $viharaProfile->default_signer_name ?? '',
-        ]);
-
-        function toggleA4SignerEditor() {
-            const panel = document.getElementById('a4SignerEditorPanel');
-            if (panel) {
-                panel.classList.toggle('hidden');
+        function buildReceiptItemsList(receipt) {
+            if (Array.isArray(receipt.items) && receipt.items.length > 0) {
+                return receipt.items
+                    .filter(function (it) { return it && String(it.name || '').trim() !== ''; })
+                    .map(function (it) {
+                        return {
+                            name: String(it.name || '').trim(),
+                            quantity: String(it.quantity || '1 Paket').trim(),
+                            nominal: it.nominal !== null && it.nominal !== undefined && it.nominal !== '' ? Number(it.nominal) : null
+                        };
+                    });
             }
+            if (receipt.item_name) {
+                return [{
+                    name: String(receipt.item_name),
+                    quantity: String(receipt.quantity || '1 Paket'),
+                    nominal: receipt.nominal !== null && receipt.nominal !== undefined && receipt.nominal !== '' ? Number(receipt.nominal) : null
+                }];
+            }
+            return [];
         }
 
-        function setA4Signers({ date, leftTitle, leftName, rightTitle, rightName }) {
-            const finalRightTitle = defaultA4Signer.title || rightTitle;
-            const finalRightName = defaultA4Signer.name || rightName;
-
-            document.getElementById('a4SignDate').textContent = date;
-            document.getElementById('a4LeftSignTitle').textContent = leftTitle;
-            document.getElementById('a4LeftSignName').textContent = leftName;
-            document.getElementById('a4RightSignTitle').textContent = finalRightTitle;
-            document.getElementById('a4RightSignName').textContent = finalRightName;
-
-            const editDate = document.getElementById('a4EditSignDate');
-            const editLeftTitle = document.getElementById('a4EditLeftTitle');
-            const editLeftName = document.getElementById('a4EditLeftName');
-            const editRightTitle = document.getElementById('a4EditRightTitle');
-            const editRightName = document.getElementById('a4EditRightName');
-
-            if (editDate) editDate.value = date;
-            if (editLeftTitle) editLeftTitle.value = leftTitle;
-            if (editLeftName) editLeftName.value = leftName;
-            if (editRightTitle) editRightTitle.value = finalRightTitle;
-            if (editRightName) editRightName.value = finalRightName;
+        function buildReceiptItemsTableHtml(items) {
+            if (!items || items.length === 0) {
+                return '<p style="margin:6px 0;">—</p>';
+            }
+            let rowsHtml = '';
+            items.forEach(function (item, idx) {
+                rowsHtml += `
+                    <tr class="border-b border-slate-300">
+                        <td class="p-2 text-center border-r border-slate-300 w-10">${idx + 1}</td>
+                        <td class="p-2 font-semibold text-slate-900 border-r border-slate-300">${escapeHtml(item.name)}</td>
+                        <td class="p-2 text-slate-800 border-r border-slate-300 w-32">${escapeHtml(item.quantity)}</td>
+                        <td class="p-2 text-right font-mono text-slate-900 w-36">${formatRupiah(item.nominal)}</td>
+                    </tr>
+                `;
+            });
+            return `
+                <table class="w-full text-xs border border-slate-400 border-collapse my-2">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-400">
+                            <th class="p-2 text-center border-r border-slate-300 w-10">No</th>
+                            <th class="p-2 text-left border-r border-slate-300">Uraian Barang / Bantuan</th>
+                            <th class="p-2 text-left border-r border-slate-300 w-32">Jumlah / Satuan</th>
+                            <th class="p-2 text-right w-36">Nominal (Rp)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+            `;
         }
 
-        function syncA4SignersFromEditor() {
-            const editDate = document.getElementById('a4EditSignDate');
-            const editLeftTitle = document.getElementById('a4EditLeftTitle');
-            const editLeftName = document.getElementById('a4EditLeftName');
-            const editRightTitle = document.getElementById('a4EditRightTitle');
-            const editRightName = document.getElementById('a4EditRightName');
+        function applyReceiptTemplatePlaceholders(templateHtml, receipt) {
+            const dateStr = (receipt.receipt_date || '').substring(0, 10);
+            const items = buildReceiptItemsList(receipt);
+            const itemsTableHtml = buildReceiptItemsTableHtml(items);
+            const defaultThankYou = 'Semoga jasa kebajikan (Punnadhamma) yang telah Bapak/Ibu tanamkan berbuah kebahagiaan, kesehatan, kemakmuran, serta perlindungan Dharma bagi Bapak/Ibu sekeluarga.';
+            const defaultNotes = 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat wihara.';
 
-            if (editDate) document.getElementById('a4SignDate').textContent = editDate.value;
-            if (editLeftTitle) document.getElementById('a4LeftSignTitle').textContent = editLeftTitle.value;
-            if (editLeftName) document.getElementById('a4LeftSignName').textContent = editLeftName.value;
-            if (editRightTitle) document.getElementById('a4RightSignTitle').textContent = editRightTitle.value;
-            if (editRightName) document.getElementById('a4RightSignName').textContent = editRightName.value;
+            const replacements = {
+                '@{{nomor}}': escapeHtml(receipt.receipt_number || ''),
+                '@{{tanggal}}': escapeHtml(dateStr),
+                '@{{jenis}}': escapeHtml(receipt.receipt_type || ''),
+                '@{{nama_donatur}}': escapeHtml(receipt.donor_name || ''),
+                '@{{instansi}}': escapeHtml(receipt.donor_institution || 'Di Tempat'),
+                '@{{kontak}}': escapeHtml(receipt.donor_contact || '—'),
+                '@{{daftar_barang}}': itemsTableHtml,
+                '@{{uraian}}': escapeHtml(receipt.item_name || ''),
+                '@{{jumlah}}': escapeHtml(receipt.quantity || ''),
+                '@{{nominal}}': escapeHtml(formatRupiah(receipt.nominal)),
+                '@{{penerima}}': escapeHtml(receipt.receiver_name || 'Sekretariat Wihara Mahabodhi'),
+                '@{{ucapan}}': escapeHtml(receipt.thank_you_message || defaultThankYou),
+                '@{{catatan}}': escapeHtml(receipt.notes || defaultNotes)
+            };
+
+            let result = String(templateHtml);
+            Object.keys(replacements).forEach(function (token) {
+                result = result.split(token).join(replacements[token]);
+            });
+            return result;
         }
 
         function openReceiptPrintModal(receipt, mode) {
             const wrapper = document.getElementById('a4PrintWrapper');
             const content = document.getElementById('a4DocumentContent');
             const dateStr = (receipt.receipt_date || '').substring(0, 10);
+            const items = buildReceiptItemsList(receipt);
+            const itemsTableHtml = buildReceiptItemsTableHtml(items);
 
-            setA4Signers({
-                date: dateStr,
-                leftTitle: 'Pihak Penyerah / Donatur',
-                leftName: receipt.donor_name || 'Donatur',
-                rightTitle: 'Petugas Penerima Sekretariat',
-                rightName: receipt.receiver_name || 'Sekretariat Wihara Mahabodhi',
-            });
+            document.getElementById('a4SignDate').textContent = dateStr;
+            document.getElementById('a4LeftSignTitle').textContent = 'Pihak Penyerah / Donatur';
+            document.getElementById('a4LeftSignName').textContent = receipt.donor_name || 'Donatur';
+            document.getElementById('a4RightSignTitle').textContent = 'Petugas Penerima Sekretariat';
+            document.getElementById('a4RightSignName').textContent = receipt.receiver_name || 'Sekretariat Wihara Mahabodhi';
+
+            const customTpl = mode === 'thank_you'
+                ? customReceiptTemplates.thank_you
+                : customReceiptTemplates.receipt;
+
+            if (customTpl && String(customTpl).trim() !== '') {
+                content.innerHTML = `<div class="space-y-3 text-xs sm:text-sm text-slate-900 leading-relaxed custom-word-template">${applyReceiptTemplatePlaceholders(customTpl, receipt)}</div>`;
+                wrapper.classList.remove('hidden');
+                return;
+            }
 
             if (mode === 'thank_you') {
                 content.innerHTML = `
@@ -3685,31 +4174,15 @@
                         <p class="font-bold italic text-slate-900">Namo Sanghyang Adi Buddhaya, Namo Buddhaya.</p>
 
                         <p class="leading-relaxed text-justify">
-                            Semoga pancaran cinta kasih (Metta) dan berkah Tiratana senantiasa melimpah kepada Bapak/Ibu/Saudara/i beserta seluruh keluarga. Melalui surat resmi ini, Pengurus <strong>Wihara Mahabodhi Buddhist Centre Semarang</strong> menyampaikan apresiasi serta ucapan terima kasih yang sebesar-besarnya (Anumodana) atas partisipasi kebajikan berupa:
+                            Semoga pancaran cinta kasih (Metta) dan berkah Tiratana senantiasa melimpah kepada Bapak/Ibu/Saudara/i beserta seluruh keluarga. Melalui surat resmi ini, Pengurus <strong>Wihara Mahabodhi Buddhist Centre Semarang</strong> menyampaikan apresiasi serta ucapan terima kasih yang sebesar-besarnya (Anumodana) atas partisipasi kebajikan (${escapeHtml(receipt.receipt_type)}) berupa:
                         </p>
 
-                        <table class="w-full text-xs border border-slate-400 border-collapse">
-                            <tr class="border-b border-slate-300">
-                                <td class="p-2.5 font-bold bg-slate-100 w-1/3 border-r border-slate-300">Kategori Penerimaan</td>
-                                <td class="p-2.5 font-semibold text-slate-900">${escapeHtml(receipt.receipt_type)}</td>
-                            </tr>
-                            <tr class="border-b border-slate-300">
-                                <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Uraian &amp; Peruntukan</td>
-                                <td class="p-2.5 font-bold text-slate-900">${escapeHtml(receipt.item_name)}</td>
-                            </tr>
-                            <tr class="border-b border-slate-300">
-                                <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Kuantitas / Satuan</td>
-                                <td class="p-2.5 text-slate-800">${escapeHtml(receipt.quantity)}</td>
-                            </tr>
-                            <tr class="border-b border-slate-300">
-                                <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Nominal Tercatat</td>
-                                <td class="p-2.5 font-extrabold text-slate-900 text-sm">${formatRupiah(receipt.nominal)}</td>
-                            </tr>
-                            <tr>
-                                <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Diterima Oleh Sekretariat</td>
-                                <td class="p-2.5 text-slate-800">${escapeHtml(receipt.receiver_name)} (Tanggal: ${escapeHtml(dateStr)})</td>
-                            </tr>
-                        </table>
+                        ${itemsTableHtml}
+
+                        <div class="flex items-center justify-between text-xs px-3 py-2 rounded-lg bg-slate-100 border border-slate-300">
+                            <span><strong>Total Nominal Tercatat:</strong> ${formatRupiah(receipt.nominal)}</span>
+                            <span><strong>Diterima Oleh:</strong> ${escapeHtml(receipt.receiver_name)} (${escapeHtml(dateStr)})</span>
+                        </div>
 
                         <div class="p-3.5 rounded-lg bg-slate-50 border-l-4 border-slate-800 text-xs sm:text-sm leading-relaxed text-justify">
                             ${escapeHtml(receipt.thank_you_message || 'Semoga jasa kebajikan (Punnadhamma) yang telah Bapak/Ibu tanamkan berbuah kebahagiaan, kesehatan, kemakmuran, serta perlindungan Dharma bagi Bapak/Ibu sekeluarga.')}
@@ -3741,42 +4214,39 @@
 
                     <table class="w-full text-xs border border-slate-400 border-collapse">
                         <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 w-[34%] border-r border-slate-300">Telah Diterima Dari</td>
-                            <td class="p-2.5 font-bold text-slate-900 text-sm">${escapeHtml(receipt.donor_name)}</td>
+                            <td class="p-2 font-bold bg-slate-100 w-[34%] border-r border-slate-300">Telah Diterima Dari</td>
+                            <td class="p-2 font-bold text-slate-900 text-sm">${escapeHtml(receipt.donor_name)}</td>
                         </tr>
                         <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Instansi / Alamat Domisili</td>
-                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.donor_institution || '—')}</td>
+                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Instansi / Alamat Domisili</td>
+                            <td class="p-2 text-slate-800">${escapeHtml(receipt.donor_institution || '—')}</td>
                         </tr>
                         <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Nomor Telepon / Kontak</td>
-                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.donor_contact || '—')}</td>
+                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Nomor Telepon / Kontak</td>
+                            <td class="p-2 text-slate-800">${escapeHtml(receipt.donor_contact || '—')}</td>
                         </tr>
                         <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Kategori Penerimaan</td>
-                            <td class="p-2.5 font-semibold text-slate-900">${escapeHtml(receipt.receipt_type)}</td>
+                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Kategori Penerimaan</td>
+                            <td class="p-2 font-semibold text-slate-900">${escapeHtml(receipt.receipt_type)}</td>
                         </tr>
                         <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Uraian Bantuan / Barang / Surat</td>
-                            <td class="p-2.5 font-bold text-slate-900">${escapeHtml(receipt.item_name)}</td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Jumlah / Kuantitas</td>
-                            <td class="p-2.5 font-semibold text-slate-900">${escapeHtml(receipt.quantity)}</td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Petugas Penerima Sekretariat</td>
-                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.receiver_name)}</td>
+                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Petugas Penerima Sekretariat</td>
+                            <td class="p-2 text-slate-800">${escapeHtml(receipt.receiver_name)}</td>
                         </tr>
                         <tr>
-                            <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Catatan Pemeriksaan Sekretariat</td>
-                            <td class="p-2.5 text-slate-800">${escapeHtml(receipt.notes || 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat wihara.')}</td>
+                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Catatan Pemeriksaan Sekretariat</td>
+                            <td class="p-2 text-slate-800">${escapeHtml(receipt.notes || 'Telah diterima dalam keadaan baik, lengkap, dan dicatat dalam buku induk sekretariat wihara.')}</td>
                         </tr>
                     </table>
 
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 mb-1">Rincian Daftar Barang / Bantuan:</div>
+                        ${itemsTableHtml}
+                    </div>
+
                     <!-- Highlighted Official Nominal Box -->
                     <div class="p-3.5 rounded-lg border-2 border-slate-900 bg-slate-50 flex items-center justify-between gap-4">
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Jumlah Nominal Tercatat:</div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Total Nominal Tercatat:</div>
                         <div class="text-base sm:text-lg font-extrabold text-slate-900 font-mono">${formatRupiah(receipt.nominal)}</div>
                     </div>
 
@@ -3789,306 +4259,454 @@
             wrapper.classList.remove('hidden');
         }
 
-        function openDocumentPrintModal(doc) {
-            const wrapper = document.getElementById('a4PrintWrapper');
-            const content = document.getElementById('a4DocumentContent');
-            const dateStr = (doc.document_date || '').substring(0, 10);
+        /* ========================================================= */
+        /* MULTI-INPUT BARANG DI FORM TANDA TERIMA                   */
+        /* ========================================================= */
+        let receiptItemCounter = document.querySelectorAll('#receiptItemsList .receipt-item-row').length;
 
-            setA4Signers({
-                date: dateStr,
-                leftTitle: 'Pihak Pengirim / Pembuat Naskah',
-                leftName: doc.sender || 'Pengirim',
-                rightTitle: 'Penerima / Arsiparis Sekretariat',
-                rightName: doc.recipient || 'Sekretariat Wihara Mahabodhi',
-            });
-
-            content.innerHTML = `
-                <!-- Formal Master Document Sheet Title -->
-                <div class="text-center border-b border-slate-300 pb-3 space-y-1">
-                    <div class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Lembar Kendali &amp; Salinan Arsip Naskah Dinas (${escapeHtml(doc.paper_size || 'A4')})</div>
-                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 underline tracking-wide">
-                        ${escapeHtml((doc.category || 'DOKUMEN RESMI').toUpperCase())}
-                    </h3>
-                    <div class="text-xs text-slate-700">
-                        Nomor Dokumen: <strong class="font-mono text-slate-900">${escapeHtml(doc.document_number)}</strong> &bull; Kode Klasifikasi Arsip: <strong class="font-mono text-slate-900">${escapeHtml(doc.archive_code || 'ARS-A4')}</strong>
-                    </div>
+        function addReceiptItemRow() {
+            const container = document.getElementById('receiptItemsList');
+            if (!container) return;
+            const idx = receiptItemCounter++;
+            const row = document.createElement('div');
+            row.className = 'receipt-item-row grid grid-cols-1 sm:grid-cols-12 gap-2.5 p-3 rounded-xl bg-white border border-slate-200 items-end';
+            row.innerHTML = `
+                <div class="sm:col-span-5">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Uraian Barang / Bantuan *</label>
+                    <input type="text" name="items[${idx}][name]" required placeholder="Contoh: Minyak Goreng / Beras" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900">
                 </div>
-
-                <!-- Structured Metadata Table -->
-                <table class="w-full text-xs border border-slate-400 border-collapse">
-                    <tr class="border-b border-slate-300">
-                        <td class="p-2.5 font-bold bg-slate-100 w-[30%] border-r border-slate-300">Perihal / Judul Dokumen</td>
-                        <td class="p-2.5 font-bold text-slate-900 text-sm" colspan="3">${escapeHtml(doc.title)}</td>
-                    </tr>
-                    <tr class="border-b border-slate-300">
-                        <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Tanggal Surat / Naskah</td>
-                        <td class="p-2.5 text-slate-800 w-[25%] border-r border-slate-300">${escapeHtml(dateStr)}</td>
-                        <td class="p-2.5 font-bold bg-slate-100 w-[20%] border-r border-slate-300">Standar Kertas</td>
-                        <td class="p-2.5 font-semibold text-slate-900">${escapeHtml(doc.paper_size || 'A4')}</td>
-                    </tr>
-                    <tr class="border-b border-slate-300">
-                        <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Asal / Pihak Pengirim</td>
-                        <td class="p-2.5 font-semibold text-slate-900" colspan="3">${escapeHtml(doc.sender)}</td>
-                    </tr>
-                    <tr>
-                        <td class="p-2.5 font-bold bg-slate-100 border-r border-slate-300">Tujuan / Pihak Penerima</td>
-                        <td class="p-2.5 font-semibold text-slate-900" colspan="3">${escapeHtml(doc.recipient)}</td>
-                    </tr>
-                </table>
-
-                <!-- Official Document Body Content Box -->
-                <div class="space-y-2 pt-1">
-                    <div class="text-xs font-bold uppercase tracking-wider text-slate-700">Isi Pokok / Uraian Lengkap Naskah Dokumen:</div>
-                    <div class="p-5 rounded-lg bg-white border border-slate-400 text-xs sm:text-sm text-slate-900 leading-relaxed whitespace-pre-line min-h-[160px] text-justify">${escapeHtml(doc.summary)}</div>
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Jumlah / Satuan *</label>
+                    <input type="text" name="items[${idx}][quantity]" value="1 Paket" required placeholder="Contoh: 5 Dus" class="w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900">
                 </div>
-
-                <div class="p-3 rounded-lg bg-slate-50 border border-slate-300 text-[11px] text-slate-600 flex items-center justify-between">
-                    <span>Status Registrasi: <strong>Tercatat dalam Buku Agenda Sekretariat Wihara</strong></span>
-                    <span>Lampiran Digital: <strong>${escapeHtml(doc.attachment_name || 'Arsip Fisik Sekretariat')}</strong></span>
+                <div class="sm:col-span-3">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Nominal Rp (Opsional)</label>
+                    <input type="number" step="0.01" min="0" name="items[${idx}][nominal]" oninput="recalculateReceiptNominal()" placeholder="0" class="receipt-item-nominal w-full px-3 py-2 rounded-lg bg-white border border-slate-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-slate-900">
+                </div>
+                <div class="sm:col-span-1 flex justify-end">
+                    <button type="button" onclick="removeReceiptItemRow(this)" class="w-9 h-9 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition" title="Hapus Baris Barang">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
                 </div>
             `;
-
-            wrapper.classList.remove('hidden');
+            container.appendChild(row);
         }
 
-        function openMarriagePrintModal(marriage, mode) {
-            const wrapper = document.getElementById('a4PrintWrapper');
-            const content = document.getElementById('a4DocumentContent');
-            const weddingDateStr = (marriage.wedding_date || '').substring(0, 10);
-            const regDateStr = (marriage.registration_date || '').substring(0, 10);
+        function removeReceiptItemRow(btn) {
+            const container = document.getElementById('receiptItemsList');
+            if (!container) return;
+            const rows = container.querySelectorAll('.receipt-item-row');
+            if (rows.length <= 1) {
+                alert('Minimal harus terdapat 1 baris uraian barang / bantuan.');
+                return;
+            }
+            const row = btn.closest('.receipt-item-row');
+            if (row) {
+                row.remove();
+                recalculateReceiptNominal();
+            }
+        }
 
-            setA4Signers({
-                date: weddingDateStr,
-                leftTitle: 'Rohaniwan / Pandita Pemimpin Pemberkatan',
-                leftName: marriage.officiant_name || 'Romo Pandita',
-                rightTitle: 'Ketua / Pengurus Sekretariat Wihara',
-                rightName: 'Sekretariat Wihara Mahabodhi',
+        function recalculateReceiptNominal() {
+            const inputs = document.querySelectorAll('.receipt-item-nominal');
+            const totalInput = document.getElementById('receiptTotalNominal');
+            if (!totalInput) return;
+
+            let sum = 0;
+            let hasAny = false;
+            inputs.forEach(function (inp) {
+                const val = String(inp.value || '').trim();
+                if (val !== '' && !isNaN(Number(val))) {
+                    sum += Number(val);
+                    hasAny = true;
+                }
+            });
+            if (hasAny) {
+                totalInput.value = sum;
+            }
+        }
+
+        /* ========================================================= */
+        /* WEB TEMPLATE EDITOR (WORD .DOCX -> EDITABLE HTML)         */
+        /* ========================================================= */
+        let activeTemplateEditorKey = @json(request('editor') === 'thank_you' ? 'thank_you' : 'receipt');
+
+        function getActiveTemplateEditorEl() {
+            return document.getElementById(activeTemplateEditorKey === 'thank_you' ? 'thankYouTemplateEditor' : 'receiptTemplateEditor');
+        }
+
+        function switchTemplateEditorTab(key) {
+            activeTemplateEditorKey = key === 'thank_you' ? 'thank_you' : 'receipt';
+            ['receipt', 'thank_you'].forEach(function (tabKey) {
+                const wrap = document.getElementById('tplEditorWrap-' + tabKey);
+                const btn = document.getElementById('tplTabBtn-' + tabKey);
+                if (wrap) {
+                    wrap.classList.toggle('hidden', tabKey !== activeTemplateEditorKey);
+                }
+                if (btn) {
+                    if (tabKey === activeTemplateEditorKey) {
+                        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition bg-slate-900 text-white shadow-xs';
+                    } else {
+                        btn.className = 'px-3.5 py-2 rounded-lg text-xs font-bold transition text-slate-600 hover:text-slate-900';
+                    }
+                }
+            });
+        }
+
+        function execTemplateCmd(cmd) {
+            const editor = getActiveTemplateEditorEl();
+            if (!editor) return;
+            editor.focus();
+            document.execCommand(cmd, false, null);
+        }
+
+        function execTemplateHeading(tag) {
+            const editor = getActiveTemplateEditorEl();
+            if (!editor) return;
+            editor.focus();
+            document.execCommand('formatBlock', false, tag);
+        }
+
+        function insertTemplatePlaceholder(token) {
+            const editor = getActiveTemplateEditorEl();
+            if (!editor) return;
+            editor.focus();
+            if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                document.execCommand('insertText', false, token);
+            } else {
+                editor.innerHTML += escapeHtml(token);
+            }
+        }
+
+        function syncTemplateEditorsBeforeSubmit() {
+            const recEd = document.getElementById('receiptTemplateEditor');
+            const tyEd = document.getElementById('thankYouTemplateEditor');
+            const recIn = document.getElementById('receiptTemplateHtmlInput');
+            const tyIn = document.getElementById('thankYouTemplateHtmlInput');
+            if (recEd && recIn) recIn.value = recEd.innerHTML;
+            if (tyEd && tyIn) tyIn.value = tyEd.innerHTML;
+        }
+
+        /* ========================================================= */
+        /* KELOLA KATEGORI DINAMIS & INLINE QUICK-ADD (+)            */
+        /* ========================================================= */
+        function openCategoryManagerModal(moduleKey) {
+            const modal = document.getElementById('categoryManagerModal');
+            const titleEl = document.getElementById('categoryManagerTitle');
+            const moduleInput = document.getElementById('categoryManagerModuleInput');
+            const nameInput = document.getElementById('categoryManagerNameInput');
+            const listEl = document.getElementById('categoryManagerList');
+            if (!modal || !listEl) return;
+
+            const label = categoryModuleLabelsData[moduleKey] || moduleKey;
+            if (titleEl) titleEl.textContent = 'Kategori: ' + label;
+            if (moduleInput) moduleInput.value = moduleKey;
+            if (nameInput) nameInput.value = '';
+
+            const items = Array.isArray(categoriesByModuleData[moduleKey]) ? categoriesByModuleData[moduleKey] : [];
+            if (items.length === 0) {
+                listEl.innerHTML = '<div class="p-4 text-center text-xs text-slate-400">Belum ada kategori tersimpan.</div>';
+            } else {
+                let html = '';
+                items.forEach(function (cat) {
+                    html += `
+                        <div class="px-3.5 py-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm hover:bg-slate-50">
+                            <span class="font-semibold text-slate-800 break-words">${escapeHtml(cat.name)}</span>
+                            <form method="POST" action="${escapeHtml(categoryDeleteUrlBase)}/${Number(cat.id)}" onsubmit="return confirm('Hapus kategori ini?')" class="shrink-0">
+                                <input type="hidden" name="_token" value="${escapeHtml(csrfTokenValue)}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="px-2.5 py-1 rounded-lg text-rose-600 hover:bg-rose-50 font-bold text-xs transition" title="Hapus Kategori">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                    `;
+                });
+                listEl.innerHTML = html;
+            }
+
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            if (nameInput) {
+                setTimeout(function () { nameInput.focus(); }, 60);
+            }
+        }
+
+        function closeCategoryManagerModal() {
+            const modal = document.getElementById('categoryManagerModal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        async function quickAddCategory(moduleKey, selectId) {
+            const label = categoryModuleLabelsData[moduleKey] || 'Modul Ini';
+            const rawName = window.prompt('Masukkan nama kategori baru untuk ' + label + ':');
+            if (!rawName || !rawName.trim()) {
+                return;
+            }
+            const name = rawName.trim();
+
+            try {
+                const res = await fetch(categoryStoreEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfTokenValue
+                    },
+                    body: JSON.stringify({ module: moduleKey, name: name })
+                });
+
+                if (!res.ok) {
+                    alert('Gagal menambah kategori baru. Pastikan nama valid dan Anda memiliki akses.');
+                    return;
+                }
+
+                const data = await res.json();
+                const selectEl = document.getElementById(selectId);
+                if (selectEl) {
+                    let existingOpt = Array.from(selectEl.options).find(function (opt) { return opt.value === data.name; });
+                    if (!existingOpt) {
+                        existingOpt = document.createElement('option');
+                        existingOpt.value = data.name;
+                        existingOpt.textContent = data.name;
+                        selectEl.appendChild(existingOpt);
+                    }
+                    selectEl.value = data.name;
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan koneksi saat menambah kategori.');
+            }
+        }
+
+        const multiFileQueues = {};
+
+        function handleMultiFileSelect(input, listContainerId) {
+            if (!input.id) return;
+            if (!multiFileQueues[input.id]) {
+                multiFileQueues[input.id] = [];
+            }
+
+            const existing = multiFileQueues[input.id];
+            Array.from(input.files || []).forEach(function (file) {
+                const duplicate = existing.some(function (f) {
+                    return f.name === file.name && f.size === file.size && f.lastModified === file.lastModified;
+                });
+                if (!duplicate) {
+                    existing.push(file);
+                }
             });
 
-            if (mode === 'checklist') {
-                content.innerHTML = `
-                    <!-- Official Berita Acara & Verification Header -->
-                    <div class="text-center border-b border-slate-300 pb-3 space-y-1">
-                        <div class="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Formulir Kendali Sekretariat Perkawinan Agama Buddha</div>
-                        <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 underline tracking-wide">
-                            BERITA ACARA &amp; VERIFIKASI BERKAS PERKAWINAN BUDDHIS
-                        </h3>
-                        <div class="text-xs text-slate-700">
-                            Nomor Registrasi: <strong class="font-mono text-slate-900">${escapeHtml(marriage.certificate_number)}</strong> &bull; Status Administrasi: <strong>${escapeHtml(marriage.status)}</strong>
+            syncMultiFileInput(input.id, listContainerId);
+        }
+
+        function removeQueuedMultiFile(inputId, listContainerId, index) {
+            if (!multiFileQueues[inputId]) return;
+            multiFileQueues[inputId].splice(index, 1);
+            syncMultiFileInput(inputId, listContainerId);
+        }
+
+        function syncMultiFileInput(inputId, listContainerId) {
+            const input = document.getElementById(inputId);
+            const container = document.getElementById(listContainerId);
+            const files = multiFileQueues[inputId] || [];
+
+            if (input && typeof DataTransfer !== 'undefined') {
+                const dt = new DataTransfer();
+                files.forEach(function (file) { dt.items.add(file); });
+                input.files = dt.files;
+            }
+
+            if (!container) return;
+            if (files.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="text-xs font-bold text-slate-700">${files.length} file siap diunggah:</div>`;
+            files.forEach(function (file, idx) {
+                const sizeKb = (file.size / 1024).toFixed(1);
+                html += `
+                    <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <i class="fa-solid fa-file-arrow-up text-blue-600 shrink-0"></i>
+                            <span class="font-semibold text-slate-800 truncate">${escapeHtml(file.name)}</span>
+                            <span class="text-slate-400 shrink-0">(${sizeKb} KB)</span>
                         </div>
-                    </div>
-
-                    <p class="text-xs text-slate-800 leading-relaxed text-justify">
-                        Pada hari ini telah dilakukan pemeriksaan kelengkapan administrasi dan pelaksanaan upacara perkawinan secara Agama Buddha di <strong>Wihara Mahabodhi Buddhist Centre Semarang</strong> dengan data pokok sebagai berikut:
-                    </p>
-
-                    <table class="w-full text-xs border border-slate-400 border-collapse">
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 w-[34%] border-r border-slate-300">Mempelai Pria (Upasaka)</td>
-                            <td class="p-2 font-bold text-slate-900">${escapeHtml(marriage.groom_name)} ${marriage.groom_buddhist_name ? '(' + escapeHtml(marriage.groom_buddhist_name) + ')' : ''}</td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Orang Tua Mempelai Pria</td>
-                            <td class="p-2 text-slate-800">Ayah: <strong>${escapeHtml(marriage.groom_father_name)}</strong> &bull; Ibu: <strong>${escapeHtml(marriage.groom_mother_name)}</strong></td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Mempelai Wanita (Upasika)</td>
-                            <td class="p-2 font-bold text-slate-900">${escapeHtml(marriage.bride_name)} ${marriage.bride_buddhist_name ? '(' + escapeHtml(marriage.bride_buddhist_name) + ')' : ''}</td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Orang Tua Mempelai Wanita</td>
-                            <td class="p-2 text-slate-800">Ayah: <strong>${escapeHtml(marriage.bride_father_name)}</strong> &bull; Ibu: <strong>${escapeHtml(marriage.bride_mother_name)}</strong></td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Jadwal &amp; Tempat Pemberkatan</td>
-                            <td class="p-2 font-semibold text-slate-900">${escapeHtml(weddingDateStr)} (${escapeHtml(marriage.wedding_time)}) &bull; ${escapeHtml(marriage.wedding_location)}</td>
-                        </tr>
-                        <tr class="border-b border-slate-300">
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Pandita / Pemimpin Upacara</td>
-                            <td class="p-2 font-semibold text-slate-900">${escapeHtml(marriage.officiant_name)}</td>
-                        </tr>
-                        <tr>
-                            <td class="p-2 font-bold bg-slate-100 border-r border-slate-300">Saksi Resmi Pernikahan</td>
-                            <td class="p-2 text-slate-800">Saksi I: <strong>${escapeHtml(marriage.witness_one)}</strong> &nbsp;|&nbsp; Saksi II: <strong>${escapeHtml(marriage.witness_two)}</strong></td>
-                        </tr>
-                    </table>
-
-                    <!-- Checklist Kelengkapan Berkas Persyaratan -->
-                    <div class="space-y-1.5">
-                        <div class="text-xs font-bold uppercase tracking-wider text-slate-800">Daftar Pemeriksaan Persyaratan Administrasi Perkawinan:</div>
-                        <table class="w-full text-xs border border-slate-400 border-collapse">
-                            <thead class="bg-slate-100 font-bold text-slate-800 border-b border-slate-300">
-                                <tr>
-                                    <th class="p-2 border-r border-slate-300 w-10 text-center">No</th>
-                                    <th class="p-2 border-r border-slate-300">Dokumen Persyaratan Administrasi Wihara &amp; Dukcapil</th>
-                                    <th class="p-2 w-44 text-center">Status Verifikasi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-300">
-                                <tr>
-                                    <td class="p-2 text-center border-r border-slate-300">1</td>
-                                    <td class="p-2 border-r border-slate-300">Fotokopi KTP Elektronik &amp; Kartu Keluarga (KK) Kedua Mempelai</td>
-                                    <td class="p-2 text-center font-bold text-emerald-800">[&#10003;] Lengkap</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2 text-center border-r border-slate-300">2</td>
-                                    <td class="p-2 border-r border-slate-300">Fotokopi Akta Kelahiran &amp; Surat Pengantar Kelurahan (N1 – N4)</td>
-                                    <td class="p-2 text-center font-bold text-emerald-800">[&#10003;] Lengkap</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2 text-center border-r border-slate-300">3</td>
-                                    <td class="p-2 border-r border-slate-300">Sertifikat / Bukti Bimbingan Pra-Nikah Agama Buddha</td>
-                                    <td class="p-2 text-center font-bold ${marriage.premarital_course_done ? 'text-emerald-800' : 'text-amber-700'}">${marriage.premarital_course_done ? '[&#10003;] Telah Lulus' : '[Proses Bimbingan]'}</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2 text-center border-r border-slate-300">4</td>
-                                    <td class="p-2 border-r border-slate-300">Surat Pernyataan Belum Pernah Menikah &amp; Persetujuan Orang Tua</td>
-                                    <td class="p-2 text-center font-bold text-emerald-800">[&#10003;] Lengkap</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-2 text-center border-r border-slate-300">5</td>
-                                    <td class="p-2 border-r border-slate-300">Pas Foto Gandeng Berwarna Ukuran 4x6 cm &amp; Data KTP Saksi I &amp; II</td>
-                                    <td class="p-2 text-center font-bold text-emerald-800">[&#10003;] Lengkap</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="p-3 rounded-lg bg-slate-50 border border-slate-300 text-xs leading-relaxed">
-                        <strong>Catatan Sekretariat:</strong> ${escapeHtml(marriage.notes || 'Seluruh dokumen persyaratan administrasi pemberkatan perkawinan agama Buddha telah diperiksa dan dinyatakan lengkap.')}
+                        <button type="button" onclick="removeQueuedMultiFile('${escapeHtml(inputId)}', '${escapeHtml(listContainerId)}', ${idx})" class="text-rose-600 hover:text-rose-800 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 shrink-0" title="Batalkan file ini">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 `;
+            });
+            container.innerHTML = html;
+        }
+
+        let currentUploadedFileState = { url: '', downloadUrl: '', type: 'other', title: '', files: [], activeIndex: 0 };
+
+        function openUploadedFilesModal(files, activeIndex, title) {
+            if (!Array.isArray(files) || files.length === 0) return;
+            const idx = Math.max(0, Math.min(Number(activeIndex || 0), files.length - 1));
+            currentUploadedFileState.files = files;
+            currentUploadedFileState.activeIndex = idx;
+            currentUploadedFileState.title = title || 'Dokumen Arsip';
+
+            renderUploadedFileModalTabs();
+            const chosen = files[idx];
+            renderUploadedFileContent(chosen.url, chosen.downloadUrl, currentUploadedFileState.title, chosen.name);
+
+            const modal = document.getElementById('uploadedFileViewerModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+        }
+
+        function switchUploadedModalFile(index) {
+            if (!Array.isArray(currentUploadedFileState.files) || !currentUploadedFileState.files[index]) return;
+            currentUploadedFileState.activeIndex = index;
+            renderUploadedFileModalTabs();
+            const chosen = currentUploadedFileState.files[index];
+            renderUploadedFileContent(chosen.url, chosen.downloadUrl, currentUploadedFileState.title, chosen.name);
+        }
+
+        function renderUploadedFileModalTabs() {
+            const tabsBar = document.getElementById('uploadedFileTabsBar');
+            if (!tabsBar) return;
+
+            const files = currentUploadedFileState.files || [];
+            if (files.length <= 1) {
+                tabsBar.classList.add('hidden');
+                tabsBar.innerHTML = '';
+                return;
+            }
+
+            tabsBar.classList.remove('hidden');
+            let html = `<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">${files.length} Berkas:</span>`;
+            files.forEach(function (file, idx) {
+                const isActive = idx === currentUploadedFileState.activeIndex;
+                html += `
+                    <button type="button" onclick="switchUploadedModalFile(${idx})" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center gap-1.5 ${isActive ? 'bg-amber-400 text-slate-950 font-bold shadow-xs' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'}">
+                        <i class="fa-solid fa-file-lines text-[10px]"></i>
+                        <span>${idx + 1}. ${escapeHtml(file.name)}</span>
+                    </button>
+                `;
+            });
+            tabsBar.innerHTML = html;
+        }
+
+        function renderUploadedFileContent(fileUrl, downloadUrl, title, filename) {
+            const body = document.getElementById('uploadedFileViewerBody');
+            const titleEl = document.getElementById('uploadedFileModalTitle');
+            const nameEl = document.getElementById('uploadedFileModalName');
+            const newTabLink = document.getElementById('uploadedFileNewTabLink');
+            const downloadLink = document.getElementById('uploadedFileDownloadLink');
+            const printBtn = document.getElementById('uploadedFilePrintBtn');
+
+            const lowerName = String(filename || fileUrl || '').toLowerCase();
+            const isPdf = lowerName.endsWith('.pdf');
+            const isImage = /\.(jpg|jpeg|png|webp|gif)$/.test(lowerName);
+
+            currentUploadedFileState.url = fileUrl;
+            currentUploadedFileState.downloadUrl = downloadUrl;
+            currentUploadedFileState.type = isPdf ? 'pdf' : (isImage ? 'image' : 'other');
+
+            if (titleEl) titleEl.textContent = title || filename || 'Dokumen Arsip';
+            if (nameEl) nameEl.textContent = filename || '';
+            if (newTabLink) newTabLink.href = fileUrl;
+            if (downloadLink) downloadLink.href = downloadUrl;
+
+            if (isPdf) {
+                if (printBtn) printBtn.classList.remove('hidden');
+                body.innerHTML = `<iframe id="uploadedFileIframe" src="${escapeHtml(fileUrl)}" class="w-full h-full rounded-xl border border-slate-200 bg-white"></iframe>`;
+            } else if (isImage) {
+                if (printBtn) printBtn.classList.remove('hidden');
+                body.innerHTML = `<img src="${escapeHtml(fileUrl)}" alt="${escapeHtml(title || filename || 'Dokumen Arsip')}" class="max-w-full max-h-full object-contain rounded-xl shadow-md bg-white">`;
             } else {
-                content.innerHTML = `
-                    <!-- Official Buddhist Marriage Certificate Title -->
-                    <div class="text-center border-b border-slate-300 pb-3 space-y-1">
-                        <div class="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-600">Namo Sanghyang Adi Buddhaya &bull; Namo Buddhaya</div>
-                        <h3 class="text-lg sm:text-xl font-extrabold text-slate-900 underline tracking-wide">
-                            SURAT KETERANGAN PEMBERKATAN PERKAWINAN BUDDHIS
-                        </h3>
-                        <div class="text-xs text-slate-700">
-                            Nomor Akta / Surat: <strong class="font-mono text-slate-900">${escapeHtml(marriage.certificate_number)}</strong> &bull; Tanggal Registrasi: <strong>${escapeHtml(regDateStr || weddingDateStr)}</strong>
+                if (printBtn) printBtn.classList.add('hidden');
+                body.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-8 max-w-md text-center space-y-4 shadow-xs">
+                        <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mx-auto">
+                            <i class="fa-solid fa-file-word"></i>
                         </div>
-                    </div>
-
-                    <p class="text-xs text-slate-900 leading-relaxed text-justify">
-                        Pengurus <strong>Wihara Mahabodhi Buddhist Centre Semarang</strong> dengan ini menerangkan dengan sesungguhnya bahwa pada tanggal <strong>${escapeHtml(weddingDateStr)}</strong> pukul <strong>${escapeHtml(marriage.wedding_time)}</strong> bertempat di <strong>${escapeHtml(marriage.wedding_location)}</strong>, telah dilangsungkan Upacara Pemberkatan Perkawinan yang sah menurut tata cara Agama Buddha di hadapan Tiratana (Buddha, Dhamma, dan Sangha) antara:
-                    </p>
-
-                    <!-- Clean Aligned Biodata Tables for Groom & Bride -->
-                    <div class="grid grid-cols-2 gap-3 text-xs">
-                        <div class="rounded-lg border border-slate-400 overflow-hidden">
-                            <div class="bg-slate-100 px-2.5 py-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px] border-b border-slate-300">
-                                I. Mempelai Pria (Upasaka)
-                            </div>
-                            <table class="w-full text-[11px] border-collapse">
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600 w-[38%]">Nama Lengkap</td>
-                                    <td class="p-1.5 font-bold text-slate-900">: ${escapeHtml(marriage.groom_name)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Buddhis</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.groom_buddhist_name || '—')}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">NIK KTP</td>
-                                    <td class="p-1.5 font-mono text-slate-800">: ${escapeHtml(marriage.groom_nik || '—')}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Tempat, Tgl Lahir</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.groom_birth_info)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Ayah</td>
-                                    <td class="p-1.5 text-slate-800">: Bpk. ${escapeHtml(marriage.groom_father_name)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Ibu</td>
-                                    <td class="p-1.5 text-slate-800">: Ibu ${escapeHtml(marriage.groom_mother_name)}</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-1.5 font-semibold text-slate-600 align-top">Alamat</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.groom_address)}</td>
-                                </tr>
-                            </table>
+                        <div>
+                            <div class="font-bold text-slate-900 text-base break-words">${escapeHtml(filename || 'Dokumen Arsip')}</div>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-1">Format berkas ini tidak dapat dipratinjau langsung di browser. Silakan unduh berkas untuk membuka atau mencetaknya.</p>
                         </div>
-
-                        <div class="rounded-lg border border-slate-400 overflow-hidden">
-                            <div class="bg-slate-100 px-2.5 py-1.5 font-bold text-slate-900 uppercase tracking-wider text-[10px] border-b border-slate-300">
-                                II. Mempelai Wanita (Upasika)
-                            </div>
-                            <table class="w-full text-[11px] border-collapse">
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600 w-[38%]">Nama Lengkap</td>
-                                    <td class="p-1.5 font-bold text-slate-900">: ${escapeHtml(marriage.bride_name)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Buddhis</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.bride_buddhist_name || '—')}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">NIK KTP</td>
-                                    <td class="p-1.5 font-mono text-slate-800">: ${escapeHtml(marriage.bride_nik || '—')}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Tempat, Tgl Lahir</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.bride_birth_info)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Ayah</td>
-                                    <td class="p-1.5 text-slate-800">: Bpk. ${escapeHtml(marriage.bride_father_name)}</td>
-                                </tr>
-                                <tr class="border-b border-slate-200">
-                                    <td class="p-1.5 font-semibold text-slate-600">Nama Ibu</td>
-                                    <td class="p-1.5 text-slate-800">: Ibu ${escapeHtml(marriage.bride_mother_name)}</td>
-                                </tr>
-                                <tr>
-                                    <td class="p-1.5 font-semibold text-slate-600 align-top">Alamat</td>
-                                    <td class="p-1.5 text-slate-800">: ${escapeHtml(marriage.bride_address)}</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Officiant & Witnesses Official Box -->
-                    <table class="w-full text-xs border border-slate-400 border-collapse">
-                        <tr class="border-b border-slate-300">
-                            <td class="p-1.5 font-bold bg-slate-100 w-[34%] border-r border-slate-300">Rohaniwan / Pandita Pemimpin</td>
-                            <td class="p-1.5 font-bold text-slate-900">${escapeHtml(marriage.officiant_name)}</td>
-                        </tr>
-                        <tr>
-                            <td class="p-1.5 font-bold bg-slate-100 border-r border-slate-300">Saksi Upacara Pemberkatan</td>
-                            <td class="p-1.5 text-slate-800">1. <strong>${escapeHtml(marriage.witness_one)}</strong> (Saksi I) &nbsp;&nbsp;&bull;&nbsp;&nbsp; 2. <strong>${escapeHtml(marriage.witness_two)}</strong> (Saksi II)</td>
-                        </tr>
-                    </table>
-
-                    <p class="text-[11px] text-slate-800 leading-snug text-justify">
-                        Demikian Surat Keterangan Pemberkatan Perkawinan Buddhis ini diterbitkan dengan sebenarnya sebagai bukti sah perkawinan secara Agama Buddha dan untuk dipergunakan dalam pencatatan perkawinan pada Dinas Kependudukan dan Pencatatan Sipil (Disdukcapil). Semoga Tiratana senantiasa melindungi keluarga bahagia (Hitaya Sukhaya).
-                    </p>
-
-                    <!-- Bride, Groom & Witnesses Signature Row -->
-                    <div class="grid grid-cols-4 gap-3 pt-3 text-[10px] text-center">
-                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
-                            <div class="font-semibold text-slate-600">Mempelai Pria</div>
-                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.groom_name)}</div>
-                        </div>
-                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
-                            <div class="font-semibold text-slate-600">Mempelai Wanita</div>
-                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.bride_name)}</div>
-                        </div>
-                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
-                            <div class="font-semibold text-slate-600">Saksi I</div>
-                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.witness_one)}</div>
-                        </div>
-                        <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50/40">
-                            <div class="font-semibold text-slate-600">Saksi II</div>
-                            <div class="pt-16 font-bold underline text-slate-900">${escapeHtml(marriage.witness_two)}</div>
-                        </div>
+                        <a href="${escapeHtml(downloadUrl)}" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition shadow-xs">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Unduh Dokumen</span>
+                        </a>
                     </div>
                 `;
             }
+        }
 
-            wrapper.classList.remove('hidden');
+        function openUploadedFileModal(fileUrl, downloadUrl, title, filename) {
+            openUploadedFilesModal([{ url: fileUrl, downloadUrl: downloadUrl, name: filename || 'Dokumen Arsip' }], 0, title);
+        }
+
+        function closeUploadedFileModal() {
+            const modal = document.getElementById('uploadedFileViewerModal');
+            const body = document.getElementById('uploadedFileViewerBody');
+            if (modal) modal.classList.add('hidden');
+            if (body) body.innerHTML = '';
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function printUploadedFile() {
+            if (currentUploadedFileState.type === 'pdf') {
+                const iframe = document.getElementById('uploadedFileIframe');
+                if (iframe && iframe.contentWindow) {
+                    try {
+                        iframe.contentWindow.focus();
+                        iframe.contentWindow.print();
+                        return;
+                    } catch (e) {
+                        window.open(currentUploadedFileState.url, '_blank');
+                        return;
+                    }
+                }
+                window.open(currentUploadedFileState.url, '_blank');
+                return;
+            }
+
+            if (currentUploadedFileState.type === 'image') {
+                const printFrame = document.createElement('iframe');
+                printFrame.style.position = 'fixed';
+                printFrame.style.right = '0';
+                printFrame.style.bottom = '0';
+                printFrame.style.width = '0';
+                printFrame.style.height = '0';
+                printFrame.style.border = '0';
+                document.body.appendChild(printFrame);
+
+                const frameWin = printFrame.contentWindow;
+                const doc = frameWin.document;
+                doc.open();
+                doc.close();
+                doc.title = currentUploadedFileState.title;
+
+                const style = doc.createElement('style');
+                style.textContent = '@page { margin: 8mm; } body { margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; } img { max-width: 100%; max-height: 96vh; object-fit: contain; }';
+                doc.head.appendChild(style);
+
+                const img = doc.createElement('img');
+                img.src = currentUploadedFileState.url;
+                img.alt = currentUploadedFileState.title;
+                img.onload = function () {
+                    frameWin.focus();
+                    frameWin.print();
+                    setTimeout(function () {
+                        if (printFrame.parentNode) {
+                            printFrame.parentNode.removeChild(printFrame);
+                        }
+                    }, 500);
+                };
+                doc.body.appendChild(img);
+            }
         }
 
         /* ========================================================= */
@@ -4270,8 +4888,44 @@
             renderDashboardCalendar();
         }
 
-        function openImportExcelModal() {
+        function openImportExcelModal(moduleKey) {
+            const cfg = importExcelConfigs[moduleKey] || importExcelConfigs.documents;
             const modal = document.getElementById('importExcelModal');
+            const titleEl = document.getElementById('importModalTitle');
+            const subtitleEl = document.getElementById('importModalSubtitle');
+            const templateBtn = document.getElementById('importModalTemplateBtn');
+            const formEl = document.getElementById('importExcelForm');
+            const colsBadge = document.getElementById('importModalColsBadge');
+            const specBody = document.getElementById('importModalSpecBody');
+            const fileNameEl = document.getElementById('modalFileName');
+            const fileInput = document.getElementById('modalExcelInput');
+
+            if (titleEl) titleEl.textContent = cfg.title;
+            if (subtitleEl) subtitleEl.textContent = cfg.subtitle;
+            if (templateBtn) templateBtn.href = cfg.templateUrl;
+            if (formEl) formEl.action = cfg.importUrl;
+            if (colsBadge) colsBadge.textContent = cfg.colsLabel;
+            if (fileInput) fileInput.value = '';
+            if (fileNameEl) fileNameEl.textContent = 'Klik di sini untuk memilih berkas spreadsheet (.xlsx, .xls, .csv)';
+
+            if (specBody) {
+                let rowsHtml = '';
+                cfg.specs.forEach(function (spec, idx) {
+                    const isRequired = spec[1] === 'Wajib';
+                    const badgeClass = isRequired ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-600';
+                    rowsHtml += `
+                        <tr class="hover:bg-slate-50/80 transition">
+                            <td class="p-3 text-center font-bold text-slate-400">${idx + 1}</td>
+                            <td class="p-3 font-bold text-slate-900">${escapeHtml(spec[0])}</td>
+                            <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-md ${badgeClass} font-bold text-[11px]">${escapeHtml(spec[1])}</span></td>
+                            <td class="p-3 text-slate-600">${escapeHtml(spec[2])}</td>
+                            <td class="p-3 text-slate-800 font-mono text-[11px]">${escapeHtml(spec[3])}</td>
+                        </tr>
+                    `;
+                });
+                specBody.innerHTML = rowsHtml;
+            }
+
             if (modal) {
                 modal.classList.remove('hidden');
                 document.body.classList.add('overflow-hidden');
@@ -4304,7 +4958,9 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeImportExcelModal();
+                closeCategoryManagerModal();
                 closeA4PrintModal();
+                closeUploadedFileModal();
                 closeProfileDropdown();
             }
         });
@@ -4314,9 +4970,17 @@
             if (importModal && e.target === importModal) {
                 closeImportExcelModal();
             }
+            const catModal = document.getElementById('categoryManagerModal');
+            if (catModal && e.target === catModal) {
+                closeCategoryManagerModal();
+            }
             const a4Modal = document.getElementById('a4PrintWrapper');
             if (a4Modal && e.target === a4Modal) {
                 closeA4PrintModal();
+            }
+            const fileModal = document.getElementById('uploadedFileViewerModal');
+            if (fileModal && e.target === fileModal) {
+                closeUploadedFileModal();
             }
         });
 
@@ -4393,6 +5057,7 @@
                 container: '#schedulesTableBody',
                 rowSelector: '.schedule-row',
                 searchInput: '#scheduleSearchInput',
+                filterSelect: '#scheduleFilterCategory',
                 infoContainer: '#schedulesCountInfo',
                 paginationContainer: '#schedulesPaginationContainer',
                 pageSize: 8
@@ -4417,6 +5082,7 @@
                 container: '#articlesTableBody',
                 rowSelector: '.article-row',
                 searchInput: '#articleSearchInput',
+                filterSelect: '#articleFilterCategory',
                 infoContainer: '#articlesCountInfo',
                 paginationContainer: '#articlesPaginationContainer',
                 pageSize: 8
@@ -4441,14 +5107,8 @@
                 pageSize: 5
             });
 
-            @if (!empty($printRecord) && !empty($printType))
-                @if (in_array($printType, ['receipt', 'thank_you'], true))
-                    openReceiptPrintModal(@js($printRecord), @json($printType));
-                @elseif ($printType === 'document')
-                    openDocumentPrintModal(@js($printRecord));
-                @elseif ($printType === 'marriage')
-                    openMarriagePrintModal(@js($printRecord), 'certificate');
-                @endif
+            @if (!empty($printRecord) && !empty($printType) && in_array($printType, ['receipt', 'thank_you'], true))
+                openReceiptPrintModal(@js($printRecord), @json($printType));
             @endif
         });
     </script>

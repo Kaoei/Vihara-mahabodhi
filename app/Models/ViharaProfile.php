@@ -18,12 +18,13 @@ use Illuminate\Database\Eloquent\Model;
     'tagline',
     'about',
     'hero_image',
-    'default_signer_title',
-    'default_signer_name',
+    'logo_url',
     'footer_description',
     'footer_services_title',
     'footer_services',
     'footer_copyright',
+    'receipt_template_html',
+    'thank_you_template_html',
     'facilities',
     'dhammapada_quotes',
 ])]
@@ -64,8 +65,7 @@ class ViharaProfile extends Model
             'tagline' => 'Harmoni Kesadaran, Welas Asih, dan Kebijaksanaan di Jantung Kota Semarang',
             'about' => 'Wihara Mahabodhi Buddhist Centre merupakan pusat pembinaan spiritual, Puja Bakti, latihan meditasi, dan pelayanan sosial kemasyarakatan yang berlokasi di Jl. Seroja Timur No. 9-11 Semarang. Dengan semangat cinta kasih universal (Metta) dan welas asih (Karuna), wihara ini terbuka bagi seluruh umat dan masyarakat yang ingin mempelajari serta mempraktikkan Dhamma dalam keheningan yang teduh.',
             'hero_image' => '/Assets/Img/hero.png',
-            'default_signer_title' => null,
-            'default_signer_name' => null,
+            'logo_url' => null,
             'footer_description' => 'Pusat pembinaan spiritual Buddhis, pelaksanaan Puja Bakti, latihan meditasi Samatha-Vipassana, serta pelayanan sosial dan administrasi umat di Kota Semarang.',
             'footer_services_title' => 'Layanan Sekretariat',
             'footer_services' => [
@@ -75,6 +75,8 @@ class ViharaProfile extends Model
                 'Jadwal Puja Bakti & Meditasi',
             ],
             'footer_copyright' => 'Sabbe Satta Bhavantu Sukhitatta.',
+            'receipt_template_html' => null,
+            'thank_you_template_html' => null,
             'facilities' => [
                 [
                     'id' => 'dharmasala-agung',
@@ -176,6 +178,7 @@ class ViharaProfile extends Model
             'tagline' => $this->tagline ?: $defaults['tagline'],
             'about' => $this->about ?: $defaults['about'],
             'hero_image' => $this->hero_image ?: $defaults['hero_image'],
+            'logo_url' => $this->logo_url ?: null,
             'footer_description' => $this->footer_description ?: $defaults['footer_description'],
             'footer_services_title' => $this->footer_services_title ?: $defaults['footer_services_title'],
             'footer_services' => is_array($this->footer_services) && count($this->footer_services) > 0

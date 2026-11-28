@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'donor_contact',
     'item_name',
     'quantity',
+    'items',
     'nominal',
     'receiver_name',
     'thank_you_message',
@@ -38,7 +39,48 @@ class Receipt extends Model
         return [
             'receipt_date' => 'date',
             'nominal' => 'decimal:2',
+            'items' => 'array',
         ];
+    }
+
+    /**
+     * Return a normalized list of goods/items for this receipt (supports multi-item and legacy single-item).
+     *
+     * @return array<int, array{name: string, quantity: string, nominal: ?float}>
+     */
+    public function normalizedItems(): array
+    {
+        $raw = is_array($this->items) ? $this->items : [];
+        $normalized = [];
+
+        foreach ($raw as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+            $name = trim((string) ($entry['name'] ?? ''));
+            $qty = trim((string) ($entry['quantity'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $nom = isset($entry['nominal']) && $entry['nominal'] !== '' && $entry['nominal'] !== null
+                ? (float) $entry['nominal']
+                : null;
+            $normalized[] = [
+                'name' => $name,
+                'quantity' => $qty !== '' ? $qty : '1 Paket',
+                'nominal' => $nom,
+            ];
+        }
+
+        if ($normalized === [] && trim((string) $this->item_name) !== '') {
+            $normalized[] = [
+                'name' => (string) $this->item_name,
+                'quantity' => (string) ($this->quantity ?: '1 Paket'),
+                'nominal' => $this->nominal !== null ? (float) $this->nominal : null,
+            ];
+        }
+
+        return $normalized;
     }
 
     /**

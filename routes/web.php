@@ -19,21 +19,28 @@ Route::middleware('permission')->group(function (): void {
     Route::get('/management', [ManagementController::class, 'dashboard'])->name('management.dashboard');
     Route::get('/management/profile', [ManagementController::class, 'editProfile'])->name('management.profile.edit');
     Route::put('/management/profile', [ManagementController::class, 'updateProfile'])->name('management.profile.update');
+    Route::post('/management/categories', [ManagementController::class, 'storeCategory'])->name('management.categories.store');
+    Route::delete('/management/categories/{category}', [ManagementController::class, 'destroyCategory'])->name('management.categories.destroy');
 
     Route::middleware('permission:manage_receipts')->group(function (): void {
         Route::get('/management/receipts/create', [ManagementController::class, 'createReceipt'])->name('management.receipts.create');
         Route::post('/management/receipts', [ManagementController::class, 'storeReceipt'])->name('management.receipts.store');
+        Route::get('/management/receipts/template-editor', [ManagementController::class, 'editReceiptTemplate'])->name('management.receipts.template.edit');
+        Route::put('/management/receipts/template-editor', [ManagementController::class, 'updateReceiptTemplate'])->name('management.receipts.template.update');
+        Route::post('/management/receipts/template-editor/upload-docx', [ManagementController::class, 'uploadReceiptDocxTemplate'])->name('management.receipts.template.upload-docx');
+        Route::post('/management/receipts/template-editor/reset', [ManagementController::class, 'resetReceiptTemplate'])->name('management.receipts.template.reset');
         Route::get('/management/receipts/{receipt}/edit', [ManagementController::class, 'editReceipt'])->name('management.receipts.edit');
         Route::put('/management/receipts/{receipt}', [ManagementController::class, 'updateReceipt'])->name('management.receipts.update');
         Route::delete('/management/receipts/{receipt}', [ManagementController::class, 'destroyReceipt'])->name('management.receipts.destroy');
-        Route::post('/management/receipts/import-excel', [ManagementController::class, 'importReceiptsExcel'])->name('management.receipts.import');
-        Route::get('/management/receipts/export-excel', [ManagementController::class, 'exportReceiptsExcel'])->name('management.receipts.export');
-        Route::get('/management/receipts/template-excel', [ManagementController::class, 'downloadReceiptTemplate'])->name('management.receipts.template');
     });
 
     Route::middleware('permission:manage_documents')->group(function (): void {
         Route::get('/management/documents/create', [ManagementController::class, 'createDocument'])->name('management.documents.create');
         Route::post('/management/documents', [ManagementController::class, 'storeDocument'])->name('management.documents.store');
+        Route::get('/management/documents/export-excel', [ManagementController::class, 'exportDocumentsExcel'])->name('management.documents.export');
+        Route::post('/management/documents/import-excel', [ManagementController::class, 'importDocumentsExcel'])->name('management.documents.import');
+        Route::get('/management/documents/template-excel', [ManagementController::class, 'downloadDocumentTemplate'])->name('management.documents.template');
+        Route::get('/management/documents/{document}/file', [ManagementController::class, 'showDocumentFile'])->name('management.documents.file');
         Route::get('/management/documents/{document}/edit', [ManagementController::class, 'editDocument'])->name('management.documents.edit');
         Route::put('/management/documents/{document}', [ManagementController::class, 'updateDocument'])->name('management.documents.update');
         Route::delete('/management/documents/{document}', [ManagementController::class, 'destroyDocument'])->name('management.documents.destroy');
@@ -42,6 +49,10 @@ Route::middleware('permission')->group(function (): void {
     Route::middleware('permission:manage_marriages')->group(function (): void {
         Route::get('/management/marriages/create', [ManagementController::class, 'createMarriage'])->name('management.marriages.create');
         Route::post('/management/marriages', [ManagementController::class, 'storeMarriage'])->name('management.marriages.store');
+        Route::get('/management/marriages/export-excel', [ManagementController::class, 'exportMarriagesExcel'])->name('management.marriages.export');
+        Route::post('/management/marriages/import-excel', [ManagementController::class, 'importMarriagesExcel'])->name('management.marriages.import');
+        Route::get('/management/marriages/template-excel', [ManagementController::class, 'downloadMarriageTemplate'])->name('management.marriages.template');
+        Route::get('/management/marriages/{marriage}/file', [ManagementController::class, 'showMarriageFile'])->name('management.marriages.file');
         Route::get('/management/marriages/{marriage}/edit', [ManagementController::class, 'editMarriage'])->name('management.marriages.edit');
         Route::put('/management/marriages/{marriage}', [ManagementController::class, 'updateMarriage'])->name('management.marriages.update');
         Route::delete('/management/marriages/{marriage}', [ManagementController::class, 'destroyMarriage'])->name('management.marriages.destroy');

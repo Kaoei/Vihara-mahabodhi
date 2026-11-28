@@ -104,9 +104,13 @@
     <!-- 3-Second Initial Buddhist Dhamma Loading Screen (White Mode) -->
     <div id="dhammaLoadingScreen" class="fixed inset-0 z-[100] bg-white text-slate-900 flex flex-col items-center justify-center px-5 text-center transition-opacity duration-700 overflow-hidden">
         <div class="w-full max-w-xl mx-auto space-y-5 sm:space-y-6 flex flex-col items-center">
-            <!-- Buddha / Dharma Icon (No Background Box) -->
+            <!-- Brand Logo or Dharma Icon (No Background Box) -->
             <div class="text-gold-500 text-4xl sm:text-6xl">
-                <i class="fa-solid fa-dharmachakra fa-spin" style="animation-duration: 10s;"></i>
+                @if (!empty($vihara['logo_url']))
+                    <img src="{{ $vihara['logo_url'] }}" alt="{{ $vihara['short_name'] ?? 'Logo Wihara' }}" class="w-16 h-16 sm:w-20 sm:h-20 object-contain mx-auto">
+                @else
+                    <i class="fa-solid fa-dharmachakra fa-spin" style="animation-duration: 10s;"></i>
+                @endif
             </div>
 
             <div class="space-y-1.5 px-2">
@@ -147,9 +151,13 @@
     <!-- Sticky Navigation Header with Spacious Y-Padding & Margin (No Icons in Menu Items, No Background on Buddha Icon) -->
     <header id="mainNavbar" class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 py-3.5 sm:py-5 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 my-0.5 flex items-center justify-between gap-2 sm:gap-4">
-            <!-- Brand (Buddha Icon Only — No Background Box) -->
+            <!-- Brand (Custom Logo or Buddha Icon Only — No Background Box) -->
             <a href="{{ route('landing') }}" class="flex items-center gap-2.5 sm:gap-3 min-w-0 group">
-                <i class="fa-solid fa-dharmachakra text-gold-500 text-2xl sm:text-3xl shrink-0 transition-transform duration-500 group-hover:rotate-45"></i>
+                @if (!empty($vihara['logo_url']))
+                    <img src="{{ $vihara['logo_url'] }}" alt="{{ $vihara['short_name'] ?? 'Logo Wihara' }}" class="w-9 h-9 sm:w-10 sm:h-10 object-contain shrink-0 transition-transform duration-300 group-hover:scale-105">
+                @else
+                    <i class="fa-solid fa-dharmachakra text-gold-500 text-2xl sm:text-3xl shrink-0 transition-transform duration-500 group-hover:rotate-45"></i>
+                @endif
                 <div class="min-w-0">
                     <span class="block text-sm sm:text-base font-bold text-slate-900 tracking-tight leading-none truncate">{{ $vihara['short_name'] ?? 'Wihara Mahabodhi' }}</span>
                     <span class="block text-[11px] sm:text-xs text-slate-500 mt-1 truncate">Buddhist Centre &bull; Semarang</span>
@@ -724,7 +732,11 @@
                 <!-- Col 1: Wihara Brand & About -->
                 <div class="md:col-span-5 space-y-4">
                     <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-dharmachakra text-gold-400 text-2xl shrink-0"></i>
+                        @if (!empty($vihara['logo_url']))
+                            <img src="{{ $vihara['logo_url'] }}" alt="{{ $vihara['short_name'] ?? 'Logo Wihara' }}" class="w-9 h-9 object-contain shrink-0">
+                        @else
+                            <i class="fa-solid fa-dharmachakra text-gold-400 text-2xl shrink-0"></i>
+                        @endif
                         <div>
                             <div class="text-base font-bold text-white leading-tight">{{ $vihara['name'] }}</div>
                             <div class="text-xs text-gold-400 mt-0.5">{{ $vihara['address_short'] }}</div>
